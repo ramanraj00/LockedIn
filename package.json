@@ -1,0 +1,12 @@
+{
+  "name": "lockedin",
+  "version": "1.0.0",
+  "description": "Locked-In is a full-stack MERN productivity application that enables users to manage tasks, track deadlines, and monitor productivity through a personalized dashboard",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
