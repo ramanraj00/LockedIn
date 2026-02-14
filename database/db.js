@@ -6,7 +6,7 @@ async function connectDb(){
    mongoose.connect(process.env.MONGODB_URI);
 }
 
-mongoose.export(
+module.exports = (
     mongoose,
     connectDb
 )

@@ -4,14 +4,14 @@ const {Schema} = mongoose;
 const sessionSchema = new Schema ({
 
     taskId:{
-        type:Schema.Type.ObjectId,
-        ref:taskcredential,
+       type: Schema.Types.ObjectId,
+        ref:"taskcredential",
         required:true
     },
 
     userId:{
-        type:Schema.Type.ObjectId,
-        ref:userCredential,
+       type: Schema.Types.ObjectId,
+        ref:"userCredential",
         required:true
     },
 
@@ -36,4 +36,4 @@ const sessionSchema = new Schema ({
 })
 
 const sessionmodel = mongoose.model("sessioncrediantials",sessionSchema);
-module.export(sessionmodel);
+module.exports(sessionmodel);
