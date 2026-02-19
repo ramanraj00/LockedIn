@@ -7,7 +7,7 @@ const userValidationmiddleware = (schema) => {
 
         const result = schema.safeParse(req.body);
 
-        if(!result.sucess){
+        if(!result.success){
             return res.status(400).json({
                 message:'Validation Failed',
                 errors:result.error.errors

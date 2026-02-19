@@ -1,4 +1,4 @@
-const mongoose = require("../database/db");
+const { mongoose } = require("../database/db");
 const {Schema} = mongoose;
 
 const sessionSchema = new Schema ({
@@ -36,4 +36,4 @@ const sessionSchema = new Schema ({
 })
 
 const sessionmodel = mongoose.model("sessioncrediantials",sessionSchema);
-module.exports(sessionmodel);
+module.exports = sessionmodel;
