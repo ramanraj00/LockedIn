@@ -1,7 +1,7 @@
 
 
 
-const userValidationmiddleware = (schema) => {
+const userValidationMiddleware = (schema) => {
 
     return (req,res,next) => {
 
@@ -19,4 +19,4 @@ const userValidationmiddleware = (schema) => {
     }
 }
 
-module.exports = userValidationmiddleware;
+module.exports = userValidationMiddleware;

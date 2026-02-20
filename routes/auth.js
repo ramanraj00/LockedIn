@@ -5,9 +5,9 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET
 const express = require("express");
 const router = express.Router();
-const userValidationmiddleware = require("../middleware/userValidationMiddleware");
-const { userValidSchema } = require("../validators/userValidSchema");
-const {userloginSchema} = require("../validators/userloginSchema");
+const validate = require("../middleware/uservalidation");
+const { userloginSchema } = require("../validators/login.validator");
+const { userValidSchema} = require("../validators/user.validator");
 
 
 // so one user cant try to login contunusly and prevent brute force 
@@ -18,7 +18,7 @@ const loginLimiter = ratelimit({
 })
 
 
-router.post("/signup", userValidationmiddleware(userValidSchema), async function(req,res){ // signup routes
+router.post("/signup", validate(userValidSchema), async function(req,res){ // signup routes
 
 try{
 const name = req.body.name;
@@ -45,7 +45,7 @@ await usermodel.create({
 })
 
 
-res.token(201).json({
+ return res.status(201).json({
     message:"Account created Sucessfully"
 })
 
@@ -60,7 +60,7 @@ catch(err){
 
 })
 
-router.post("/signin",userValidationmiddleware(userloginSchema), loginLimiter, async function(req,res){
+router.post("/signin",validate(userloginSchema), loginLimiter, async function(req,res){
 
 try {
 

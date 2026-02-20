@@ -21,7 +21,13 @@ const userValidSchema = z.object({
     .regex(/[a-z]/, { message: "Must contain at least one lowercase letter" })
     .regex(/[0-9]/, { message: "Must contain at least one number" })
     .regex(/[!@#$%^&*]/, "Must include special character")
-    .max(100)
+    .max(100),
+
+     imageUrl: z
+     .string()
+     .url()
+    
+
 });
 
 module.exports = {
