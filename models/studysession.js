@@ -1,18 +1,23 @@
 const { mongoose } = require("../database/db");
 const {Schema} = mongoose;
 
+
+// Timer system...
+
 const sessionSchema = new Schema ({
 
     taskId:{
        type: Schema.Types.ObjectId,
         ref:"taskcredential",
-        required:true
+        required:true,
+        index:true
     },
 
     userId:{
        type: Schema.Types.ObjectId,
         ref:"userCredential",
-        required:true
+        required:true,
+        index:true
     },
 
     startTime:{
@@ -21,11 +26,11 @@ const sessionSchema = new Schema ({
     },
     endTime:{
         type:Date,
-        required:true
     },
 
     duration:{
-        type:Number
+        type:Number,
+        default:0
     },
     status:{
         type:String,
@@ -33,7 +38,9 @@ const sessionSchema = new Schema ({
         default:"running"
     }
 
-})
+},
+{timestamps:true}
+)
 
 const sessionmodel = mongoose.model("sessioncrediantials",sessionSchema);
 module.exports = sessionmodel;
