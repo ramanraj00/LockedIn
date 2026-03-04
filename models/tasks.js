@@ -8,6 +8,13 @@ const taskSchema = new Schema({
         required:true,
         trim:true
     },
+
+   daySessionId :{
+        type: Schema.Types.ObjectId,
+        ref:"daysessioncreditanils",
+        required:true
+    },
+
     description:{
         type:String,
         required:true,
@@ -18,15 +25,17 @@ const taskSchema = new Schema({
         required:true,
     },
 
-    completed:{
-        type:Boolean,
-        default:false
+    status:{
+        type:String,  
+        enum:["pending","completed"],
+        default:"pending"
     },
 
    userId:{
-  type: Schema.Types.ObjectId,
-    ref:"UserCredential",
-    required:true
+   type: Schema.Types.ObjectId,
+    ref:"userCredential",
+    required:true,
+    index:true
    }
     
 

@@ -1,13 +1,16 @@
 const ratelimit = require("express-rate-limit");
-const usermodel = require("../models/users")
+const usermodel = require("../models/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET){
+    throw new error ("JWT SECRET is not defined or missing")
+}
 const express = require("express");
 const router = express.Router();
-const validate = require("../middleware/uservalidation");
-const { userloginSchema } = require("../validators/login.validator");
-const { userValidSchema} = require("../validators/user.validator");
+const userValidationmiddleware = require("../middleware/userValidationMiddleware");
+const { userValidSchema } = require("../validators/userValidSchema");
+const {userloginSchema} = require("../validators/userloginSchema");
 
 
 // so one user cant try to login contunusly and prevent brute force 
@@ -18,9 +21,9 @@ const loginLimiter = ratelimit({
 })
 
 
-router.post("/signup", validate(userValidSchema), async function(req,res){ // signup routes
+router.post("/signup", userValidationmiddleware(userValidSchema), async function(req,res){ // signup routes
 
-try{
+try {
 const name = req.body.name;
 const email = req.body.email;
 const password = req.body.password;
@@ -31,8 +34,8 @@ const existingUser = await usermodel.findOne({email});
 if(existingUser){
     return res.status(400).json({
         message:"Email Already Exist"
-    })
-}
+    });
+};
 
 
 const hasedPassword = await bcrypt.hash(password,10) // hassing the password using bycrpt library
@@ -42,12 +45,12 @@ await usermodel.create({
     email:email,
     password:hasedPassword,
     imageUrl:imageUrl
-})
+});
 
 
- return res.status(201).json({
+res.status(201).json({
     message:"Account created Sucessfully"
-})
+});
 
 }
 
@@ -55,27 +58,31 @@ catch(err){
     res.status(500).json({
         message: "Error creating account",
         error: err.message
-    })
+    });
 }
 
-})
+});
 
-router.post("/signin",validate(userloginSchema), loginLimiter, async function(req,res){
+router.post("/signin",userValidationmiddleware(userloginSchema), loginLimiter, async function(req,res){
 
 try {
 
 const email = req.body.email;
 const password = req.body.password;
 
-const user = await usermodel.findOne({email});
+const user = await usermodel
+.findOne({email})
+.select("+password");
 
 if(!user){
     return res.status(401).json({
-        message:"Invalid credentials"
-    })
+        message:"Please enter Valid credentials"
+    });
 } 
 
 const isMatch = await bcrypt.compare(password, user.password) // here we compare the password in our db vs password client send
+
+
 
 if(isMatch){
     const token = jwt.sign({
@@ -84,11 +91,11 @@ if(isMatch){
    return res.json({
         token:token,
         message:"Login Successful"
-    })
+    });
 } else{
     return res.status(401).json({
         message:"Please enter Valid credentials"
-    })
+    });
 }
 
     }
@@ -97,10 +104,10 @@ if(isMatch){
         res.status(500).json({
             message: "Login error",
             error: err.message
-        })
+        });
     }
 
-})
+});
 
 
 module.exports = router
