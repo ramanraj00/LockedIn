@@ -1,10 +1,10 @@
 const ratelimit = require("express-rate-limit");
-const usermodel = require("../models/users")
+const usermodel = require("../models/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET
 if (!JWT_SECRET){
-    throw new error ("JWT_SECRET is not defined or missing")
+    throw new error ("JWT SECRET is not defined or missing")
 }
 const express = require("express");
 const router = express.Router();
@@ -23,7 +23,7 @@ const loginLimiter = ratelimit({
 
 router.post("/signup", userValidationmiddleware(userValidSchema), async function(req,res){ // signup routes
 
-try{
+try {
 const name = req.body.name;
 const email = req.body.email;
 const password = req.body.password;
@@ -92,7 +92,7 @@ if(isMatch){
         token:token,
         message:"Login Successful"
     });
-} else{
+}else{
     return res.status(401).json({
         message:"Please enter Valid credentials"
     });
