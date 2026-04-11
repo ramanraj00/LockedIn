@@ -1,6 +1,9 @@
 const {mongoose} = require("../database/db")
 const {Schema} = mongoose;
 
+
+
+// this is where we get user details 
 const userSchema = new Schema({
     name:{
         type:String,
@@ -18,6 +21,16 @@ const userSchema = new Schema({
         type:String,
         required:true,
         select: false
+    },
+
+    resetToken:{
+        type:String,
+        select:false
+    },
+
+    resetTokenExpiry:{
+        type:Date,
+
     },
 
     imageUrl:{

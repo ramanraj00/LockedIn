@@ -2,7 +2,7 @@ const { mongoose } = require("../database/db");
 const {Schema} = mongoose;
 
 
-// Timer system...
+// Timer system for calculating in one day how much hour you spent in one daysession...
 
 const sessionSchema = new Schema ({
 
@@ -39,8 +39,14 @@ const sessionSchema = new Schema ({
     }
 
 },
-{timestamps:true}
-)
+{timestamps:true})
+
+sessionSchema.pre("save", function(next) {
+  if (this.endTime && this.startTime) {
+    this.duration = (this.endTime - this.startTime) / 1000;
+  }
+  next();
+});
 
 const sessionmodel = mongoose.model("sessioncrediantials",sessionSchema);
 module.exports = sessionmodel;
