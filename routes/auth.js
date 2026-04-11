@@ -72,7 +72,6 @@ catch(err){
 
 // password forget 
 
-
 router.post("/forgetemail",userValidationmiddleware(forgetpasswordvalidatorSchemna), async function(req,res){
 
     try {
@@ -86,7 +85,7 @@ router.post("/forgetemail",userValidationmiddleware(forgetpasswordvalidatorSchem
 
             emailexist.resetToken = token;
             emailexist.resetTokenExpiry = Date.now() + 600000;
-             await emailexist.save()
+            await emailexist.save()
         }
 
     }
