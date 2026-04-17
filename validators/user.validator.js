@@ -14,6 +14,10 @@ const userValidSchema = z.object({
     })
     .email({ message: "Email is invalid" }),
 
+    authProvider : z
+    .enum(["local","google"])
+    .default("local"),
+
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters" })
@@ -21,13 +25,27 @@ const userValidSchema = z.object({
     .regex(/[a-z]/, { message: "Must contain at least one lowercase letter" })
     .regex(/[0-9]/, { message: "Must contain at least one number" })
     .regex(/[!@#$%^&*]/, "Must include special character")
-    .max(100),
+    .max(100)
+    .optional(),
+
 
      imageUrl: z
      .string()
      .url()
+     .optional()
     
 
+})
+
+.refine((data)=>{
+  if(data.authProvider === "local" && !data.password){
+    return false;
+  }
+
+  return true;
+}, {
+  message:"Password is required for local Signup",
+  path:["password"]
 });
 
 module.exports = {

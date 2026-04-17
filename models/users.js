@@ -1,4 +1,6 @@
-const {mongoose} = require("../database/db")
+const { optional } = require("zod");
+const {mongoose} = require("../database/db");
+const { required } = require("zod/mini");
 const {Schema} = mongoose;
 
 
@@ -19,8 +21,17 @@ const userSchema = new Schema({
     },
     password:{
         type:String,
-        required:true,
         select: false
+    },
+
+    googleId:{
+       type:String
+    },
+
+    authProvider:{
+        type: String,
+        enum: ["local", "google"],
+        default: "local"
     },
 
     resetToken:{
