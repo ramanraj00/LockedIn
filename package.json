@@ -4,7 +4,8 @@
   "description": "Locked-In is a full-stack MERN productivity application that enables users to manage tasks, track deadlines, and monitor productivity through a personalized dashboard",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,10 @@
     "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.1",
+    "nodemailer": "^8.0.5",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

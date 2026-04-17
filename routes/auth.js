@@ -11,10 +11,12 @@ if (!JWT_SECRET){
 }
 const express = require("express");
 const router = express.Router();
-const userValidationmiddleware = require("../middleware/userValidationMiddleware");
-const { userValidSchema } = require("../validators/userValidSchema");
-const {userloginSchema} = require("../validators/userloginSchema");
-const {forgetpasswordvalidatorSchemna} = require("../validators/forgetpasswordvalidatorSchemna");
+const userValidationMiddleware = require("../middleware/uservalidation");
+const { userValidSchema } = require("../validators/user.validator");
+const {userloginSchema} = require("../validators/login.validator");
+const { forgetpasswordvalidatorSchemna } = require("../validators/forgetemailvalidator");
+const sendResetEmail = require("../Services/emailServices");
+const {resetPasswordSchema} = require("../validators/resetPasswordvalidator");
 
 
 // so one user cant try to login contunusly and prevent brute force 
@@ -27,7 +29,7 @@ const loginLimiter = ratelimit({
 
 // Signup route 
 
-router.post("/signup", userValidationmiddleware(userValidSchema),loginLimiter, async function(req,res){ // signup routes
+router.post("/signup", userValidationMiddleware(userValidSchema),loginLimiter, async function(req,res){ // signup routes
 
 try {
 const name = req.body.name;
@@ -72,27 +74,102 @@ catch(err){
 
 // password forget 
 
-router.post("/forgetemail",userValidationmiddleware(forgetpasswordvalidatorSchemna), async function(req,res){
+router.post("/forgetPassword",userValidationMiddleware(forgetpasswordvalidatorSchemna), async function(req,res){
 
     try {
         const email = req.body.email.toLowerCase();
         const emailexist = await usermodel.findOne({email});
+        if(!emailexist){
+            return res.json({
+          message: "If this email exists, reset link has been sent",
+        });
+        }
         if(emailexist){
-
             const token = jwt.sign({
                 id:emailexist._id.toString()
             }, JWT_SECRET,{expiresIn: "10min" })
-
+ 
             emailexist.resetToken = token;
-            emailexist.resetTokenExpiry = Date.now() + 600000;
+            emailexist.resetTokenExpiry = Date.now() +  10 * 60 * 1000;
             await emailexist.save()
+
+            await sendResetEmail (email,token);
+
+             return res.json({
+              message: "If this email exists, reset link has been sent",
+           });
+
+
+            
         }
 
     }
 
     catch(error){
 
+        console.error(error);
+        return res.status(500).json({
+            message:"Something went wrong"
+        });
+
     }
+});
+
+router.post("/reset-password/:token", userValidationMiddleware(resetPasswordSchema), async function(req, res) {
+    
+    try {
+
+        const token = req.params.token;
+        const password = req.body.password;
+
+       let decoded;
+
+try {
+    decoded = jwt.verify(token, JWT_SECRET);
+} catch (err) {
+    return res.status(400).json({
+        message: "Invalid or Expired token"
+    });
+}
+        const user = await usermodel.findById(decoded.id);
+
+        if(!user ){
+            
+         return res.status(400).json({
+            message:"Invalid  token"
+         });
+        }
+
+        if(user.resetTokenExpiry < Date.now()){
+            return res.status(400).json({
+                message:"Token Expired"
+            })
+        }
+        const hasedPassword = await bcrypt.hash(password,10);
+
+
+       user.password = hasedPassword;
+
+       user.resetToken = undefined;
+       user.resetTokenExpiry = undefined;
+
+       await user.save()
+
+        res.status(201).json({
+            message:"Password created succesfully"
+        })
+
+
+    } catch(error){
+
+         console.error(error);
+        return res.status(500).json({
+            message:"Something went wrong"
+        });
+
+    }
+
+
 })
 
 
@@ -101,7 +178,7 @@ router.post("/forgetemail",userValidationmiddleware(forgetpasswordvalidatorSchem
 
 // SignIn Route 
 
-router.post("/signin",userValidationmiddleware(userloginSchema), loginLimiter, async function(req,res){
+router.post("/signin",userValidationMiddleware(userloginSchema), loginLimiter, async function(req,res){
 
 try {
 
