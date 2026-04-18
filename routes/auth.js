@@ -17,6 +17,7 @@ const {userloginSchema} = require("../validators/login.validator");
 const { forgetpasswordvalidatorSchemna } = require("../validators/forgetemailvalidator");
 const sendResetEmail = require("../Services/emailServices");
 const {resetPasswordSchema} = require("../validators/resetPasswordvalidator");
+const {googleAuthSchema} = require("../validators/googleauthvalidator");
 
 
 // so one user cant try to login contunusly and prevent brute force 
@@ -124,13 +125,13 @@ router.post("/reset-password/:token", userValidationMiddleware(resetPasswordSche
 
        let decoded;
 
-try {
+    try {
     decoded = jwt.verify(token, JWT_SECRET);
-} catch (err) {
+    } catch (err) {
     return res.status(400).json({
         message: "Invalid or Expired token"
     });
-}
+    }
         const user = await usermodel.findById(decoded.id);
 
         if(!user ){
@@ -169,6 +170,58 @@ try {
 
     }
 
+
+})
+
+
+router.post("/google-auth", userValidationMiddleware(googleAuthSchema), async function(req,res){
+
+  try {
+
+      const token = req.body.token;
+
+    const ticket =  await verifyIdToken({
+        idToken:token,
+        audience:CLIENT_ID
+    })
+
+    const payload = ticket.getPayload();
+
+    const email = payload.email;
+    const name = payload.name;
+    const googleId = payload.sub;
+    const imageUrl = payload.picture;
+
+    const emailexist = await usermodel.findOne({email});
+
+    if (!emailexist){
+   emailexist= await usermodel.create({
+        name:name,
+        email:email,
+        googleId:googleId,
+        imageUrl:imageUrl,
+        authProvider:"google"
+       })
+    }
+
+   const jwtToken = jwt.sign({
+        id:user._id.toString()
+   },JWT_SECRET);
+   
+   res.status(200).json({
+    token:jwtToken
+   })
+
+
+  } catch(error){
+
+
+    res.status(400).json({
+        message:"Google Autentication failed"
+    })
+
+
+  }
 
 })
 
