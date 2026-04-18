@@ -1,6 +1,4 @@
 
-
-
 const userValidationMiddleware = (schema) => {
 
     return (req,res,next) => {

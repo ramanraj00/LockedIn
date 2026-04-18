@@ -66,13 +66,11 @@ router.patch("/patchtask", async function(req,res){
 
      try {
 
-
         const user = req.user.id;
         const {taskId} = req.params;
         const tasks = await  taskmodel.find({
             userId,
             taskId
-
         });
 
           res.status(200).json(tasks);
