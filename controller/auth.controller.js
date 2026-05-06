@@ -12,7 +12,7 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET missing");
 }
 
-//  SIGNUP
+//  SIGNUP ------------------------------------------------------------------------
 exports.signup = async (req, res) => {
   try {
     const { name, password, imageUrl } = req.body;
@@ -46,7 +46,7 @@ exports.signup = async (req, res) => {
     });
   }
 };
-//signin
+//SignIn------------------------------------------------------------------------
 exports.signin = async (req, res) => {
   try {
     const {password } = req.body;
@@ -87,7 +87,7 @@ exports.signin = async (req, res) => {
   }
 };
 
-// forgetpassword
+// forgetpassword------------------------------------------------------------------------
 
 exports.forgetPassword = async (req, res) => {
   try {
@@ -125,7 +125,7 @@ exports.forgetPassword = async (req, res) => {
   }
 };
 
-// reset password 
+// reset password------------------------------------------------------------------------
 
 exports.resetPassword = async (req, res) => {
   try {
@@ -173,7 +173,7 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// google auth 
+// google auth------------------------------------------------------------------------
 
 exports.googleAuth = async (req, res) => {
   try {

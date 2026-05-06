@@ -5,11 +5,6 @@ const {Schema}= mongoose;
 
 const taskSchema = new Schema({
     
-    title:{
-        type:String,
-        required:true,
-        trim:true
-    },
 
    daySessionId :{
         type: Schema.Types.ObjectId,
@@ -22,15 +17,10 @@ const taskSchema = new Schema({
         required:true,
         trim:true
     },
-    deadline:{
-        type:Date,
-        required:true,
-    },
 
     status:{
-        type:String,  
-        enum:["pending","completed"],
-        default:"pending"
+        type:Boolean,  
+        default:false  // false = pending, true = completed
     },
 
    userId:{
@@ -40,7 +30,6 @@ const taskSchema = new Schema({
     index:true
    }
     
-
 },
 
 {timestamps:true}
