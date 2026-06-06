@@ -12,11 +12,15 @@ const taskSchema = new Schema({
         required:true
     },
 
-    description:{
-        type:String,
-        required:true,
-        trim:true
-    },
+    encryptedDescription:{
+      type:String,
+      required:true
+   },
+
+   encryptedAESKey:{
+      type:String,
+      required:true
+   },
 
     status:{
         type:Boolean,  

@@ -15,7 +15,7 @@ if (!JWT_SECRET) {
 //  SIGNUP ------------------------------------------------------------------------
 exports.signup = async (req, res) => {
   try {
-    const { name, password, imageUrl } = req.body;
+    const { name, password, imageUrl , publicKey } = req.body;
     const email = req.body.email.toLowerCase();
 
     const existingUser = await usermodel.findOne({ email });
@@ -28,17 +28,24 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await usermodel.create({
+ const user =  await usermodel.create({
       name,
       email,
       password: hashedPassword,
-      imageUrl,
+      publicKey,
+      imageUrl
     });
+
+    const token = jwt.sign(
+  { id: user._id.toString() },
+  JWT_SECRET,
+  { expiresIn: "7d" }
+);
 
     res.status(201).json({
       message: "Account created Successfully",
+      token
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Error creating account",
@@ -49,8 +56,8 @@ exports.signup = async (req, res) => {
 //SignIn------------------------------------------------------------------------
 exports.signin = async (req, res) => {
   try {
-    const {password } = req.body;
-     const email = req.body.email.toLowerCase();
+    const { password } = req.body;
+    const email = req.body.email.toLowerCase();
 
     const user = await usermodel.findOne({ email }).select("+password");
 
@@ -68,17 +75,14 @@ exports.signin = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id.toString() },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ id: user._id.toString() }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     return res.json({
       token,
       message: "Login Successful",
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Login error",
@@ -101,11 +105,9 @@ exports.forgetPassword = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id.toString() },
-      JWT_SECRET,
-      { expiresIn: "10m" }
-    );
+    const token = jwt.sign({ id: user._id.toString() }, JWT_SECRET, {
+      expiresIn: "10m",
+    });
 
     user.resetToken = token;
     user.resetTokenExpiry = Date.now() + 10 * 60 * 1000;
@@ -114,10 +116,9 @@ exports.forgetPassword = async (req, res) => {
 
     await sendResetEmail(email, token);
 
-   return res.json({
+    return res.json({
       message: "If this email exists, reset link has been sent",
     });
-
   } catch (error) {
     res.status(500).json({
       message: "Something went wrong",
@@ -165,7 +166,6 @@ exports.resetPassword = async (req, res) => {
     res.status(201).json({
       message: "Password reset successful",
     });
-
   } catch (error) {
     res.status(500).json({
       message: "Something went wrong",
@@ -177,7 +177,6 @@ exports.resetPassword = async (req, res) => {
 
 exports.googleAuth = async (req, res) => {
   try {
-
     const token = req.body.token;
 
     const ticket = await client.verifyIdToken({
@@ -199,23 +198,20 @@ exports.googleAuth = async (req, res) => {
       });
     }
 
-    const jwtToken = jwt.sign(
-      { id: user._id.toString() },
-      JWT_SECRET, {expiresIn:"7d"});
+    const jwtToken = jwt.sign({ id: user._id.toString() }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-   res.cookie("token", jwtToken, {
-  httpOnly: true,
-  secure: true,
-});
+    res.cookie("token", jwtToken, {
+      httpOnly: true,
+      secure: true,
+    });
 
-
-return res.json({
-  message: "Login successful",
-});
-
-
+    return res.json({
+      message: "Login successful",
+    });
   } catch (error) {
-   return res.status(400).json({
+    return res.status(400).json({
       message: "Google Authentication failed",
     });
   }

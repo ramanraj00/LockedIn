@@ -24,6 +24,10 @@ const userSchema = new Schema({
         select: false
     },
 
+    publicKey:{
+        type:String
+    },
+
     googleId:{
        type:String
     },

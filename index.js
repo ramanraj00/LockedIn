@@ -4,7 +4,8 @@ const express = require("express");
 const helmet = require("helmet");
 const { connectDb } = require("./database/db");
 
-const authRoutes = require("./routes/auth");
+const authRoute = require("./routes/auth");
+const taskRoute = require("./routes/task");
 
 const app = express();
 
@@ -12,7 +13,8 @@ app.use(express.json());
 
 connectDb();
 app.use(helmet());
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoute);
+app.use("/api/task",taskRoute);
 
 app.listen(3000, () => {
 
