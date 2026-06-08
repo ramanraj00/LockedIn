@@ -6,12 +6,12 @@ const {Schema} = mongoose;
 
 const sessionSchema = new Schema ({
 
-    taskId:{
-       type: Schema.Types.ObjectId,
-        ref:"taskcredential",
-        required:true,
-        index:true
+     daySessionId :{
+        type: Schema.Types.ObjectId,
+        ref:"daysessioncreditanils",
+        required:true
     },
+
 
     userId:{
        type: Schema.Types.ObjectId,

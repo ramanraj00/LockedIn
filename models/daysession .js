@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 // this is for 1 day session like for mon, tue, wed...
 
-const daysessionSchema = new Schema(
+const daysessionSchema = new Schema (
   {
     title: {
       type: String,
@@ -12,7 +12,7 @@ const daysessionSchema = new Schema(
       trim: true,
     },
     
-    // mai 10 may takk ess task ko complete kar dunga, aur maine mark uncheck kar rakha hai ,to hum check karengai ki deadline ki date cross ho gayi aur user ka still task jo hai unchecked hai to deadline cross ho gayi hai  
+    // mai 10 may takk ess task ko complete kar dunga, aur maine mark uncheck kar rakha hai ,to hum check karengai ki deadline ki date cross ho gayi aur user ka still task jo hai unchecked hai to deadline cross ho gayi hai.................
 
      deadline:{ 
         type:Date,
