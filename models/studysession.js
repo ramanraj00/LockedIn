@@ -9,7 +9,8 @@ const sessionSchema = new Schema ({
      daySessionId :{
         type: Schema.Types.ObjectId,
         ref:"daysessioncreditanils",
-        required:true
+        required:true,
+        index:true
     },
 
 
@@ -22,7 +23,8 @@ const sessionSchema = new Schema ({
 
     startTime:{
         type:Date,
-        required:true
+        required:true,
+        index:true
     },
     endTime:{
         type:Date,
@@ -35,7 +37,8 @@ const sessionSchema = new Schema ({
     status:{
         type:String,
         enum:["running","paused","completed"],
-        default:"running"
+        default:"running",
+        index:true
     }
 
 },
