@@ -4,19 +4,18 @@ const { Schema } = mongoose;
 
 // this is for 1 day session like for mon, tue, wed...
 
-const daysessionSchema = new Schema (
+const daysessionSchema = new Schema(
   {
     title: {
       type: String,
       required: true,
       trim: true,
     },
-    
+
     // mai 10 may takk ess task ko complete kar dunga, aur maine mark uncheck kar rakha hai ,to hum check karengai ki deadline ki date cross ho gayi aur user ka still task jo hai unchecked hai to deadline cross ho gayi hai.................
 
-     deadline:{ 
-        type:Date,
-        required:optional,
+    deadline: {
+      type: Date,
     },
 
     date: {
@@ -35,18 +34,15 @@ const daysessionSchema = new Schema (
       default: 0,
     },
 
-  
+    status: {
+      type: String,
+      enum: ["active", "completed"],
+      default: "active",
+    },
   },
 
   { timestamps: true },
 );
-
-daysessionSchema.pre("save", function (next) {
-  if (this.date) {
-    this.date.setHours(0, 0, 0, 0);
-  }
-  next();
-});
 
 daysessionSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate();
