@@ -1,8 +1,5 @@
-const { optional } = require("zod");
 const { mongoose } = require("../database/db");
 const { Schema } = mongoose;
-
-// this is for 1 day session like for mon, tue, wed...
 
 const daysessionSchema = new Schema(
   {
@@ -11,8 +8,6 @@ const daysessionSchema = new Schema(
       required: true,
       trim: true,
     },
-
-    // mai 10 may takk ess task ko complete kar dunga, aur maine mark uncheck kar rakha hai ,to hum check karengai ki deadline ki date cross ho gayi aur user ka still task jo hai unchecked hai to deadline cross ho gayi hai.................
 
     deadline: {
       type: Date,
@@ -40,22 +35,34 @@ const daysessionSchema = new Schema(
       default: "active",
     },
   },
-
-  { timestamps: true },
+  { timestamps: true }
 );
 
-daysessionSchema.pre("findOneAndUpdate", function (next) {
-  const update = this.getUpdate();
-  if (update.date) {
-    update.date.setHours(0, 0, 0, 0);
+daysessionSchema.pre("save", function (next) {
+  if (this.date) {
+    this.date.setHours(0, 0, 0, 0);
   }
   next();
 });
 
-daysessionSchema.index({ userId: 1, date: 1 }, { unique: true });
+daysessionSchema.pre("findOneAndUpdate", function (next) {
+  const update = this.getUpdate();
+
+  if (update.date) {
+    update.date.setHours(0, 0, 0, 0);
+  }
+
+  next();
+});
+
+daysessionSchema.index(
+  { userId: 1, date: 1 },
+  { unique: true }
+);
 
 const dailysessionmodel = mongoose.model(
   "daysessioncreditanils",
-  daysessionSchema,
+  daysessionSchema
 );
+
 module.exports = dailysessionmodel;
