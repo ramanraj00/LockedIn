@@ -1,0 +1,5 @@
+// MainLayout
+// │
+// ├── Sidebar
+// ├── Navbar
+// └── Outlet
