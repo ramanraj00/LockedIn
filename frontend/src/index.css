@@ -1,5 +1,8 @@
 @import "tailwindcss";
 body {
-  background-color: #181818;
+  background-image: linear-gradient(to bottom, #041027, #122548);
+  background-attachment: fixed; /* Isse scroll karne par bhi background ek jagah fixed rahega */
   color: #ffffff;
+  min-h-screen: 100vh;
+  margin: 0;
 }
