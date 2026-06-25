@@ -109,7 +109,7 @@ const HeaderTitle = memo(() => {
    ========================================================================== */
 const CTAButton = memo(() => {
   return (
-    <div className="z-20 mb-2 w-full max-w-xs sm:max-w-sm md:max-w-md px-2">
+    <div className="z-20 mb-2 w-full max-w-xs sm:max-w-sm md:max-w-md px-3">
       <button
         style={{ 
           fontFamily: "'Instrument Sans', sans-serif",
