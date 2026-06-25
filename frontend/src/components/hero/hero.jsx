@@ -290,11 +290,11 @@ const BackgroundSVGLayer = memo(() => {
 });
 
 /* ==========================================================================
-   MAIN SYSTEM MASTER WRAPPER
+   MAIN HERO WRAPPER - NO BACKGROUND (Landing.jsx handle karega)
    ========================================================================== */
-function App() {
+function Hero() {
   return (
-    <div className="relative overflow-hidden w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f1026] via-[#17193b] to-[#2c3599] py-4 md:py-0">
+    <div className="relative w-full">
       
       {/* GPU Vector Matrix Keyframes Styles */}
       <style>{`
@@ -313,7 +313,7 @@ function App() {
       <BackgroundEffects />
 
       {/* MAIN RESPONSIVE CONTAINER */}
-      <div id="hero-section" className="relative z-10 w-full max-w-7xl px-4 sm:px-6 lg:px-8 select-none flex flex-col items-center">
+      <div id="hero-section" className="relative z-10 w-full px-4 sm:px-6 lg:px-8 select-none flex flex-col items-center justify-center min-h-screen py-4 md:py-20">
         
         {/* 2. Isolated Headline */}
         <HeaderTitle />
@@ -333,4 +333,4 @@ function App() {
   );
 }
 
-export default App;
+export default Hero;
