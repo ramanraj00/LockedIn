@@ -1,6 +1,7 @@
 import Navbar from "../components/common/Navbar";
 import Hero from "../components/hero/hero";
 import InteractiveDropdownDashboard from "../components/dropwdown/dropdownCrad";
+import PerformanceDashboard  from "@/components/dropwdown/feature";
 
 function Landing() {
   return (
@@ -29,7 +30,12 @@ function Landing() {
         <div className="relative z-20 w-full min-h-screen pt-20 pb-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
           <InteractiveDropdownDashboard />
         </div>
+
+           <PerformanceDashboard/>
+        
       </div>
+
+   
 
     </div>
   );
