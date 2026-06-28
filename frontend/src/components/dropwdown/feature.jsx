@@ -1,70 +1,147 @@
 import React, { useState, useEffect, useCallback, memo, useRef } from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
+import { BarChart as ReBarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList } from "recharts";
 
-// ─── BAR CHART with entry animation (using animate, not whileInView) ───
+// ─── BAR DATA ───
 const barData = [
-  { label: "Mon", hours: 3, height: 38 },
-  { label: "Tue", hours: 4, height: 50 },
-  { label: "Wed", hours: 5, height: 62 },
-  { label: "Thu", hours: 6, height: 75 },
-  { label: "Fri", hours: 7, height: 88 },
-  { label: "Sat", hours: 5, height: 62 },
-  { label: "Sun", hours: 6, height: 75 },
+  { label: "Mon", hours: 3 },
+  { label: "Tue", hours: 4 },
+  { label: "Wed", hours: 5 },
+  { label: "Thu", hours: 6 },
+  { label: "Fri", hours: 7 },
+  { label: "Sat", hours: 5 },
+  { label: "Sun", hours: 6 },
 ];
 
+// Custom Label for Top of the Bars (e.g., "3hr")
+const CustomBarLabel = (props) => {
+  const { x, y, width, value } = props;
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 8}
+      fill="#cbd5e1"
+      fontSize={10}
+      textAnchor="middle"
+      className="font-mono font-bold"
+    >
+      {value}hr
+    </text>
+  );
+};
+
+// Custom Tick for Bottom X-Axis (e.g., "Mon")
+const CustomXAxisTick = (props) => {
+  const { x, y, payload } = props;
+  return (
+    <text
+      x={x}
+      y={y + 14}
+      fill="#94a3b8"
+      fontSize={10}
+      textAnchor="middle"
+      className="font-medium tracking-wide"
+    >
+      {payload.value}
+    </text>
+  );
+};
+
+// ─── ULTRA SMOOTH RECHARTS BAR CHART (animates on scroll with delay) ───
 const BarChart = memo(function BarChart() {
+  const chartRef = useRef(null);
+  const [animKey, setAnimKey] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = chartRef.current;
+    if (!node) return;
+
+    let delayTimer = null;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          // 600ms delay — user page pe settle ho jaye pehle
+          delayTimer = setTimeout(() => {
+            setIsVisible(true);
+            setAnimKey((prev) => prev + 1);
+          }, 600);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      clearTimeout(delayTimer);
+    };
+  }, [isVisible]);
+
   return (
     <div
+      ref={chartRef}
       className="flex-1 border border-slate-500/30 rounded-2xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden min-h-[240px] sm:min-h-[270px]"
       style={{ background: "rgba(25, 30, 58, 0.65)" }}
     >
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-slate-400/15 via-slate-400/8 to-transparent pointer-events-none" />
       <div className="absolute top-0 left-0 bottom-0 w-[1px] bg-gradient-to-b from-slate-400/15 via-slate-400/8 to-transparent pointer-events-none" />
 
-      <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-4">
+      <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-6 block">
         Weekly Focus Hours
       </span>
 
-      <div className="flex items-end justify-between gap-3 sm:gap-4 flex-1">
-        {barData.map((bar, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 flex-1 h-full justify-end">
-            <span className="text-[10px] sm:text-xs font-mono text-slate-300 font-bold">
-              {bar.hours}hr
-            </span>
-            <motion.div
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ duration: 0.7, delay: 0.3 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-[44px] rounded-lg origin-bottom"
-              style={{
-                height: `${bar.height}%`,
-                minHeight: "20px",
-                background:
-                  bar.hours >= 6
-                    ? "linear-gradient(180deg, rgba(165,180,252,0.95) 0%, rgba(99,102,241,0.6) 100%)"
-                    : "linear-gradient(180deg, rgba(203,213,225,0.8) 0%, rgba(148,163,184,0.4) 100%)",
-                border:
-                  bar.hours >= 6
-                    ? "1px solid rgba(165,180,252,0.5)"
-                    : "1px solid rgba(203,213,225,0.4)",
-                boxShadow:
-                  bar.hours >= 6
-                    ? "0 0 20px rgba(129,140,248,0.35), inset 0 1px 0 rgba(255,255,255,0.2)"
-                    : "inset 0 1px 0 rgba(255,255,255,0.15)",
-              }}
+      <div className="w-full flex-1 min-h-[140px] relative">
+        <ResponsiveContainer width="100%" height="100%">
+          <ReBarChart key={animKey} data={barData} margin={{ top: 15, right: 5, left: 5, bottom: 5 }}>
+            <defs>
+              <linearGradient id="colorHigh" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(165,180,252,0.95)" />
+                <stop offset="100%" stopColor="rgba(99,102,241,0.6)" />
+              </linearGradient>
+              <linearGradient id="colorMed" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(148,163,184,0.8)" />
+                <stop offset="100%" stopColor="rgba(100,116,139,0.5)" />
+              </linearGradient>
+              <linearGradient id="colorLow" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(203,213,225,0.5)" />
+                <stop offset="100%" stopColor="rgba(148,163,184,0.2)" />
+              </linearGradient>
+            </defs>
+
+            <XAxis
+              dataKey="label"
+              axisLine={false}
+              tickLine={false}
+              tick={<CustomXAxisTick />}
             />
-            <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 tracking-wide">
-              {bar.label}
-            </span>
-          </div>
-        ))}
+
+            <Bar
+              dataKey="hours"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={44}
+              isAnimationActive={isVisible}
+              animationDuration={1100}
+              animationEasing="ease-out"
+            >
+              {barData.map((entry, index) => {
+                let gradient = "url(#colorLow)";
+                if (entry.hours >= 6) gradient = "url(#colorHigh)";
+                else if (entry.hours >= 4) gradient = "url(#colorMed)";
+                return <Cell key={`cell-${index}`} fill={gradient} />;
+              })}
+              <LabelList dataKey="hours" content={<CustomBarLabel />} />
+            </Bar>
+          </ReBarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
 });
 
-// ─── STOPWATCH (circular, isolated state) ───
+// ─── STOPWATCH ───
 const Stopwatch = memo(function Stopwatch() {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -143,7 +220,7 @@ const Stopwatch = memo(function Stopwatch() {
   );
 });
 
-// ─── HEATMAP (spread boxes to fill full width) ───
+// ─── HEATMAP ───
 const ActivityHeatmap = memo(function ActivityHeatmap() {
   const weeks = 20;
   const rows = 5;
@@ -184,7 +261,6 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
         Activity
       </span>
 
-      {/* Grid uses flex-1 boxes so they stretch to fill available width */}
       <div className="flex flex-col gap-[6px] sm:gap-2">
         {grid.map((row, ri) => (
           <div key={ri} className="flex gap-[6px] sm:gap-2">
@@ -199,7 +275,6 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
         ))}
       </div>
 
-      {/* Legend */}
       <div className="flex items-center justify-between mt-4">
         <span className="text-[10px] text-slate-500 font-medium">
           {totalActivities} activities in 2025
@@ -217,7 +292,7 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
   );
 });
 
-// ─── CALENDAR CARD (white background) ───
+// ─── CALENDAR CARD ───
 const CalendarCard = memo(function CalendarCard() {
   const today = new Date();
   const monthName = today.toLocaleString("default", { month: "long" });
@@ -229,7 +304,7 @@ const CalendarCard = memo(function CalendarCard() {
   const dayLabels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   return (
-    <div className="w-full sm:w-auto sm:min-w-[220px] rounded-2xl p-5 sm:p-6 flex flex-col bg-white shadow-lg">
+    <div className="w-full sm:w-auto sm:min-w-[220px] rounded-2xl p-5 sm:p-6 flex flex-col border-1 shadow-lg">
       <span className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">
         Calendar
       </span>
@@ -271,20 +346,19 @@ const CalendarCard = memo(function CalendarCard() {
 // ─── MAIN SECTION ───
 export default function PerformanceDashboard() {
   return (
-    <section className="w-full px-4 md:px-8 flex flex-col items-center pt-4 sm:pt-6 pb-12 sm:pb-16">
-      {/* ─── QUOTED HEADING (inline quotes, not overlapping) ─── */}
-      <div className="mb-6 sm:mb-8 text-center w-full max-w-4xl px-4">
+    <section className="w-full px-4 md:px-8 flex flex-col items-center pt-0 pb-12 sm:pb-16 overflow-hidden">
+      
+      <div className="mb-6 sm:mb-8 text-center w-full max-w-5xl px-2 sm:px-4 overflow-hidden overflow-x-auto no-scrollbar">
         <h2
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-200 leading-tight"
+          className="text-base sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-200 leading-tight whitespace-nowrap flex items-center justify-center"
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
         >
-          <span className="text-black text-5xl sm:text-6xl md:text-7xl font-serif leading-none align-text-top mr-1 select-none" aria-hidden="true">&ldquo;</span>
+          <span className="text-black text-4xl sm:text-5xl md:text-7xl font-serif leading-none mt-2 sm:mt-0 mr-1 sm:mr-2 select-none" aria-hidden="true">&ldquo;</span>
           A personal dashboard for analysing your performance
-          <span className="text-black text-5xl sm:text-6xl md:text-7xl font-serif leading-none align-text-bottom ml-0.5 select-none" aria-hidden="true">&rdquo;</span>
+          <span className="text-black text-4xl sm:text-5xl md:text-7xl font-serif leading-none mt-4 sm:mt-6 ml-1 sm:ml-2 select-none" aria-hidden="true">&rdquo;</span>
         </h2>
       </div>
 
-      {/* ─── DASHBOARD CONTAINER ─── */}
       <div
         className="w-full max-w-5xl border border-slate-500/30 rounded-3xl p-4 sm:p-6 md:p-8 relative overflow-hidden"
         style={{
@@ -296,13 +370,11 @@ export default function PerformanceDashboard() {
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-slate-400/12 via-slate-400/6 to-transparent pointer-events-none" />
         <div className="absolute top-0 left-0 bottom-0 w-[1px] bg-gradient-to-b from-slate-400/12 via-slate-400/6 to-transparent pointer-events-none" />
 
-        {/* TOP ROW: Bar Chart + Stopwatch */}
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 mb-4 sm:mb-5">
           <BarChart />
           <Stopwatch />
         </div>
 
-        {/* BOTTOM ROW: Calendar + Heatmap */}
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-5">
           <CalendarCard />
           <ActivityHeatmap />
