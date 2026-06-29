@@ -29,7 +29,7 @@ function StatsSection() {
   return (
     <section className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-12">
       <motion.div
-        className="flex flex-wrap items-center justify-center gap-10 md:gap-16 lg:gap-24 border border-gray-200 bg-white shadow-xl rounded-3xl py-8 px-6"
+        className="flex flex-wrap items-center justify-center gap-10 md:gap-16 lg:gap-24 border border-gray-200 bg-gray-300 shadow-xl rounded-3xl py-8 px-6"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"

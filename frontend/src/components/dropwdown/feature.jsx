@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, memo, useMemo } from "react";
+import React, { useState, useEffect, useCallback, memo, useMemo, useRef } from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { BarChart as ReBarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList } from "recharts";
 
 // ─── BAR DATA ───
@@ -14,9 +14,9 @@ const barData = [
   { label: "Sun", hours: 6 },
 ];
 
-// Custom Label for Top of the Bars
+// Custom Label for Top of the Bars (Added animation classes and index)
 const CustomBarLabel = (props) => {
-  const { x, y, width, value } = props;
+  const { x, y, width, value, index } = props;
   return (
     <text
       x={x + width / 2}
@@ -24,7 +24,7 @@ const CustomBarLabel = (props) => {
       fill="#cbd5e1"
       fontSize={10}
       textAnchor="middle"
-      className="font-mono font-bold"
+      className={`font-mono font-bold custom-label-anim custom-label-${index}`}
     >
       {value}hr
     </text>
@@ -53,80 +53,103 @@ const OpenCard = ({ children, className = "" }) => (
   <div
     className={`w-full border border-slate-500/30 rounded-3xl p-5 sm:p-6 flex flex-col relative overflow-hidden bg-transparent ${className}`}
   >
-    {/* Yahan se dono background geometric lines remove kar di gayi hain */}
     {children}
   </div>
 );
 
-// ─── 1. WEEKLY FOCUS HOURS (BAR CHART COMPONENT WITH CONTINUOUS ANIMATION) ───
+// ─── 1. WEEKLY FOCUS HOURS (BAR CHART COMPONENT WITH SCROLL TRIGGER & CONTINUOUS ANIMATION) ───
 const BarChart = memo(function BarChart() {
+  // 1. Ref and useInView banaya taaki animation tabhi trigger ho jab user yahan tak scroll kare
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
   return (
     <OpenCard className="flex-1 min-h-[260px] justify-between relative">
       
-      {/* CSS for continuous smooth breathing animation on Recharts Bars */}
+      {/* CSS for continuous smooth breathing animation on Recharts Bars & Labels */}
       <style>
         {`
+          /* Bar ki physical scale animation */
           @keyframes continuousPulse {
-            0%, 100% { opacity: 1; filter: brightness(1); }
-            50% { opacity: 0.65; filter: brightness(1.3); }
+            0%, 100% { transform: scaleY(1); opacity: 1; filter: brightness(1); }
+            50% { transform: scaleY(0.95); opacity: 0.75; filter: brightness(1.2); }
           }
+          
+          /* Labels ki up-down sync animation */
+          @keyframes continuousLabelPulse {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(4px); opacity: 0.75; }
+          }
+
           .recharts-bar-rectangle path {
             animation: continuousPulse 3s infinite ease-in-out;
+            transform-box: fill-box;
             transform-origin: bottom;
           }
-          .recharts-bar-rectangles g:nth-child(1) path { animation-delay: 0.0s; }
-          .recharts-bar-rectangles g:nth-child(2) path { animation-delay: 0.2s; }
-          .recharts-bar-rectangles g:nth-child(3) path { animation-delay: 0.4s; }
-          .recharts-bar-rectangles g:nth-child(4) path { animation-delay: 0.6s; }
-          .recharts-bar-rectangles g:nth-child(5) path { animation-delay: 0.8s; }
-          .recharts-bar-rectangles g:nth-child(6) path { animation-delay: 1.0s; }
-          .recharts-bar-rectangles g:nth-child(7) path { animation-delay: 1.2s; }
+          
+          .custom-label-anim {
+            animation: continuousLabelPulse 3s infinite ease-in-out;
+          }
+
+          /* Match delays for both Bars and their Labels taaki perfect wave bane */
+          .recharts-bar-rectangles g:nth-child(1) path, .custom-label-0 { animation-delay: 0.0s; }
+          .recharts-bar-rectangles g:nth-child(2) path, .custom-label-1 { animation-delay: 0.2s; }
+          .recharts-bar-rectangles g:nth-child(3) path, .custom-label-2 { animation-delay: 0.4s; }
+          .recharts-bar-rectangles g:nth-child(4) path, .custom-label-3 { animation-delay: 0.6s; }
+          .recharts-bar-rectangles g:nth-child(5) path, .custom-label-4 { animation-delay: 0.8s; }
+          .recharts-bar-rectangles g:nth-child(6) path, .custom-label-5 { animation-delay: 1.0s; }
+          .recharts-bar-rectangles g:nth-child(7) path, .custom-label-6 { animation-delay: 1.2s; }
         `}
       </style>
 
-      <div className="w-full h-full flex flex-col justify-between flex-1">
+      {/* Ref yahan lagaya hai track karne ke liye */}
+      <div ref={ref} className="w-full h-full flex flex-col justify-between flex-1">
         <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-6 block">
           Weekly Focus Hours
         </span>
 
         <div className="w-full flex-1 min-h-[140px] relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <ReBarChart data={barData} margin={{ top: 15, right: 5, left: 5, bottom: 5 }}>
-              <defs>
-                <linearGradient id="colorHigh" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(165,180,252,0.95)" />
-                  <stop offset="100%" stopColor="rgba(99,102,241,0.6)" />
-                </linearGradient>
-                <linearGradient id="colorMed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(148,163,184,0.8)" />
-                  <stop offset="100%" stopColor="rgba(100,116,139,0.5)" />
-                </linearGradient>
-                <linearGradient id="colorLow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(203,213,225,0.5)" />
-                  <stop offset="100%" stopColor="rgba(148,163,184,0.2)" />
-                </linearGradient>
-              </defs>
+          
+          {/* Chart ko tabhi render karna jab isInView true ho jaye */}
+          {isInView && (
+            <ResponsiveContainer width="100%" height="100%">
+              <ReBarChart data={barData} margin={{ top: 15, right: 5, left: 5, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorHigh" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(165,180,252,0.95)" />
+                    <stop offset="100%" stopColor="rgba(99,102,241,0.6)" />
+                  </linearGradient>
+                  <linearGradient id="colorMed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(148,163,184,0.8)" />
+                    <stop offset="100%" stopColor="rgba(100,116,139,0.5)" />
+                  </linearGradient>
+                  <linearGradient id="colorLow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(203,213,225,0.5)" />
+                    <stop offset="100%" stopColor="rgba(148,163,184,0.2)" />
+                  </linearGradient>
+                </defs>
 
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={<CustomXAxisTick />} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={<CustomXAxisTick />} />
 
-              <Bar
-                dataKey="hours"
-                radius={[6, 6, 0, 0]}
-                maxBarSize={44}
-                isAnimationActive={true}
-                animationDuration={1500}
-                animationEasing="ease-out"
-              >
-                {barData.map((entry, index) => {
-                  let gradient = "url(#colorLow)";
-                  if (entry.hours >= 6) gradient = "url(#colorHigh)";
-                  else if (entry.hours >= 4) gradient = "url(#colorMed)";
-                  return <Cell key={`cell-${index}`} fill={gradient} />;
-                })}
-                <LabelList dataKey="hours" content={<CustomBarLabel />} />
-              </Bar>
-            </ReBarChart>
-          </ResponsiveContainer>
+                <Bar
+                  dataKey="hours"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={44}
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                >
+                  {barData.map((entry, index) => {
+                    let gradient = "url(#colorLow)";
+                    if (entry.hours >= 6) gradient = "url(#colorHigh)";
+                    else if (entry.hours >= 4) gradient = "url(#colorMed)";
+                    return <Cell key={`cell-${index}`} fill={gradient} />;
+                  })}
+                  <LabelList dataKey="hours" content={<CustomBarLabel />} />
+                </Bar>
+              </ReBarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </OpenCard>
