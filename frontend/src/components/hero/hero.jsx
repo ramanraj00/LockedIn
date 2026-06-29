@@ -294,7 +294,8 @@ const BackgroundSVGLayer = memo(() => {
    ========================================================================== */
 function Hero() {
   return (
-    <div className="relative w-full">
+    <div className="relative w-full mb-32 md:mb-48">
+      {/* YAHAN mb-32 md:mb-48 ADD KIYA HAI TO PUSH THE NEXT COMPONENT DOWN */}
       
       {/* GPU Vector Matrix Keyframes Styles */}
       <style>{`

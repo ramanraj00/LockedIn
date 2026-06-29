@@ -263,7 +263,7 @@ export default function InteractiveDropdownDashboard() {
   }, []);
 
   return (
-    <div className="px-4 md:px-8 flex flex-col items-center">
+   <div className="min-h-screen px-4 md:px-8 flex flex-col items-center justify-center py-12">
       {/* Inject CSS-only cursor blink */}
       <style>{cursorBlinkStyle}</style>
 
