@@ -4,18 +4,18 @@ import Hero from "../components/hero/hero";
 import InteractiveDropdownDashboard from "../components/dropwdown/dropdownCrad";
 import PerformanceDashboard from "@/components/dropwdown/feature";
 import StatSection from "../components/dropwdown/StatSection";
+import Leaderboard from "@/components/dropwdown/leaderboardcard";
 import { motion } from "framer-motion";
 
 // ─── THEME-BASED AMBIENT AURORA BACKGROUND ───
 const AmbientBackground = () => {
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#0f1026]">
-      {/* Base Dark Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0f1026] via-[#17193b] to-[#2c3599] opacity-80" />
+    // Yahan maine image se exact gradient extract karke lagaya hai 👇
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-gradient-to-b from-[#050B16] via-[#0A1630] to-[#112348]">
       
       {/* Orb 1: Deep Indigo Glow (Moves Top Left to Center) */}
       <motion.div
-        className="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/20 blur-[120px] mix-blend-screen"
+        className="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/10 blur-[120px] mix-blend-screen"
         animate={{
           x: [0, 150, -50, 0],
           y: [0, 100, -20, 0],
@@ -30,7 +30,7 @@ const AmbientBackground = () => {
 
       {/* Orb 2: Rich Purple Glow (Moves Top Right to Center) */}
       <motion.div
-        className="absolute top-[10%] -right-[10%] w-[45vw] h-[45vw] rounded-full bg-purple-600/20 blur-[130px] mix-blend-screen"
+        className="absolute top-[10%] -right-[10%] w-[45vw] h-[45vw] rounded-full bg-blue-600/10 blur-[130px] mix-blend-screen"
         animate={{
           x: [0, -120, 40, 0],
           y: [0, 80, -40, 0],
@@ -46,7 +46,7 @@ const AmbientBackground = () => {
 
       {/* Orb 3: Deep Cyan/Blue Glow (Moves Bottom to Up) */}
       <motion.div
-        className="absolute -bottom-[20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-[#2c3599]/30 blur-[150px] mix-blend-screen"
+        className="absolute -bottom-[20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-[#112348]/20 blur-[150px] mix-blend-screen"
         animate={{
           x: [0, 100, -100, 0],
           y: [0, -120, 50, 0],
@@ -68,7 +68,7 @@ function Landing() {
   return (
     <div className="w-full min-h-screen relative overflow-hidden text-slate-200">
       
-      {/* 🌟 THEMATIC AMBIENT BACKGROUND REPLACES EVERYTHING ELSE 🌟 */}
+      {/* THEMATIC AMBIENT BACKGROUND REPLACES EVERYTHING ELSE 🌟 */}
       <AmbientBackground />
       
       {/* HERO SECTION - TRANSPARENT */}
@@ -83,6 +83,7 @@ function Landing() {
           <InteractiveDropdownDashboard /> 
           <StatSection />
           <PerformanceDashboard />
+          <Leaderboard/>
         </div>
       </div>
       

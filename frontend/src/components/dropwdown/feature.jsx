@@ -64,7 +64,7 @@ const BarChart = memo(function BarChart() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <OpenCard className="flex-1 min-h-[260px] justify-between relative">
+    <OpenCard className="flex-1 min-h-[260px] justify-between relative  ">
       
       {/* CSS for continuous smooth breathing animation on Recharts Bars & Labels */}
       <style>
@@ -103,8 +103,8 @@ const BarChart = memo(function BarChart() {
       </style>
 
       {/* Ref yahan lagaya hai track karne ke liye */}
-      <div ref={ref} className="w-full h-full flex flex-col justify-between flex-1">
-        <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-6 block">
+      <div ref={ref}  className="w-full h-full flex flex-col justify-between flex-1">
+        <span className="  text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-6 block">
           Weekly Focus Hours
         </span>
 

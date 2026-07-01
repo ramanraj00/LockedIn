@@ -132,13 +132,25 @@ const CTAButton = memo(() => {
    ========================================================================== */
 const InteractiveCards = memo(() => {
   const [activeCard, setActiveCard] = useState(1);
+  const [isStaticPhase, setIsStaticPhase] = useState(true);
 
+  // 1. Both cards static for 2 seconds
   useEffect(() => {
+    const staticTimer = setTimeout(() => {
+      setIsStaticPhase(false);
+    }, 2000);
+    return () => clearTimeout(staticTimer);
+  }, []);
+
+  // 2. Start alternating exactly like your original code after 2 seconds
+  useEffect(() => {
+    if (isStaticPhase) return;
+
     const cardInterval = setInterval(() => {
       setActiveCard((prev) => (prev === 1 ? 2 : 1));
     }, 3300);
     return () => clearInterval(cardInterval);
-  }, []);
+  }, [isStaticPhase]);
 
   const cardGroupVariants = {
     hidden: { opacity: 0 },
@@ -161,12 +173,74 @@ const InteractiveCards = memo(() => {
     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 70, damping: 20 } }
   };
 
+  // Reusable content to avoid repeating code
+  const card1Content = (
+    <>
+      <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide backface-hidden">
+        Watch your progress
+      </motion.div>
+      <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-bold text-blue-600 text-xs sm:text-sm tracking-wide backface-hidden">
+        Grow one day
+      </motion.div>
+      <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide backface-hidden">
+        at a time.
+      </motion.div>
+    </>
+  );
+
+  const renderCard2Content = (isStatic) => (
+    <motion.div variants={containerVariants} initial={isStatic ? false : "hidden"} animate="visible" className="flex flex-col gap-3 text-xs sm:text-sm font-medium text-zinc-200">
+      <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
+        <Flame size={16} className="text-orange-500 shrink-0" />
+        <span>Build your streak</span>
+      </motion.div>
+      <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
+        <Calendar size={16} className="text-blue-400 shrink-0" />
+        <span>Plan your day</span>
+      </motion.div>
+      <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
+        <CheckCircle size={16} className="text-emerald-400 shrink-0" />
+        <span>Track your focus session</span>
+      </motion.div>
+    </motion.div>
+  );
+
   return (
     <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-7xl flex flex-col md:flex-row items-center justify-center gap-4 mt-1 md:mt-2 pt-2 md:pt-10">
       <div className="w-full min-h-[13rem] flex items-start justify-center text-left z-20">
         <AnimatePresence mode="wait">
-          {activeCard === 1 ? (
-            /* CARD 1: WHITE PILLS */
+          {isStaticPhase ? (
+            /* PHASE 1: BOTH CARDS STATIC IN THEIR EXACT ORIGINAL POSITIONS (2 sec) */
+            <motion.div
+              key="both-cards-static"
+              initial={false} // Disable entry animation
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+              // Wrapping them in a row. Their exact original `mr-auto` and `ml-auto` will push them left and right.
+              className="w-full flex flex-col md:flex-row items-center md:items-start"
+            >
+              {/* Card 1 (EXACT original classes) */}
+              <motion.div
+                variants={cardGroupVariants}
+                initial={false} // completely static
+                animate="visible"
+                className="flex flex-col gap-3 w-full items-center md:items-start md:mr-auto md:w-80 transform-gpu [transform:translateZ(0)]"
+              >
+                {card1Content}
+              </motion.div>
+
+              {/* Card 2 (EXACT original classes) */}
+              <motion.div
+                initial={false} // completely static
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className={`w-[92%] sm:w-full md:w-80 bg-zinc-800/90 border border-zinc-700 rounded-2xl p-4 shadow-2xl overflow-hidden mx-auto md:mx-0 md:ml-auto md:-mr-12 -mt-4 md:mt-0 transform-gpu [transform:translateZ(0)] ${
+                  isSafari ? "backdrop-blur-sm" : "backdrop-blur-md"
+                }`}
+              >
+                {renderCard2Content(true)}
+              </motion.div>
+            </motion.div>
+          ) : activeCard === 1 ? (
+            /* PHASE 2: ALTERNATING CARD 1 (Original code) */
             <motion.div
               key="white-pills-card"
               variants={cardGroupVariants}
@@ -175,18 +249,10 @@ const InteractiveCards = memo(() => {
               exit="exit"
               className="flex flex-col gap-3 w-full items-center md:items-start md:mr-auto md:w-80 transform-gpu [transform:translateZ(0)]"
             >
-              <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide backface-hidden">
-                Watch your progress
-              </motion.div>
-              <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-bold text-blue-600 text-xs sm:text-sm tracking-wide backface-hidden">
-                Grow one day
-              </motion.div>
-              <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide backface-hidden">
-                at a time.
-              </motion.div>
+              {card1Content}
             </motion.div>
           ) : (
-            /* CARD 2: BLACK CARD */
+            /* PHASE 2: ALTERNATING CARD 2 (Original code) */
             <motion.div
               key="black-checklist-card"
               initial={{ opacity: 0, scale: 0.97, y: -8 }}
@@ -197,20 +263,7 @@ const InteractiveCards = memo(() => {
                 isSafari ? "backdrop-blur-sm" : "backdrop-blur-md"
               }`}
             >
-              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex flex-col gap-3 text-xs sm:text-sm font-medium text-zinc-200">
-                <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
-                  <Flame size={16} className="text-orange-500 shrink-0" />
-                  <span>Build your streak</span>
-                </motion.div>
-                <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
-                  <Calendar size={16} className="text-blue-400 shrink-0" />
-                  <span>Plan your day</span>
-                </motion.div>
-                <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
-                  <CheckCircle size={16} className="text-emerald-400 shrink-0" />
-                  <span>Track your focus session</span>
-                </motion.div>
-              </motion.div>
+              {renderCard2Content(false)}
             </motion.div>
           )}
         </AnimatePresence>
@@ -218,7 +271,6 @@ const InteractiveCards = memo(() => {
     </div>
   );
 });
-
 /* ==========================================================================
    5. INDEPENDENT SVG LAYER COMPONENT (Static Background Asset)
    ========================================================================== */
