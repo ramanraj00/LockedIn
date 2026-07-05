@@ -156,11 +156,28 @@ function Landing() {
       
       {/* DASHBOARD COMPONENTS SECTION */}
       <div className="relative z-10 w-full">
-        <div className="relative z-20 w-full pt-8 pb-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center gap-10 sm:gap-24">
-          <InteractiveDropdownDashboard /> 
-          <StatSection />
-          <PerformanceDashboard />
-          <Leaderboard/>
+        <div className="relative z-20 w-full pt-8 pb-20 flex flex-col items-center justify-center gap-10 sm:gap-16">
+          
+          <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+            <InteractiveDropdownDashboard /> 
+          </div>
+          
+          <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+            <StatSection />
+          </div>
+
+          {/* 👇 YAHAN HAI ASLI FIX 👇 */}
+          <div className="w-full flex flex-col items-center">
+            <PerformanceDashboard />
+            
+            {/* Ye wrapper Leaderboard ko exact PerformanceDashboard ke inner grid (Calendar) ki line me set karega */}
+            {/* -mt-6 gap ko kam karne ke liye hai, isko badha/ghata sakte ho agar aur paas/door karna ho */}
+            <div className="w-full max-w-6xl mx-auto flex justify-start px-4 md:px-8 -mt-6 sm:-mt-10 z-20 relative">
+              <Leaderboard />
+            </div>
+          </div>
+          {/* 👆 KHEL KHATAM 👆 */}
+
         </div>
       </div>
       

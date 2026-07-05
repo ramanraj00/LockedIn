@@ -46,43 +46,23 @@ const CustomXAxisTick = (props) => {
   );
 };
 
-// ─── SHARED SVG NOISE FILTER (rendered once, referenced by all cards) ───
-const SharedNoiseFilter = memo(function SharedNoiseFilter() {
-  return (
-    <svg width="0" height="0" className="absolute" aria-hidden="true">
-      <defs>
-        <filter id="noiseFilterCard">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.8"
-            numOctaves="2"
-            stitchTiles="stitch"
-          />
-        </filter>
-      </defs>
-    </svg>
-  );
-});
 
-// ─── GLASSMORPHISM WRAPPER (optimized: no backdrop-blur, shared filter ref) ───
+// ─── 🌟 PREMIUM GLASSMORPHISM WRAPPER (Leaderboard Wala Effect) 🌟 ───
 const OpenCard = ({ children, className = "" }) => (
   <div
-    className={`w-full border border-slate-500/30 rounded-3xl p-5 sm:p-6 flex flex-col relative overflow-hidden shadow-2xl ${className}`}
+    className={`w-full rounded-3xl p-5 sm:p-6 flex flex-col relative overflow-hidden backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${className}`}
     style={{
-      background: "rgba(15, 23, 42, 0.65)",
-      contain: "layout style paint",
+      background: "rgba(20, 24, 54, 0.4)",
+      border: "1px solid rgba(255, 255, 255, 0.05)",
+      borderTop: "1px solid rgba(255, 255, 255, 0.15)",
+      borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
+      boxShadow: `
+        8px 12px 32px rgba(0, 0, 0, 0.3), 
+        inset 1px 1px 2px rgba(255, 255, 255, 0.1),
+        inset -1px -1px 4px rgba(0, 0, 0, 0.2)
+      `,
     }}
   >
-    {/* Noise overlay referencing the shared filter */}
-    <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay z-0">
-      <svg className="w-full h-full">
-        <rect width="100%" height="100%" filter="url(#noiseFilterCard)" />
-      </svg>
-    </div>
-
-    {/* Inner subtle highlight for glass edge */}
-    <div className="absolute inset-0 rounded-3xl border-t border-white/10 pointer-events-none z-0" />
-
     {/* Content Wrapper */}
     <div className="relative z-10 flex flex-col h-full w-full">{children}</div>
   </div>
@@ -378,7 +358,7 @@ const CalendarCard = memo(function CalendarCard() {
   );
 });
 
-// ─── ANIMATION VARIANTS (hoisted outside component — no re-creation per render) ───
+// ─── ANIMATION VARIANTS ───
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -396,9 +376,7 @@ const itemVariants = {
 export default function PerformanceDashboard() {
   return (
     <section className="relative w-full px-4 md:px-8 py-12 flex flex-col items-center overflow-x-hidden bg-transparent">
-      {/* Shared SVG noise filter — rendered once for all cards */}
-      <SharedNoiseFilter />
-
+      
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
