@@ -38,48 +38,59 @@ const Leaderboard = () => {
             Leaderboard
           </h2>
         </div>
+        
         <div className="w-full h-[1px] bg-gradient-to-r from-white/[0.12] via-white/[0.05] to-transparent mb-3 shrink-0"></div>
 
-        <div className="flex flex-col flex-1 justify-center">
+        <div className="flex flex-col flex-1 justify-center gap-1">
           {isLoading ? (
+            // SKELETON LOADER
             [1, 2, 3].map((item) => (
-              <div key={item} className="flex items-center gap-3 p-3 border-b border-white/[0.04] last:border-0 animate-pulse">
-                <div className="w-5 h-5 rounded bg-slate-600/20 shrink-0"></div>
-                <div className="w-10 h-10 rounded-xl bg-slate-600/20 shrink-0"></div>
+              <div key={item} className="flex items-center gap-4 p-3 border-b border-white/[0.04] last:border-0 animate-pulse">
+                <div className="w-6 h-6 rounded bg-slate-600/20 shrink-0"></div>
+                <div className="w-12 h-12 rounded-xl bg-slate-600/20 shrink-0"></div>
                 <div className="flex-1 flex flex-col gap-2">
-                  <div className="w-24 h-3 bg-slate-600/20 rounded"></div>
-                  <div className="w-16 h-2 bg-slate-600/20 rounded"></div>
+                  <div className="w-28 h-4 bg-slate-600/20 rounded"></div>
+                  <div className="w-20 h-3 bg-slate-600/20 rounded"></div>
                 </div>
-                <div className="w-7 h-7 rounded-lg bg-slate-600/20 shrink-0"></div>
+                <div className="w-9 h-9 rounded-lg bg-slate-600/20 shrink-0"></div>
               </div>
             ))
           ) : (
+            // ACTUAL CONTENT
             users.map((user, index) => (
               <div 
                 key={user.id} 
-                className="group flex items-center gap-3 p-2.5 sm:p-3 rounded-2xl border-b border-transparent hover:bg-white/[0.03] hover:border-white/[0.02] transition-all duration-300"
+                className="group flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:bg-white/[0.04] hover:border-white/[0.05] transition-all duration-300"
               >
-                <div className="shrink-0 w-5 text-center">
-                  <span className="text-base font-bold text-slate-500 group-hover:text-slate-200 transition-colors duration-300">
+                <div className="shrink-0 w-6 text-center">
+                  <span className="text-xl font-extrabold text-slate-400 group-hover:text-slate-200 transition-colors duration-300">
                     #{index + 1}
                   </span>
                 </div>
                 <div className="shrink-0 relative">
-                  <img src={user.profilePic} alt={user.name} className="w-10 h-10 rounded-xl border border-white/10 object-cover" />
+                  <img 
+                    src={user.profilePic} 
+                    alt={user.name} 
+                    className="w-12 h-12 rounded-xl border border-white/10 object-cover group-hover:border-white/30 transition-colors duration-300" 
+                  />
                 </div>
                 <div className="flex-1 flex flex-col justify-center min-w-0">
-                  <h3 className="text-sm font-semibold text-slate-200 tracking-wide group-hover:text-white transition-colors duration-300 truncate">
+                  <h3 className="text-base font-bold text-slate-200 tracking-wide group-hover:text-white transition-colors duration-300 truncate">
                     {user.name}
                   </h3>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50 group-hover:bg-blue-400 transition-colors duration-300 shrink-0"></span>
-                    <span className="text-slate-400 font-mono text-[10px] tracking-wider truncate">
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-500/60 group-hover:bg-blue-400 transition-colors duration-300 shrink-0 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+                    <span className="text-slate-300 font-mono text-xs tracking-wider truncate">
                       {user.time}
                     </span>
                   </div>
                 </div>
                 <div className="shrink-0 flex items-center justify-center">
-                  <img src={user.badgeIcon} alt="badge" className="w-7 h-7 object-contain grayscale-[0.6] opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110" />
+                  <img 
+                    src={user.badgeIcon} 
+                    alt="badge" 
+                    className="w-9 h-9 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.2)] transition-all duration-300" 
+                  />
                 </div>
               </div>
             ))
@@ -91,14 +102,32 @@ const Leaderboard = () => {
 };
 
 // ==========================================
-// 2. MOMENTUM (STREAK) COMPONENT (UPDATED WITH BLUE FIRE LOGIC)
+// 2. MOMENTUM (STREAK) COMPONENT
 // ==========================================
 const MomentumCard = () => {
-  // Yahan state add ki hai track karne ke liye ki button click hua ya nahi
   const [isClaimed, setIsClaimed] = useState(false);
+  const [isPulsing, setIsPulsing] = useState(false);
+
+  const handleClaim = () => {
+    setIsClaimed(true);
+    setTimeout(() => {
+      setIsPulsing(true);
+    }, 800);
+  };
 
   return (
     <div className="w-[340px] h-[340px] font-sans relative z-10 shrink-0">
+      
+      <style>{`
+        @keyframes fire-pulse-custom {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.9; }
+        }
+        .animate-fire-dhak {
+          animation: fire-pulse-custom 1.5s ease-in-out infinite;
+        }
+      `}</style>
+
       <div 
         className="w-full h-full rounded-2xl p-5 sm:p-6 flex flex-col relative overflow-hidden backdrop-blur-xl transition-all duration-300 hover:-translate-y-1"
         style={{
@@ -123,7 +152,6 @@ const MomentumCard = () => {
               Momentum
             </h2>
           </div>
-          {/* Badge color dynamically changes on claim */}
           <span className={`text-[10px] font-medium px-3 py-1 rounded-full border transition-colors duration-500 ${isClaimed ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : 'text-slate-400 border-white/10 bg-white/5'}`}>
             daily streak
           </span>
@@ -131,33 +159,33 @@ const MomentumCard = () => {
 
         <div className="flex flex-col items-center justify-center flex-1 my-auto relative">
           
-          {/* IMAGE CROSS-FADE CONTAINER */}
-          <div className="relative w-16 h-16 mb-2">
+          <div className="relative w-20 h-20 mb-3 flex items-center justify-center">
             
-            {/* 1. Black & White Image */}
+            <div className={`absolute inset-0 bg-blue-500/40 rounded-full blur-xl transition-all duration-[800ms] ease-out ${
+              isClaimed ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+            } ${isPulsing ? 'animate-fire-dhak' : ''}`}></div>
+
             <img 
               src="/bw-fire.png" 
               alt="BW Fire" 
-              className={`absolute inset-0 w-full h-full object-contain transition-all duration-700 ease-in-out ${
-                isClaimed ? 'opacity-0 scale-90' : 'opacity-60 scale-100'
+              className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ease-in-out ${
+                isClaimed ? 'opacity-0 scale-95' : 'opacity-60 scale-100'
               }`}
             />
             
-            {/* 2. Colorful Image (Fades in with a glow) */}
             <img 
               src="/color-fire.png" 
               alt="Colorful Fire" 
-              className={`absolute inset-0 w-full h-full object-contain transition-all duration-700 ease-in-out ${
+              className={`absolute inset-0 w-full h-full object-contain origin-bottom transition-all duration-[800ms] ease-out ${
                 isClaimed 
-                  ? 'opacity-100 scale-110 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] animate-pulse' 
-                  : 'opacity-0 scale-90'
-              }`}
+                  ? 'opacity-100 translate-y-0 scale-y-100' 
+                  : 'opacity-0 translate-y-4 scale-y-75'
+              } ${isPulsing ? 'animate-fire-dhak' : ''}`}
             />
           </div>
 
           <div className="flex items-baseline gap-2">
             <span className="text-5xl font-extrabold text-white tracking-tighter transition-all duration-500">
-              {/* Conditional Rendering for Count */}
               {isClaimed ? '15' : '14'}
             </span>
             <span className="text-sm font-bold text-slate-300 leading-tight">
@@ -166,9 +194,8 @@ const MomentumCard = () => {
           </div>
         </div>
 
-        {/* Dynamic Button */}
         <button 
-          onClick={() => setIsClaimed(true)}
+          onClick={handleClaim}
           disabled={isClaimed}
           className={`w-full py-3 mt-auto shrink-0 rounded-xl text-sm font-bold transition-all duration-500 shadow-[0_4px_12px_rgba(0,0,0,0.1)] ${
             isClaimed 
@@ -182,6 +209,7 @@ const MomentumCard = () => {
     </div>
   );
 };
+
 // ==========================================
 // 3. CONSISTENCY (GRID) COMPONENT
 // ==========================================
@@ -244,15 +272,26 @@ const ConsistencyCard = () => {
 };
 
 // ==========================================
-// MAIN DASHBOARD COMPONENT (WRAPPER)
+// MAIN DASHBOARD COMPONENT (WRAPPER) - YAHAN FIX KIYA HAI
 // ==========================================
 const Dashboard = () => {
   return (
-    <div className="w-full min-h-screen flex justify-center items-start p-4 sm:p-6 md:p-10 overflow-x-auto">
-      <div className="flex flex-col lg:flex-row gap-6 justify-center items-center lg:items-start w-full max-w-7xl">
-        <Leaderboard />
-        <MomentumCard />
-        <ConsistencyCard />
+    // Yahan se 'overflow-x-auto' hata diya hai jo shadow cut kar raha tha
+    <div className="w-full flex justify-center items-start p-4 sm:p-6 md:p-10 mt-12 sm:mt-16">
+      {/* Width thodi si increase ki (1068 -> 1100px) taaki shadow ko render hone ki space mile */}
+      <div className="flex flex-col w-full max-w-[1100px]">
+        
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-6 tracking-wide text-left">
+          Your Progress, At a Glance.
+        </h2>
+        
+        {/* Added pb-4 so shadow doesn't cut at the bottom either */}
+        <div className="flex flex-col lg:flex-row gap-6 justify-start items-center lg:items-start w-full pb-4">
+          <Leaderboard />
+          <MomentumCard />
+          <ConsistencyCard />
+        </div>
+
       </div>
     </div>
   );
