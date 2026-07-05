@@ -91,9 +91,12 @@ const Leaderboard = () => {
 };
 
 // ==========================================
-// 2. MOMENTUM (STREAK) COMPONENT
+// 2. MOMENTUM (STREAK) COMPONENT (UPDATED WITH BLUE FIRE LOGIC)
 // ==========================================
 const MomentumCard = () => {
+  // Yahan state add ki hai track karne ke liye ki button click hua ya nahi
+  const [isClaimed, setIsClaimed] = useState(false);
+
   return (
     <div className="w-[340px] h-[340px] font-sans relative z-10 shrink-0">
       <div 
@@ -112,36 +115,73 @@ const MomentumCard = () => {
       >
         <div className="flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
+            <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+            </svg>
             <h2 className="text-xs font-bold text-slate-300 tracking-widest uppercase">
               Momentum
             </h2>
           </div>
-          <span className="text-[10px] font-medium text-slate-400 px-3 py-1 rounded-full border border-white/10 bg-white/5">
+          {/* Badge color dynamically changes on claim */}
+          <span className={`text-[10px] font-medium px-3 py-1 rounded-full border transition-colors duration-500 ${isClaimed ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : 'text-slate-400 border-white/10 bg-white/5'}`}>
             daily streak
           </span>
         </div>
 
-        <div className="flex flex-col items-center justify-center flex-1 my-auto">
-          <svg className="w-14 h-14 text-white/20 mb-3" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M11.657 2.343A7.975 7.975 0 009.314 8c-2.486 2-2.986 5-2.986 7a8 8 0 1011.314-11.314C16.09 2.123 14 1.346 11.657 2.343zM12 16a3 3 0 11-2.121-5.121L11 8l1 3h2a3 3 0 01-2 5z" />
-          </svg>
+        <div className="flex flex-col items-center justify-center flex-1 my-auto relative">
+          
+          {/* IMAGE CROSS-FADE CONTAINER */}
+          <div className="relative w-16 h-16 mb-2">
+            
+            {/* 1. Black & White Image */}
+            <img 
+              src="/bw-fire.png" 
+              alt="BW Fire" 
+              className={`absolute inset-0 w-full h-full object-contain transition-all duration-700 ease-in-out ${
+                isClaimed ? 'opacity-0 scale-90' : 'opacity-60 scale-100'
+              }`}
+            />
+            
+            {/* 2. Colorful Image (Fades in with a glow) */}
+            <img 
+              src="/color-fire.png" 
+              alt="Colorful Fire" 
+              className={`absolute inset-0 w-full h-full object-contain transition-all duration-700 ease-in-out ${
+                isClaimed 
+                  ? 'opacity-100 scale-110 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] animate-pulse' 
+                  : 'opacity-0 scale-90'
+              }`}
+            />
+          </div>
+
           <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-extrabold text-white tracking-tighter">14</span>
+            <span className="text-5xl font-extrabold text-white tracking-tighter transition-all duration-500">
+              {/* Conditional Rendering for Count */}
+              {isClaimed ? '15' : '14'}
+            </span>
             <span className="text-sm font-bold text-slate-300 leading-tight">
               days<br />consistency
             </span>
           </div>
         </div>
 
-        <button className="w-full py-3 mt-auto shrink-0 rounded-xl text-sm font-bold text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:scale-[1.02] transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-          Claim Streak Badge
+        {/* Dynamic Button */}
+        <button 
+          onClick={() => setIsClaimed(true)}
+          disabled={isClaimed}
+          className={`w-full py-3 mt-auto shrink-0 rounded-xl text-sm font-bold transition-all duration-500 shadow-[0_4px_12px_rgba(0,0,0,0.1)] ${
+            isClaimed 
+              ? 'bg-transparent text-blue-400 border border-blue-500/30 cursor-default'
+              : 'text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:scale-[1.02]'
+          }`}
+        >
+          {isClaimed ? 'Claimed for today!' : 'Claim Streak Badge'}
         </button>
       </div>
     </div>
   );
 };
-
 // ==========================================
 // 3. CONSISTENCY (GRID) COMPONENT
 // ==========================================
@@ -209,10 +249,6 @@ const ConsistencyCard = () => {
 const Dashboard = () => {
   return (
     <div className="w-full min-h-screen flex justify-center items-start p-4 sm:p-6 md:p-10 overflow-x-auto">
-      {/* 
-        Yahan par magic hai: flex-col on mobile, but strictly flex-row on desktop/laptop (lg+). 
-        flex-wrap hata diya hai taaki ye hamesha ek hi line mein rahein.
-      */}
       <div className="flex flex-col lg:flex-row gap-6 justify-center items-center lg:items-start w-full max-w-7xl">
         <Leaderboard />
         <MomentumCard />
