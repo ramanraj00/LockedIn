@@ -2,56 +2,120 @@ import React, { useEffect, useState, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Calendar, CheckCircle } from "lucide-react";
 
-// Safari Engine Check (GPU acceleration optimization ke liye)
-const isSafari = typeof navigator !== "undefined" && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+// Safari Engine Check
+const isSafari =
+  typeof navigator !== "undefined" &&
+  /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
 const animatedHeadlineChars = [..."Comfort Space"];
 
 /* ==========================================================================
-   1. STATIC BACKGROUND EFFECTS COMPONENT (Isolated from Main App)
+   HOISTED ANIMATION VARIANTS (never re-created per render)
+   ========================================================================== */
+const titleContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
+};
+
+const titleWordVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const cardGroupVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  exit: { transition: { staggerChildren: 0.06, staggerDirection: -1 } },
+};
+
+const pillVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+  exit: { opacity: 0, x: -10, transition: { duration: 0.18, ease: "easeInOut" } },
+};
+
+const containerVariants = {
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const card2Enter = {
+  initial: { opacity: 0, scale: 0.97, y: -8 },
+  animate: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.97, y: -8 },
+  transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+};
+
+/* ==========================================================================
+   1. STATIC BACKGROUND EFFECTS COMPONENT
    ========================================================================== */
 const BackgroundEffects = memo(() => {
   return (
     <>
       {/* Premium UI Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:45px_45px] [mask-image:radial-gradient(ellipse_at_center,black_50%,transparent_95%)] pointer-events-none z-0" />
-      
-      {/* Ambient Light Orbs with Dynamic Safari Blur Optimization */}
-      <div className={`absolute -top-[15%] -left-[10%] w-[500px] h-[500px] rounded-full bg-indigo-500/15 pointer-events-none z-0 hidden md:block ${isSafari ? 'blur-[60px]' : 'blur-[120px]'}`} />
-      <div className={`absolute top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-purple-500/10 pointer-events-none z-0 hidden md:block ${isSafari ? 'blur-[70px]' : 'blur-[140px]'}`} />
+
+      {/* Ambient Light Orbs — Safari gets CSS radial-gradient instead of blur */}
+      {isSafari ? (
+        <>
+          <div
+            className="absolute -top-[15%] -left-[10%] w-[500px] h-[500px] rounded-full pointer-events-none z-0 hidden md:block"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+            }}
+          />
+          <div
+            className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full pointer-events-none z-0 hidden md:block"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%)",
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div className="absolute -top-[15%] -left-[10%] w-[500px] h-[500px] rounded-full bg-indigo-500/15 blur-[120px] pointer-events-none z-0 hidden md:block" />
+          <div className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-[140px] pointer-events-none z-0 hidden md:block" />
+        </>
+      )}
     </>
   );
 });
 
 /* ==========================================================================
-   2. INDEPENDENT HEADER TITLE COMPONENT (Renders only once on mount)
+   2. HEADER TITLE COMPONENT
+   FIX: fontWeight animation → opacity+scale wave (no layout thrashing)
    ========================================================================== */
 const HeaderTitle = memo(() => {
-  const titleContainerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
-  };
-
-  const titleWordVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 70, damping: 20 },
-    },
-  };
-
   return (
-    <div className="text-center w-full mb-8 mt-2 md:mt-0 transform-gpu [transform:translateZ(0)]">
-      <motion.h1 
+    <div className="text-center w-full mb-8 mt-2 md:mt-0">
+      <motion.h1
         variants={titleContainerVariants}
         initial="hidden"
         animate="visible"
         className="text-4xl sm:text-6xl md:text-7xl tracking-tight max-w-xs sm:max-w-3xl md:max-w-4xl mx-auto leading-[1.2] md:leading-[1.15]"
       >
         {/* Brand Header */}
-        <motion.span 
+        <motion.span
           variants={titleWordVariants}
-          style={{ fontFamily: "'Instrument Sans', sans-serif" }} 
+          style={{ fontFamily: "'Instrument Sans', sans-serif" }}
           className="font-black inline-block mb-1 text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-300 tracking-tighter"
         >
           LockedIn.
@@ -59,42 +123,43 @@ const HeaderTitle = memo(() => {
 
         <br />
 
-        {/* Subtitle with GPU Font-Weight Wave */}
-        <motion.span 
+        {/* Subtitle with GPU-safe opacity+scale wave (NOT fontWeight) */}
+        <motion.span
           variants={titleWordVariants}
-          style={{ fontFamily: "'Instrument Sans', sans-serif" }} 
+          style={{ fontFamily: "'Instrument Sans', sans-serif" }}
           className="font-normal text-xl sm:text-3xl md:text-4xl inline-block text-zinc-400/90 tracking-normal my-2"
         >
           Your{" "}
-          <span className="inline-block bg-white text-black px-4 py-0.5 rounded-2xl font-bold shadow-xl mx-1 align-middle transform-gpu [transform:translateZ(0)]">
+          <span className="inline-block bg-white text-black px-4 py-0.5 rounded-2xl font-bold shadow-xl mx-1 align-middle">
             {animatedHeadlineChars.map((char, index) => (
               <motion.span
                 key={`${char}-${index}`}
-                inherit={false} 
-                initial={{ fontWeight: 600 }}
-                animate={{ fontWeight: [600, 900, 600] }}
+                inherit={false}
+                initial={{ opacity: 0.7, scale: 1 }}
+                animate={{ opacity: [0.7, 1, 0.7], scale: [1, 1.05, 1] }}
                 transition={{
                   duration: 1.8,
                   ease: "easeInOut",
                   delay: index * 0.05,
                   repeat: Infinity,
-                  repeatDelay: 1.2
+                  repeatDelay: 1.2,
                 }}
-                className="inline-block"
+                className="inline-block font-extrabold"
+                style={{ willChange: "opacity, transform" }}
               >
                 {char === " " ? "\u00A0" : char}
               </motion.span>
             ))}
-          </span>
-          {" "}For
+          </span>{" "}
+          For
         </motion.span>
 
         <br />
 
         {/* Editorial Italic Line */}
-        <motion.span 
+        <motion.span
           variants={titleWordVariants}
-          style={{ fontFamily: "'Instrument Serif', serif" }} 
+          style={{ fontFamily: "'Instrument Serif', serif" }}
           className="italic font-normal text-4xl sm:text-6xl md:text-7xl inline-block text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-purple-100 to-pink-200 pt-1"
         >
           Building Better Days
@@ -105,36 +170,37 @@ const HeaderTitle = memo(() => {
 });
 
 /* ==========================================================================
-   3. INDEPENDENT CTA BUTTON COMPONENT (⚠️ FIXED: Native CSS Rendering Engine)
+   3. CTA BUTTON COMPONENT
    ========================================================================== */
 const CTAButton = memo(() => {
   return (
     <div className="z-20 mb-2 w-full max-w-xs sm:max-w-sm md:max-w-md px-3">
       <button
-        style={{ 
+        style={{
           fontFamily: "'Instrument Sans', sans-serif",
-          /* 1. Base Gradient Layer (Image 1 target match) */
-          background: "linear-gradient(180deg, #5c7fa 0%, #314d1 45%, #141836 100%)",
-          /* 2. SPECULAR HIGH-GLOSS SHADOW LAYER (Lining complete solution) */
-          boxShadow: "inset 0px 2px 4px rgba(255, 255, 255, 0.45), 0px 12px 24px rgba(10, 11, 28, 0.8)"
+          background:
+            "linear-gradient(180deg, #5c7fa 0%, #314d1 45%, #141836 100%)",
+          boxShadow:
+            "inset 0px 2px 4px rgba(255, 255, 255, 0.45), 0px 12px 24px rgba(10, 11, 28, 0.8)",
         }}
-        /* active:scale-95 aur transition classes add ki hain smooth click movement ke liye */
         className="w-full text-white font-light uppercase tracking-[0.23em] py-4 rounded-[20px] text-xs sm:text-sm text-center block select-none border border-white/10 outline-none overflow-hidden active:scale-95 transition-transform duration-100"
       >
-       Start Building Better Days
+        Start Building Better Days
       </button>
     </div>
   );
 });
 
 /* ==========================================================================
-   4. ISOLATED INTERACTIVE CARDS COMPONENT (Handles its own toggle state)
+   4. INTERACTIVE CARDS COMPONENT
+   FIX: Removed backdrop-blur, solid bg instead. Simplified transitions.
    ========================================================================== */
+const DARK_CARD_BG = "rgba(39, 39, 42, 0.92)";
+
 const InteractiveCards = memo(() => {
   const [activeCard, setActiveCard] = useState(1);
   const [isStaticPhase, setIsStaticPhase] = useState(true);
 
-  // 1. Both cards static for 2 seconds
   useEffect(() => {
     const staticTimer = setTimeout(() => {
       setIsStaticPhase(false);
@@ -142,126 +208,123 @@ const InteractiveCards = memo(() => {
     return () => clearTimeout(staticTimer);
   }, []);
 
-  // 2. Start alternating exactly like your original code after 2 seconds
   useEffect(() => {
     if (isStaticPhase) return;
-
     const cardInterval = setInterval(() => {
       setActiveCard((prev) => (prev === 1 ? 2 : 1));
     }, 3300);
     return () => clearInterval(cardInterval);
   }, [isStaticPhase]);
 
-  const cardGroupVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-    exit: { transition: { staggerChildren: 0.06, staggerDirection: -1 } }
-  };
-
-  const pillVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 55, damping: 18 } },
-    exit: { opacity: 0, x: -10, transition: { duration: 0.18, ease: "easeInOut" } }
-  };
-
-  const containerVariants = {
-    visible: { transition: { staggerChildren: 0.12 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 70, damping: 20 } }
-  };
-
-  // Reusable content to avoid repeating code
   const card1Content = (
     <>
-      <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide backface-hidden">
+      <motion.div
+        variants={pillVariants}
+        className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide"
+      >
         Watch your progress
       </motion.div>
-      <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-bold text-blue-600 text-xs sm:text-sm tracking-wide backface-hidden">
+      <motion.div
+        variants={pillVariants}
+        className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-bold text-blue-600 text-xs sm:text-sm tracking-wide"
+      >
         Grow one day
       </motion.div>
-      <motion.div variants={pillVariants} className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide backface-hidden">
+      <motion.div
+        variants={pillVariants}
+        className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide"
+      >
         at a time.
       </motion.div>
     </>
   );
 
   const renderCard2Content = (isStatic) => (
-    <motion.div variants={containerVariants} initial={isStatic ? false : "hidden"} animate="visible" className="flex flex-col gap-3 text-xs sm:text-sm font-medium text-zinc-200">
-      <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
+    <motion.div
+      variants={containerVariants}
+      initial={isStatic ? false : "hidden"}
+      animate="visible"
+      className="flex flex-col gap-3 text-xs sm:text-sm font-medium text-zinc-200"
+    >
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30"
+      >
         <Flame size={16} className="text-orange-500 shrink-0" />
         <span>Build your streak</span>
       </motion.div>
-      <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30"
+      >
         <Calendar size={16} className="text-blue-400 shrink-0" />
         <span>Plan your day</span>
       </motion.div>
-      <motion.div variants={itemVariants} className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30 backface-hidden">
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center gap-2.5 bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-700/30"
+      >
         <CheckCircle size={16} className="text-emerald-400 shrink-0" />
         <span>Track your focus session</span>
       </motion.div>
     </motion.div>
   );
 
+  // Shared dark card classes — NO backdrop-blur, solid background
+  const darkCardClass =
+    "w-[92%] sm:w-full md:w-80 border border-zinc-700 rounded-2xl p-4 shadow-2xl overflow-hidden mx-auto md:mx-0 md:ml-auto md:-mr-12 -mt-4 md:mt-0";
+
   return (
-    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-7xl flex flex-col md:flex-row items-center justify-center gap-4 mt-1 md:mt-2 pt-2 md:pt-10">
+    <div
+      className="relative w-full max-w-xs sm:max-w-sm md:max-w-7xl flex flex-col md:flex-row items-center justify-center gap-4 mt-1 md:mt-2 pt-2 md:pt-10"
+      style={{ contain: "layout style" }}
+    >
       <div className="w-full min-h-[13rem] flex items-start justify-center text-left z-20">
         <AnimatePresence mode="wait">
           {isStaticPhase ? (
-            /* PHASE 1: BOTH CARDS STATIC IN THEIR EXACT ORIGINAL POSITIONS (2 sec) */
             <motion.div
               key="both-cards-static"
-              initial={false} // Disable entry animation
+              initial={false}
               exit={{ opacity: 0, transition: { duration: 0.2 } }}
-              // Wrapping them in a row. Their exact original `mr-auto` and `ml-auto` will push them left and right.
               className="w-full flex flex-col md:flex-row items-center md:items-start"
             >
-              {/* Card 1 (EXACT original classes) */}
+              {/* Card 1 */}
               <motion.div
                 variants={cardGroupVariants}
-                initial={false} // completely static
+                initial={false}
                 animate="visible"
-                className="flex flex-col gap-3 w-full items-center md:items-start md:mr-auto md:w-80 transform-gpu [transform:translateZ(0)]"
+                className="flex flex-col gap-3 w-full items-center md:items-start md:mr-auto md:w-80"
               >
                 {card1Content}
               </motion.div>
 
-              {/* Card 2 (EXACT original classes) */}
+              {/* Card 2 — solid bg, no blur */}
               <motion.div
-                initial={false} // completely static
+                initial={false}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className={`w-[92%] sm:w-full md:w-80 bg-zinc-800/90 border border-zinc-700 rounded-2xl p-4 shadow-2xl overflow-hidden mx-auto md:mx-0 md:ml-auto md:-mr-12 -mt-4 md:mt-0 transform-gpu [transform:translateZ(0)] ${
-                  isSafari ? "backdrop-blur-sm" : "backdrop-blur-md"
-                }`}
+                className={darkCardClass}
+                style={{ background: DARK_CARD_BG }}
               >
                 {renderCard2Content(true)}
               </motion.div>
             </motion.div>
           ) : activeCard === 1 ? (
-            /* PHASE 2: ALTERNATING CARD 1 (Original code) */
             <motion.div
               key="white-pills-card"
               variants={cardGroupVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex flex-col gap-3 w-full items-center md:items-start md:mr-auto md:w-80 transform-gpu [transform:translateZ(0)]"
+              className="flex flex-col gap-3 w-full items-center md:items-start md:mr-auto md:w-80"
             >
               {card1Content}
             </motion.div>
           ) : (
-            /* PHASE 2: ALTERNATING CARD 2 (Original code) */
             <motion.div
               key="black-checklist-card"
-              initial={{ opacity: 0, scale: 0.97, y: -8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: -8 }}
-              transition={{ type: "spring", stiffness: 70, damping: 20 }}
-              className={`w-[92%] sm:w-full md:w-80 bg-zinc-800/90 border border-zinc-700 rounded-2xl p-4 shadow-2xl overflow-hidden mx-auto md:mx-0 md:ml-auto md:-mr-12 -mt-4 md:mt-0 transform-gpu [transform:translateZ(0)] ${
-                isSafari ? "backdrop-blur-sm" : "backdrop-blur-md"
-              }`}
+              {...card2Enter}
+              className={darkCardClass}
+              style={{ background: DARK_CARD_BG }}
             >
               {renderCard2Content(false)}
             </motion.div>
@@ -271,13 +334,15 @@ const InteractiveCards = memo(() => {
     </div>
   );
 });
+
 /* ==========================================================================
-   5. INDEPENDENT SVG LAYER COMPONENT (Static Background Asset)
+   5. BACKGROUND SVG LAYER
+   FIX: Removed filter from animated flow-path (no per-frame filter recalc)
    ========================================================================== */
 const BackgroundSVGLayer = memo(() => {
   return (
     <svg
-      className="absolute bottom-0 left-1/2 -translate-x-1/2 z-0 pointer-events-none origin-bottom scale-75 sm:scale-90 md:scale-100 transform-gpu [transform:translateZ(0)]"
+      className="absolute bottom-0 left-1/2 -translate-x-1/2 z-0 pointer-events-none origin-bottom scale-75 sm:scale-90 md:scale-100"
       width="900"
       height="500"
       viewBox="0 0 900 500"
@@ -310,8 +375,13 @@ const BackgroundSVGLayer = memo(() => {
           <rect width="900" height="500" fill="url(#glowMaskGrad)" />
         </mask>
 
-        <filter id="upperGlow"><feGaussianBlur stdDeviation="6" /></filter>
-        <filter id="heavyGlow"><feGaussianBlur stdDeviation="1" /></filter>
+        <filter id="upperGlow">
+          <feGaussianBlur stdDeviation="6" />
+        </filter>
+        <filter id="heavyGlow">
+          <feGaussianBlur stdDeviation="1" />
+        </filter>
+        {/* Static-only glow filter (NOT applied to the animated path) */}
         <filter id="premiumPulseGlow">
           <feGaussianBlur stdDeviation="12" result="blur" />
           <feMerge>
@@ -321,35 +391,70 @@ const BackgroundSVGLayer = memo(() => {
         </filter>
       </defs>
 
-      <path d="M 100 600 C 200 110, 700 110, 800 550" stroke="black" strokeWidth="8" strokeLinecap="round" opacity="1" filter="url(#upperGlow)" fill="none" />
-      <path d="M 100 600 C 200 110, 700 110, 800 550" stroke="#5A70B3" strokeWidth="45" strokeLinecap="round" opacity="1" filter="url(#heavyGlow)" mask="url(#bottomGlowMask)" fill="none" />
-      <path d="M 100 600 C 200 110, 700 110, 800 550" stroke="#5A70B3" strokeWidth="1" strokeLinecap="round" filter="url(#upperGlow)" fill="none" />
-      <path d="M 100 600 C 200 110, 700 110, 800 550" stroke="#9BB1FF" strokeWidth="25" strokeLinecap="round" opacity="1" filter="url(#heavyGlow)" mask="url(#bottomGlowMask)" fill="none" />
-      
-      {/* Infinite High-Performance CSS Glow Wave */}
-      <path 
+      {/* Static glow layers — these don't animate, filters are fine */}
+      <path
+        d="M 100 600 C 200 110, 700 110, 800 550"
+        stroke="black"
+        strokeWidth="8"
+        strokeLinecap="round"
+        opacity="1"
+        filter="url(#upperGlow)"
+        fill="none"
+      />
+      <path
+        d="M 100 600 C 200 110, 700 110, 800 550"
+        stroke="#5A70B3"
+        strokeWidth="45"
+        strokeLinecap="round"
+        opacity="1"
+        filter="url(#heavyGlow)"
+        mask="url(#bottomGlowMask)"
+        fill="none"
+      />
+      <path
+        d="M 100 600 C 200 110, 700 110, 800 550"
+        stroke="#5A70B3"
+        strokeWidth="1"
+        strokeLinecap="round"
+        filter="url(#upperGlow)"
+        fill="none"
+      />
+      <path
+        d="M 100 600 C 200 110, 700 110, 800 550"
+        stroke="#9BB1FF"
+        strokeWidth="25"
+        strokeLinecap="round"
+        opacity="1"
+        filter="url(#heavyGlow)"
+        mask="url(#bottomGlowMask)"
+        fill="none"
+      />
+
+      {/* ⚡ Animated flow path — NO SVG filter applied!
+          The premiumPulseGlow filter was being re-computed every single frame
+          during the stroke-dashoffset animation. Removed it completely.
+          The neon gradient + opacity is enough for the glow effect. */}
+      <path
         className="flow-path"
-        d="M 100 600 C 200 110, 700 110, 800 550" 
-        stroke="url(#premiumNeonLight)" 
-        strokeWidth="12" 
-        strokeLinecap="round" 
-        filter="url(#premiumPulseGlow)" 
-        fill="none" 
-        style={{ strokeDasharray: "500 1500" }} 
+        d="M 100 600 C 200 110, 700 110, 800 550"
+        stroke="url(#premiumNeonLight)"
+        strokeWidth="12"
+        strokeLinecap="round"
+        opacity="0.85"
+        fill="none"
+        style={{ strokeDasharray: "500 1500" }}
       />
     </svg>
   );
 });
 
 /* ==========================================================================
-   MAIN HERO WRAPPER - NO BACKGROUND (Landing.jsx handle karega)
+   MAIN HERO WRAPPER
    ========================================================================== */
 function Hero() {
   return (
     <div className="relative w-full mb-32 md:mb-48">
-      {/* YAHAN mb-32 md:mb-48 ADD KIYA HAI TO PUSH THE NEXT COMPONENT DOWN */}
-      
-      {/* GPU Vector Matrix Keyframes Styles */}
+      {/* CSS-only flow animation — GPU-accelerated, no JS involvement */}
       <style>{`
         @keyframes flow {
           from { stroke-dashoffset: 2000; }
@@ -358,7 +463,6 @@ function Hero() {
         .flow-path {
           animation: flow 8s linear infinite;
           will-change: stroke-dashoffset;
-          transform: translateZ(0);
         }
       `}</style>
 
@@ -366,8 +470,10 @@ function Hero() {
       <BackgroundEffects />
 
       {/* MAIN RESPONSIVE CONTAINER */}
-      <div id="hero-section" className="relative z-10 w-full px-4 sm:px-6 lg:px-8 select-none flex flex-col items-center justify-center min-h-screen py-4 md:py-20">
-        
+      <div
+        id="hero-section"
+        className="relative z-10 w-full px-4 sm:px-6 lg:px-8 select-none flex flex-col items-center justify-center min-h-screen py-4 md:py-20"
+      >
         {/* 2. Isolated Headline */}
         <HeaderTitle />
 
@@ -376,12 +482,10 @@ function Hero() {
 
         {/* 4. Isolated Live Interactive Cards Loop */}
         <InteractiveCards />
-
       </div>
-      
+
       {/* 5. Isolated Bottom Semicircle Wave */}
       <BackgroundSVGLayer />
-
     </div>
   );
 }

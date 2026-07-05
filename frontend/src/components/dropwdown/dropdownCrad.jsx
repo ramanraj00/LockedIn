@@ -184,18 +184,32 @@ const SessionClock = memo(function SessionClock() {
   }, []);
 
   return (
-    <div
-      className="w-full lg:w-1/3 border border-slate-700/50 p-4 sm:p-6 rounded-2xl shadow-2xl flex flex-col items-center justify-center space-y-5 lg:self-stretch relative backdrop-blur-xl overflow-hidden"
-      style={{
-        background: "rgba(20, 24, 54, 0.5)",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0px 8px 32px rgba(10, 11, 28, 0.3)",
-      }}
-    >
+   <div
+  className="w-full lg:w-1/3 p-4 sm:p-6 rounded-2xl flex flex-col items-center justify-center space-y-5 lg:self-stretch relative overflow-hidden"
+  style={{
+    /* Parent card ka colour adopt karne ke liye completely transparent */
+    background: "transparent",
+    
+    /* 3D Light Effect: Top aur left border thode bright hain, baaki dark */
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    borderTop: "1px solid rgba(255, 255, 255, 0.15)",
+    borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
+    
+    /* 
+      1st shadow: Bahar ka dark drop-shadow depth ke liye
+      2nd shadow: Andar ka white inset shine glass thickness ke liye
+      3rd shadow: Andar ka dark inset opposite side depth ke liye 
+    */
+    boxShadow: `
+      8px 12px 32px rgba(0, 0, 0, 0.25), 
+      inset 1px 1px 2px rgba(255, 255, 255, 0.1),
+      inset -1px -1px 4px rgba(0, 0, 0, 0.15)
+    `,
+  }}
+>
       {/* Top/Left Subtle Dark Overlays */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-slate-600/30 via-slate-600/10 to-transparent pointer-events-none z-10" />
-      <div className="absolute top-0 left-0 bottom-0 w-[2px] bg-gradient-to-b from-slate-600/30 via-slate-600/10 to-transparent pointer-events-none z-10" />
-
+      
       <span className="text-xs font-bold tracking-widest text-slate-500 uppercase relative z-20">
         Session Clock
       </span>
