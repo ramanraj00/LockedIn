@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 const stats = [
   { value: "200+", label: "Registered Users" },
-  { value: "100+", label: "Online Users" },
+  { value: "100+", label: "Active Users" },
   { value: "8+", label: "Features" },
 ];
 

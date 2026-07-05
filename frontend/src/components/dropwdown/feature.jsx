@@ -14,7 +14,6 @@ const barData = [
   { label: "Sun", hours: 6 },
 ];
 
-// Custom Label for Top of the Bars (Added animation classes and index)
 const CustomBarLabel = (props) => {
   const { x, y, width, value, index } = props;
   return (
@@ -31,7 +30,6 @@ const CustomBarLabel = (props) => {
   );
 };
 
-// Custom Tick for Bottom X-Axis
 const CustomXAxisTick = (props) => {
   const { x, y, payload } = props;
   return (
@@ -48,69 +46,92 @@ const CustomXAxisTick = (props) => {
   );
 };
 
-// ─── COMPLETELY TRANSPARENT WRAPPER (GEOMETRIC LINES REMOVED) ───
+// ─── SHARED SVG NOISE FILTER (rendered once, referenced by all cards) ───
+const SharedNoiseFilter = memo(function SharedNoiseFilter() {
+  return (
+    <svg width="0" height="0" className="absolute" aria-hidden="true">
+      <defs>
+        <filter id="noiseFilterCard">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.8"
+            numOctaves="2"
+            stitchTiles="stitch"
+          />
+        </filter>
+      </defs>
+    </svg>
+  );
+});
+
+// ─── GLASSMORPHISM WRAPPER (optimized: no backdrop-blur, shared filter ref) ───
 const OpenCard = ({ children, className = "" }) => (
   <div
-    className={`w-full border border-slate-500/30 rounded-3xl p-5 sm:p-6 flex flex-col relative overflow-hidden bg-transparent ${className}`}
+    className={`w-full border border-slate-500/30 rounded-3xl p-5 sm:p-6 flex flex-col relative overflow-hidden shadow-2xl ${className}`}
+    style={{
+      background: "rgba(15, 23, 42, 0.65)",
+      contain: "layout style paint",
+    }}
   >
-    {children}
+    {/* Noise overlay referencing the shared filter */}
+    <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay z-0">
+      <svg className="w-full h-full">
+        <rect width="100%" height="100%" filter="url(#noiseFilterCard)" />
+      </svg>
+    </div>
+
+    {/* Inner subtle highlight for glass edge */}
+    <div className="absolute inset-0 rounded-3xl border-t border-white/10 pointer-events-none z-0" />
+
+    {/* Content Wrapper */}
+    <div className="relative z-10 flex flex-col h-full w-full">{children}</div>
   </div>
 );
 
-// ─── 1. WEEKLY FOCUS HOURS (BAR CHART COMPONENT WITH SCROLL TRIGGER & CONTINUOUS ANIMATION) ───
+// ─── BAR CHART STYLES (injected once, GPU-friendly animations) ───
+const barChartStyles = `
+  @keyframes continuousPulse {
+    0%, 100% { transform: scaleY(1); opacity: 1; }
+    50% { transform: scaleY(0.96); opacity: 0.8; }
+  }
+  @keyframes continuousLabelPulse {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(3px); opacity: 0.8; }
+  }
+  .recharts-bar-rectangle path {
+    animation: continuousPulse 3s infinite ease-in-out;
+    transform-box: fill-box;
+    transform-origin: bottom;
+    will-change: transform, opacity;
+  }
+  .custom-label-anim {
+    animation: continuousLabelPulse 3s infinite ease-in-out;
+    will-change: transform, opacity;
+  }
+  .recharts-bar-rectangles g:nth-child(1) path, .custom-label-0 { animation-delay: 0.0s; }
+  .recharts-bar-rectangles g:nth-child(2) path, .custom-label-1 { animation-delay: 0.2s; }
+  .recharts-bar-rectangles g:nth-child(3) path, .custom-label-2 { animation-delay: 0.4s; }
+  .recharts-bar-rectangles g:nth-child(4) path, .custom-label-3 { animation-delay: 0.6s; }
+  .recharts-bar-rectangles g:nth-child(5) path, .custom-label-4 { animation-delay: 0.8s; }
+  .recharts-bar-rectangles g:nth-child(6) path, .custom-label-5 { animation-delay: 1.0s; }
+  .recharts-bar-rectangles g:nth-child(7) path, .custom-label-6 { animation-delay: 1.2s; }
+`;
+
+// ─── 1. WEEKLY FOCUS HOURS ───
 const BarChart = memo(function BarChart() {
-  // 1. Ref and useInView banaya taaki animation tabhi trigger ho jab user yahan tak scroll kare
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <OpenCard className="flex-1 min-h-[260px] justify-between relative  ">
-      
-      {/* CSS for continuous smooth breathing animation on Recharts Bars & Labels */}
-      <style>
-        {`
-          /* Bar ki physical scale animation */
-          @keyframes continuousPulse {
-            0%, 100% { transform: scaleY(1); opacity: 1; filter: brightness(1); }
-            50% { transform: scaleY(0.95); opacity: 0.75; filter: brightness(1.2); }
-          }
-          
-          /* Labels ki up-down sync animation */
-          @keyframes continuousLabelPulse {
-            0%, 100% { transform: translateY(0); opacity: 1; }
-            50% { transform: translateY(4px); opacity: 0.75; }
-          }
+    <OpenCard className="flex-1 min-h-[260px] justify-between relative">
+      <style>{barChartStyles}</style>
 
-          .recharts-bar-rectangle path {
-            animation: continuousPulse 3s infinite ease-in-out;
-            transform-box: fill-box;
-            transform-origin: bottom;
-          }
-          
-          .custom-label-anim {
-            animation: continuousLabelPulse 3s infinite ease-in-out;
-          }
-
-          /* Match delays for both Bars and their Labels taaki perfect wave bane */
-          .recharts-bar-rectangles g:nth-child(1) path, .custom-label-0 { animation-delay: 0.0s; }
-          .recharts-bar-rectangles g:nth-child(2) path, .custom-label-1 { animation-delay: 0.2s; }
-          .recharts-bar-rectangles g:nth-child(3) path, .custom-label-2 { animation-delay: 0.4s; }
-          .recharts-bar-rectangles g:nth-child(4) path, .custom-label-3 { animation-delay: 0.6s; }
-          .recharts-bar-rectangles g:nth-child(5) path, .custom-label-4 { animation-delay: 0.8s; }
-          .recharts-bar-rectangles g:nth-child(6) path, .custom-label-5 { animation-delay: 1.0s; }
-          .recharts-bar-rectangles g:nth-child(7) path, .custom-label-6 { animation-delay: 1.2s; }
-        `}
-      </style>
-
-      {/* Ref yahan lagaya hai track karne ke liye */}
-      <div ref={ref}  className="w-full h-full flex flex-col justify-between flex-1">
-        <span className="  text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-6 block">
+      <div ref={ref} className="w-full h-full flex flex-col justify-between flex-1">
+        <span className="text-[10px] font-bold tracking-widest text-slate-300 uppercase mb-6 block">
           Weekly Focus Hours
         </span>
 
         <div className="w-full flex-1 min-h-[140px] relative">
-          
-          {/* Chart ko tabhi render karna jab isInView true ho jaye */}
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">
               <ReBarChart data={barData} margin={{ top: 15, right: 5, left: 5, bottom: 5 }}>
@@ -157,6 +178,8 @@ const BarChart = memo(function BarChart() {
 });
 
 // ─── 2. STOPWATCH COMPONENT ───
+const CIRCUMFERENCE = 2 * Math.PI * 72;
+
 const Stopwatch = memo(function Stopwatch() {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -167,7 +190,9 @@ const Stopwatch = memo(function Stopwatch() {
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  const mins = Math.floor(time / 60).toString().padStart(2, "0");
+  const mins = Math.floor(time / 60)
+    .toString()
+    .padStart(2, "0");
   const secs = (time % 60).toString().padStart(2, "0");
 
   const handleToggle = useCallback(() => setIsRunning((p) => !p), []);
@@ -176,44 +201,46 @@ const Stopwatch = memo(function Stopwatch() {
     setTime(0);
   }, []);
 
-  const circumference = 2 * Math.PI * 72;
   const progress = (time % 60) / 60;
-  const offset = circumference - progress * circumference;
+  const offset = CIRCUMFERENCE - progress * CIRCUMFERENCE;
 
   return (
     <OpenCard className="items-center justify-center gap-4 w-full h-full">
       <div className="relative w-[160px] h-[160px] flex items-center justify-center">
         <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
-          <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(100,116,139,0.15)" strokeWidth="3" />
+          <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
           <circle
             cx="80"
             cy="80"
             r="72"
             fill="none"
-            stroke="rgba(129,140,248,0.6)"
+            stroke="rgba(129,140,248,0.8)"
             strokeWidth="3"
             strokeLinecap="round"
-            strokeDasharray={circumference}
+            strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.3s ease" }}
+            style={{
+              transition: "stroke-dashoffset 0.3s ease",
+              willChange: "stroke-dashoffset",
+            }}
           />
         </svg>
-        <span className="font-mono text-3xl font-bold tracking-widest text-blue-100 z-10">
+        <span className="font-mono text-3xl font-bold tracking-widest text-slate-100 z-10 drop-shadow-md">
           {mins}:{secs}
         </span>
       </div>
 
-      <span className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+      <span className="text-[10px] font-bold tracking-[0.2em] text-slate-300 uppercase">
         Stopwatch
       </span>
 
       <div className="flex items-center gap-2 w-full mt-2">
         <button
           onClick={handleToggle}
-          className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl cursor-pointer transition-colors ${
             isRunning
-              ? "bg-transparent border border-slate-500/50 text-slate-300 hover:bg-white/5"
-              : "bg-indigo-500/80 hover:bg-indigo-500 text-white border border-indigo-400/30"
+              ? "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
+              : "bg-indigo-500/80 hover:bg-indigo-500 text-white border border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
           }`}
         >
           {isRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
@@ -221,7 +248,7 @@ const Stopwatch = memo(function Stopwatch() {
         </button>
         <button
           onClick={handleReset}
-          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border border-slate-500/40 text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
         >
           <RotateCcw className="w-3 h-3" />
           Reset
@@ -232,38 +259,39 @@ const Stopwatch = memo(function Stopwatch() {
 });
 
 // ─── 3. ACTIVITY HEATMAP COMPONENT ───
+const HEATMAP_COLORS = [
+  "bg-slate-700/30 border-white/5",        // level 0
+  "bg-slate-500/40 border-slate-500/25",    // level 1
+  "bg-slate-400/70 border-slate-400/40",    // level 2
+  "bg-indigo-400 border-indigo-300/50",     // level 3
+];
+
 const ActivityHeatmap = memo(function ActivityHeatmap() {
   const weeks = 20;
   const rows = 5;
 
-  const grid = useMemo(() => {
-    return Array.from({ length: rows }, (_, row) =>
+  const { grid, totalActivities } = useMemo(() => {
+    let count = 0;
+    const g = Array.from({ length: rows }, (_, row) =>
       Array.from({ length: weeks }, (_, col) => {
         const seed = (row * weeks + col) * 2654435761;
         const hash = (seed >>> 0) % 100;
-        if (col < 5 && row < 3) return hash < 40 ? 3 : hash < 60 ? 2 : hash < 80 ? 1 : 0;
-        if (col < 10) return hash < 20 ? 3 : hash < 40 ? 2 : hash < 55 ? 1 : 0;
-        if (col < 15) return hash < 15 ? 3 : hash < 30 ? 2 : hash < 50 ? 1 : 0;
-        return hash < 10 ? 2 : hash < 25 ? 1 : 0;
+        let level;
+        if (col < 5 && row < 3) level = hash < 40 ? 3 : hash < 60 ? 2 : hash < 80 ? 1 : 0;
+        else if (col < 10) level = hash < 20 ? 3 : hash < 40 ? 2 : hash < 55 ? 1 : 0;
+        else if (col < 15) level = hash < 15 ? 3 : hash < 30 ? 2 : hash < 50 ? 1 : 0;
+        else level = hash < 10 ? 2 : hash < 25 ? 1 : 0;
+        if (level > 0) count++;
+        return level;
       })
     );
+    return { grid: g, totalActivities: count };
   }, []);
-
-  const getColor = (level) => {
-    switch (level) {
-      case 3: return "bg-indigo-400 border-indigo-300/50";
-      case 2: return "bg-slate-400/70 border-slate-400/40";
-      case 1: return "bg-slate-500/40 border-slate-500/25";
-      default: return "bg-slate-700/50 border-slate-600/20";
-    }
-  };
-
-  const totalActivities = grid.flat().filter((l) => l > 0).length;
 
   return (
     <OpenCard className="w-full h-full justify-between">
       <div>
-        <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase block mb-4">
+        <span className="text-[10px] font-bold tracking-widest text-slate-300 uppercase block mb-4">
           Activity
         </span>
 
@@ -273,9 +301,7 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
               {row.map((level, ci) => (
                 <div
                   key={ci}
-                  className={`flex-1 aspect-square rounded-[5px] sm:rounded-md border ${getColor(
-                    level
-                  )} transition-colors hover:scale-110 cursor-pointer`}
+                  className={`flex-1 aspect-square rounded-[5px] sm:rounded-md border ${HEATMAP_COLORS[level]} transition-transform hover:scale-110 cursor-pointer`}
                   style={{ maxHeight: "28px" }}
                 />
               ))}
@@ -285,16 +311,16 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
       </div>
 
       <div className="flex items-center justify-between mt-6 pt-2">
-        <span className="text-[10px] text-slate-500 font-medium">
+        <span className="text-[10px] text-slate-300 font-medium">
           {totalActivities} activities in 2025
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-500 font-medium">Less</span>
-          <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-700/50 border border-slate-600/20" />
+          <span className="text-[10px] text-slate-300 font-medium">Less</span>
+          <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-700/30 border border-white/5" />
           <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-500/40 border border-slate-500/25" />
           <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-400/70 border border-slate-400/40" />
           <div className="w-[12px] h-[12px] rounded-[3px] bg-indigo-400 border border-indigo-300/50" />
-          <span className="text-[10px] text-slate-500 font-medium">More</span>
+          <span className="text-[10px] text-slate-300 font-medium">More</span>
         </div>
       </div>
     </OpenCard>
@@ -314,16 +340,16 @@ const CalendarCard = memo(function CalendarCard() {
 
   return (
     <OpenCard className="w-full h-full">
-      <span className="text-lg font-bold text-slate-200 tracking-tight">
+      <span className="text-lg font-bold text-slate-100 tracking-tight drop-shadow-sm">
         Calendar
       </span>
-      <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase mt-0.5 mb-4">
+      <span className="text-[10px] font-semibold tracking-widest text-slate-300 uppercase mt-0.5 mb-4">
         {monthName} {year}
       </span>
 
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayLabels.map((d) => (
-          <span key={d} className="text-[9px] font-bold text-slate-400 text-center">
+          <span key={d} className="text-[9px] font-bold text-slate-300 text-center">
             {d}
           </span>
         ))}
@@ -338,10 +364,10 @@ const CalendarCard = memo(function CalendarCard() {
             key={day}
             className={`text-[10px] font-mono font-medium w-6 h-6 flex items-center justify-center rounded-md transition-colors ${
               day === currentDay
-                ? "bg-indigo-500 text-white font-bold shadow-md shadow-indigo-500/30"
+                ? "bg-indigo-500 text-white font-bold shadow-[0_0_12px_rgba(99,102,241,0.6)]"
                 : day < currentDay
-                ? "text-slate-500"
-                : "text-slate-300"
+                ? "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                : "text-slate-200 hover:bg-white/10"
             }`}
           >
             {day}
@@ -352,37 +378,50 @@ const CalendarCard = memo(function CalendarCard() {
   );
 });
 
-// ─── MAIN LAYOUT & ANIMATION SETUP ───
+// ─── ANIMATION VARIANTS (hoisted outside component — no re-creation per render) ───
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+// ─── MAIN LAYOUT ───
 export default function PerformanceDashboard() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-  };
-
   return (
-    <section className="w-full bg-transparent px-4 md:px-8 py-12 flex flex-col items-center overflow-x-hidden">
-      
-      <motion.div 
+    <section className="relative w-full px-4 md:px-8 py-12 flex flex-col items-center overflow-x-hidden bg-transparent">
+      {/* Shared SVG noise filter — rendered once for all cards */}
+      <SharedNoiseFilter />
+
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="mb-10 text-center w-full max-w-6xl px-4"
+        className="mb-10 text-center w-full max-w-6xl px-4 z-10"
       >
         <h2
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-200 leading-tight flex items-center justify-center gap-1"
+          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-200 drop-shadow-md leading-tight flex items-center justify-center gap-1"
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
         >
-          <span className="text-slate-500/50 text-4xl sm:text-5xl font-serif leading-none select-none" aria-hidden="true">&ldquo;</span>
+          <span
+            className="text-slate-500/50 text-4xl sm:text-5xl font-serif leading-none select-none"
+            aria-hidden="true"
+          >
+            &ldquo;
+          </span>
           A personal dashboard for analysing your performance
-          <span className="text-slate-500/50 text-4xl sm:text-5xl font-serif leading-none select-none" aria-hidden="true">&rdquo;</span>
+          <span
+            className="text-slate-500/50 text-4xl sm:text-5xl font-serif leading-none select-none"
+            aria-hidden="true"
+          >
+            &rdquo;
+          </span>
         </h2>
       </motion.div>
 
@@ -390,12 +429,12 @@ export default function PerformanceDashboard() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 z-10"
       >
         <motion.div variants={itemVariants} className="col-span-1 lg:col-span-2 h-full flex">
           <BarChart />
         </motion.div>
-        
+
         <motion.div variants={itemVariants} className="col-span-1 h-full flex">
           <Stopwatch />
         </motion.div>
@@ -403,11 +442,10 @@ export default function PerformanceDashboard() {
         <motion.div variants={itemVariants} className="col-span-1 h-full flex">
           <CalendarCard />
         </motion.div>
-        
+
         <motion.div variants={itemVariants} className="col-span-1 lg:col-span-2 h-full flex">
           <ActivityHeatmap />
         </motion.div>
-
       </motion.div>
     </section>
   );
