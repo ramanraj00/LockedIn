@@ -118,7 +118,7 @@ const HeaderTitle = memo(() => {
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
           className="font-black inline-block mb-1 text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-300 tracking-tighter"
         >
-          LockedIn.
+          
         </motion.span>
 
         <br />
@@ -156,11 +156,11 @@ const HeaderTitle = memo(() => {
 
         <br />
 
-        {/* Editorial Italic Line */}
+        {/* 🌟 YAHAN CHANGE KIYA HAI: The "Premium SaaS" Look */}
         <motion.span
           variants={titleWordVariants}
-          style={{ fontFamily: "'Instrument Serif', serif" }}
-          className="italic font-normal text-4xl sm:text-6xl md:text-7xl inline-block text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-purple-100 to-pink-200 pt-1"
+          style={{ fontFamily: "'Instrument Sans', sans-serif" }}
+          className="font-black tracking-tighter text-5xl sm:text-6xl md:text-7xl inline-block text-transparent bg-clip-text bg-gradient-to-b from-white via-indigo-200 to-[#1e3a8a] pt-1 pb-2 drop-shadow-sm"
         >
           Building Better Days
         </motion.span>
@@ -168,7 +168,6 @@ const HeaderTitle = memo(() => {
     </div>
   );
 });
-
 /* ==========================================================================
    3. CTA BUTTON COMPONENT
    ========================================================================== */
@@ -183,7 +182,7 @@ const CTAButton = memo(() => {
           boxShadow:
             "inset 0px 2px 4px rgba(255, 255, 255, 0.45), 0px 12px 24px rgba(10, 11, 28, 0.8)",
         }}
-        className="w-full text-white font-light uppercase tracking-[0.23em] py-4 rounded-[20px] text-xs sm:text-sm text-center block select-none border border-white/10 outline-none overflow-hidden active:scale-95 transition-transform duration-100"
+        className="w-full text-white font-medium uppercase tracking-[0.23em] py-4 rounded-[20px] text-xs sm:text-sm text-center block select-none border border-white/10 outline-none overflow-hidden active:scale-95 transition-transform duration-100"
       >
         Start Building Better Days
       </button>
@@ -217,28 +216,45 @@ const InteractiveCards = memo(() => {
   }, [isStaticPhase]);
 
   const card1Content = (
-    <>
-      <motion.div
-        variants={pillVariants}
-        className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide"
-      >
-        Watch your progress
-      </motion.div>
-      <motion.div
-        variants={pillVariants}
-        className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-bold text-blue-600 text-xs sm:text-sm tracking-wide"
-      >
-        Grow one day
-      </motion.div>
-      <motion.div
-        variants={pillVariants}
-        className="w-fit bg-white rounded-full px-5 py-2.5 shadow-xl border border-white font-medium text-zinc-900 text-xs sm:text-sm tracking-wide"
-      >
-        at a time.
-      </motion.div>
-    </>
-  );
+  <>
+    {/* Pill 1 */}
+    <motion.div
+      variants={pillVariants}
+      className="w-fit bg-[#fdfdfd] rounded-full px-6 py-3 font-medium text-slate-800 text-sm sm:text-base tracking-wide"
+      style={{
+        // 🌟 Premium Ceramic Shadow: A mix of tight inner shadow and diffused drop shadow
+        boxShadow: "0 10px 20px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06), inset 0 -2px 5px rgba(0,0,0,0.05), inset 0 2px 0 rgba(255,255,255,1)"
+      }}
+    >
+      Watch your progress
+    </motion.div>
 
+    {/* Pill 2 (The Focus Point) */}
+    <motion.div
+      variants={pillVariants}
+      className="w-fit bg-white rounded-full px-6 py-3 font-bold text-[#1e3a8a] text-sm sm:text-base tracking-wide"
+      style={{
+        boxShadow: "0 14px 28px rgba(0,0,0,0.15), 0 6px 12px rgba(0,0,0,0.08), inset 0 -2px 5px rgba(0,0,0,0.05), inset 0 2px 0 rgba(255,255,255,1)",
+        // Halka sa scale up aur border significance badhane ke liye
+        border: "1px solid rgba(226, 232, 240, 0.8)",
+        transform: "scale(1.02)"
+      }}
+    >
+      Grow one day
+    </motion.div>
+
+    {/* Pill 3 */}
+    <motion.div
+      variants={pillVariants}
+      className="w-fit bg-[#fdfdfd] rounded-full px-6 py-3 font-medium text-slate-800 text-sm sm:text-base tracking-wide"
+      style={{
+        boxShadow: "0 10px 20px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06), inset 0 -2px 5px rgba(0,0,0,0.05), inset 0 2px 0 rgba(255,255,255,1)"
+      }}
+    >
+      at a time.
+    </motion.div>
+  </>
+);
   const renderCard2Content = (isStatic) => (
     <motion.div
       variants={containerVariants}
