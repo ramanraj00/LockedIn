@@ -19,9 +19,9 @@ const CustomBarLabel = (props) => {
   return (
     <text
       x={x + width / 2}
-      y={y - 8}
-      fill="#cbd5e1"
-      fontSize={10}
+      y={y - 10}
+      fill="#e2e8f0" 
+      fontSize={11} 
       textAnchor="middle"
       className={`font-mono font-bold custom-label-anim custom-label-${index}`}
     >
@@ -35,9 +35,9 @@ const CustomXAxisTick = (props) => {
   return (
     <text
       x={x}
-      y={y + 14}
-      fill="#94a3b8"
-      fontSize={10}
+      y={y + 16}
+      fill="#cbd5e1"
+      fontSize={12} 
       textAnchor="middle"
       className="font-medium tracking-wide"
     >
@@ -46,8 +46,7 @@ const CustomXAxisTick = (props) => {
   );
 };
 
-
-// ─── 🌟 PREMIUM GLASSMORPHISM WRAPPER (Leaderboard Wala Effect) 🌟 ───
+// ─── 🌟 PREMIUM GLASSMORPHISM WRAPPER 🌟 ───
 const OpenCard = ({ children, className = "" }) => (
   <div
     className={`w-full rounded-3xl p-5 sm:p-6 flex flex-col relative overflow-hidden backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${className}`}
@@ -63,12 +62,11 @@ const OpenCard = ({ children, className = "" }) => (
       `,
     }}
   >
-    {/* Content Wrapper */}
     <div className="relative z-10 flex flex-col h-full w-full">{children}</div>
   </div>
 );
 
-// ─── BAR CHART STYLES (injected once, GPU-friendly animations) ───
+// ─── BAR CHART STYLES ───
 const barChartStyles = `
   @keyframes continuousPulse {
     0%, 100% { transform: scaleY(1); opacity: 1; }
@@ -107,7 +105,7 @@ const BarChart = memo(function BarChart() {
       <style>{barChartStyles}</style>
 
       <div ref={ref} className="w-full h-full flex flex-col justify-between flex-1">
-        <span className="text-[10px] font-bold tracking-widest text-slate-300 uppercase mb-6 block">
+        <span className="text-xs font-bold tracking-widest text-slate-200 uppercase mb-6 block w-fit px-3 py-1.5 border border-white/10 rounded-2xl bg-white/5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
           Weekly Focus Hours
         </span>
 
@@ -129,9 +127,7 @@ const BarChart = memo(function BarChart() {
                     <stop offset="100%" stopColor="rgba(148,163,184,0.2)" />
                   </linearGradient>
                 </defs>
-
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={<CustomXAxisTick />} />
-
                 <Bar
                   dataKey="hours"
                   radius={[6, 6, 0, 0]}
@@ -185,41 +181,45 @@ const Stopwatch = memo(function Stopwatch() {
   const offset = CIRCUMFERENCE - progress * CIRCUMFERENCE;
 
   return (
-    <OpenCard className="items-center justify-center gap-4 w-full h-full">
-      <div className="relative w-[160px] h-[160px] flex items-center justify-center">
-        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
-          <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
-          <circle
-            cx="80"
-            cy="80"
-            r="72"
-            fill="none"
-            stroke="rgba(129,140,248,0.8)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={offset}
-            style={{
-              transition: "stroke-dashoffset 0.3s ease",
-              willChange: "stroke-dashoffset",
-            }}
-          />
-        </svg>
-        <span className="font-mono text-3xl font-bold tracking-widest text-slate-100 z-10 drop-shadow-md">
-          {mins}:{secs}
+    <OpenCard className="flex flex-col w-full h-full p-2">
+      <div className="flex justify-start w-full mb-2">
+        <span className="text-xs font-bold tracking-widest text-slate-200 uppercase px-3 py-1.5 border border-white/10 rounded-2xl bg-white/5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] w-fit">
+          Stopwatch
         </span>
       </div>
 
-      <span className="text-[10px] font-bold tracking-[0.2em] text-slate-300 uppercase">
-        Stopwatch
-      </span>
+      <div className="flex-1 flex items-center justify-center w-full">
+        <div className="relative w-[160px] h-[160px] flex items-center justify-center">
+          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+            <circle
+              cx="80"
+              cy="80"
+              r="72"
+              fill="none"
+              stroke="rgba(129,140,248,0.8)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={offset}
+              style={{
+                transition: "stroke-dashoffset 0.3s ease",
+                willChange: "stroke-dashoffset",
+              }}
+            />
+          </svg>
+          <span className="font-mono text-4xl font-extrabold tracking-widest text-white z-10 drop-shadow-md">
+            {mins}:{secs}
+          </span>
+        </div>
+      </div>
 
-      <div className="flex items-center gap-2 w-full mt-2">
+      <div className="flex items-center gap-2 w-full mt-auto pt-2">
         <button
           onClick={handleToggle}
-          className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl cursor-pointer transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl cursor-pointer transition-colors ${
             isRunning
-              ? "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
+              ? "bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10"
               : "bg-indigo-500/80 hover:bg-indigo-500 text-white border border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
           }`}
         >
@@ -228,7 +228,7 @@ const Stopwatch = memo(function Stopwatch() {
         </button>
         <button
           onClick={handleReset}
-          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-white/10 text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
         >
           <RotateCcw className="w-3 h-3" />
           Reset
@@ -240,10 +240,10 @@ const Stopwatch = memo(function Stopwatch() {
 
 // ─── 3. ACTIVITY HEATMAP COMPONENT ───
 const HEATMAP_COLORS = [
-  "bg-slate-700/30 border-white/5",        // level 0
-  "bg-slate-500/40 border-slate-500/25",    // level 1
-  "bg-slate-400/70 border-slate-400/40",    // level 2
-  "bg-indigo-400 border-indigo-300/50",     // level 3
+  "bg-slate-700/30 border-white/5",
+  "bg-slate-500/40 border-slate-500/25",
+  "bg-slate-400/70 border-slate-400/40",
+  "bg-indigo-400 border-indigo-300/50",
 ];
 
 const ActivityHeatmap = memo(function ActivityHeatmap() {
@@ -269,13 +269,13 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
   }, []);
 
   return (
-    <OpenCard className="w-full h-full justify-between">
+    <OpenCard className="w-full h-full justify-between p-4 sm:p-5">
       <div>
-        <span className="text-[10px] font-bold tracking-widest text-slate-300 uppercase block mb-4">
+        <span className="text-xs font-bold tracking-widest text-slate-200 uppercase px-3 py-1.5 border border-white/10 rounded-2xl bg-white/5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] w-fit mb-4 block">
           Activity
         </span>
 
-        <div className="flex flex-col gap-[6px] sm:gap-2">
+        <div className="flex flex-col gap-[6px] sm:gap-2 mt-4">
           {grid.map((row, ri) => (
             <div key={ri} className="flex gap-[6px] sm:gap-2">
               {row.map((level, ci) => (
@@ -291,16 +291,16 @@ const ActivityHeatmap = memo(function ActivityHeatmap() {
       </div>
 
       <div className="flex items-center justify-between mt-6 pt-2">
-        <span className="text-[10px] text-slate-300 font-medium">
+        <span className="text-[11px] text-slate-300 font-semibold tracking-wide">
           {totalActivities} activities in 2025
         </span>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-300 font-medium">Less</span>
-          <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-700/30 border border-white/5" />
-          <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-500/40 border border-slate-500/25" />
-          <div className="w-[12px] h-[12px] rounded-[3px] bg-slate-400/70 border border-slate-400/40" />
-          <div className="w-[12px] h-[12px] rounded-[3px] bg-indigo-400 border border-indigo-300/50" />
-          <span className="text-[10px] text-slate-300 font-medium">More</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-slate-300 font-semibold">Less</span>
+          <div className="w-[14px] h-[14px] rounded-[3px] bg-slate-700/30 border border-white/5" />
+          <div className="w-[14px] h-[14px] rounded-[3px] bg-slate-500/40 border border-slate-500/25" />
+          <div className="w-[14px] h-[14px] rounded-[3px] bg-slate-400/70 border border-slate-400/40" />
+          <div className="w-[14px] h-[14px] rounded-[3px] bg-indigo-400 border border-indigo-300/50" />
+          <span className="text-[11px] text-slate-300 font-semibold">More</span>
         </div>
       </div>
     </OpenCard>
@@ -319,32 +319,37 @@ const CalendarCard = memo(function CalendarCard() {
   const dayLabels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   return (
-    <OpenCard className="w-full h-full">
-      <span className="text-lg font-bold text-slate-100 tracking-tight drop-shadow-sm">
-        Calendar
-      </span>
-      <span className="text-[10px] font-semibold tracking-widest text-slate-300 uppercase mt-0.5 mb-4">
+    <OpenCard className="w-full h-full flex flex-col p-4 sm:p-5">
+      <div className="flex justify-start w-full mb-2">
+        <span className="text-xs font-bold tracking-widest text-slate-200 uppercase px-3 py-1.5 border border-white/10 rounded-2xl bg-white/5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] w-fit">
+          Calendar
+        </span>
+      </div>
+
+      <span className="text-xs font-bold tracking-widest text-indigo-200 uppercase mt-2 mb-3 block">
         {monthName} {year}
       </span>
 
+      <div className="w-full h-[1px] bg-gradient-to-r from-white/[0.15] via-white/[0.05] to-transparent mb-3"></div>
+
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayLabels.map((d) => (
-          <span key={d} className="text-[9px] font-bold text-slate-300 text-center">
+          <span key={d} className="text-[10px] font-extrabold text-slate-300 text-center uppercase">
             {d}
           </span>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1 flex-1 content-start">
+      <div className="grid grid-cols-7 gap-1 flex-1 content-start mt-1">
         {Array.from({ length: firstDayOffset }).map((_, i) => (
           <span key={`empty-${i}`} />
         ))}
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
           <span
             key={day}
-            className={`text-[10px] font-mono font-medium w-6 h-6 flex items-center justify-center rounded-md transition-colors ${
+            className={`text-[11px] font-mono font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md transition-colors ${
               day === currentDay
-                ? "bg-indigo-500 text-white font-bold shadow-[0_0_12px_rgba(99,102,241,0.6)]"
+                ? "bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.6)]"
                 : day < currentDay
                 ? "text-slate-400 hover:bg-white/5 hover:text-slate-200"
                 : "text-slate-200 hover:bg-white/10"
@@ -377,32 +382,19 @@ export default function PerformanceDashboard() {
   return (
     <section className="relative w-full px-4 md:px-8 py-12 flex flex-col items-center overflow-x-hidden bg-transparent">
       
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="mb-10 text-center w-full max-w-6xl px-4 z-10"
-      >
+     {/* ─── REFINED & ELEGANT HEADER ─── */}
+      <div className="mb-10 w-full max-w-6xl z-10 flex flex-col items-start">
         <h2
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-200 drop-shadow-md leading-tight flex items-center justify-center gap-1"
+          className="text-2xl sm:text-3xl md:text-4xl tracking-tight text-left"
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
         >
-          <span
-            className="text-slate-500/50 text-4xl sm:text-5xl font-serif leading-none select-none"
-            aria-hidden="true"
-          >
-            &ldquo;
-          </span>
-          A personal dashboard for analysing your performance
-          <span
-            className="text-slate-500/50 text-4xl sm:text-5xl font-serif leading-none select-none"
-            aria-hidden="true"
-          >
-            &rdquo;
-          </span>
+          <span className="font-medium text-slate-400">A personal dashboard for</span>{" "}
+          <span className="font-extrabold text-slate-100">analysing your performance.</span>
         </h2>
-      </motion.div>
-
+        
+        {/* Divider with breathing room (mt-6) and smooth fade */}
+        <div className="w-full h-[1px] bg-gradient-to-r from-white/[0.2] via-white/[0.05] to-transparent mt-6"></div>
+      </div>
       <motion.div
         variants={containerVariants}
         initial="hidden"

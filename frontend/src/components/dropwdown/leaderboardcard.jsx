@@ -1,24 +1,16 @@
 import React, { useState, useEffect } from 'react';
-
 // ==========================================
-// 1. LEADERBOARD COMPONENT
+// 1. LEADERBOARD COMPONENT (Icon Size & Blend Mode Fixed)
 // ==========================================
 const Leaderboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const users = [
-    { id: 1, name: 'Killua Zoldyck', time: '09 hr 38 min', profilePic: '/killua.png', badgeIcon: '/killuabadge.png' },
-    { id: 2, name: 'Monkey D Luffy', time: '06 hr 02 min', profilePic: '/luffy.png', badgeIcon: '/luffybadge.png' },
-    { id: 3, name: 'Roronoa Zoro', time: '03 hr 42 min', profilePic: '/zoro.png', badgeIcon: '/zorobadge.png' },
+    { id: 1, name: 'Killua', streak: '21d streak', profilePic: '/killua.png', fireIcon: '/color-fire.png' },
+    { id: 2, name: 'Monkey', streak: '18d streak', profilePic: '/luffy.png', fireIcon: '/color-fire.png' },
+    { id: 3, name: 'Roronoa', streak: '12d streak', profilePic: '/zoro.png', fireIcon: '/color-fire.png' },
   ];
 
   return (
-    <div className="w-[340px] h-[340px] font-sans relative z-10 shrink-0">
+    <div className="w-full max-w-sm h-[340px] font-sans relative z-10 shrink-0">
       <div 
         className="w-full h-full rounded-2xl p-5 sm:p-6 flex flex-col relative overflow-hidden backdrop-blur-xl transition-all duration-300 hover:-translate-y-1"
         style={{
@@ -26,11 +18,7 @@ const Leaderboard = () => {
           border: "1px solid rgba(255, 255, 255, 0.05)",
           borderTop: "1px solid rgba(255, 255, 255, 0.15)",
           borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
-          boxShadow: `
-            8px 12px 32px rgba(0, 0, 0, 0.3), 
-            inset 1px 1px 2px rgba(255, 255, 255, 0.1),
-            inset -1px -1px 4px rgba(0, 0, 0, 0.2)
-          `,
+          boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)`,
         }}
       >
         <div className="flex justify-start mb-4 shrink-0">
@@ -41,60 +29,34 @@ const Leaderboard = () => {
         
         <div className="w-full h-[1px] bg-gradient-to-r from-white/[0.12] via-white/[0.05] to-transparent mb-3 shrink-0"></div>
 
-        <div className="flex flex-col flex-1 justify-center gap-1">
-          {isLoading ? (
-            // SKELETON LOADER
-            [1, 2, 3].map((item) => (
-              <div key={item} className="flex items-center gap-4 p-3 border-b border-white/[0.04] last:border-0 animate-pulse">
-                <div className="w-6 h-6 rounded bg-slate-600/20 shrink-0"></div>
-                <div className="w-12 h-12 rounded-xl bg-slate-600/20 shrink-0"></div>
-                <div className="flex-1 flex flex-col gap-2">
-                  <div className="w-28 h-4 bg-slate-600/20 rounded"></div>
-                  <div className="w-20 h-3 bg-slate-600/20 rounded"></div>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-slate-600/20 shrink-0"></div>
-              </div>
-            ))
-          ) : (
-            // ACTUAL CONTENT
-            users.map((user, index) => (
-              <div 
-                key={user.id} 
-                className="group flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:bg-white/[0.04] hover:border-white/[0.05] transition-all duration-300"
-              >
-                <div className="shrink-0 w-6 text-center">
-                  <span className="text-xl font-extrabold text-slate-400 group-hover:text-slate-200 transition-colors duration-300">
-                    #{index + 1}
-                  </span>
-                </div>
-                <div className="shrink-0 relative">
+        <div className="flex flex-col flex-1 justify-center gap-2">
+          {users.map((user, index) => (
+            <div 
+              key={user.id} 
+              className="group flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:bg-white/[0.04] hover:border-white/[0.05] transition-all duration-300"
+            >
+              <span className="text-xl font-extrabold text-slate-500 w-6 text-center">#{index + 1}</span>
+              
+              <img 
+                src={user.profilePic} 
+                alt={user.name} 
+                className="w-12 h-12 rounded-xl border border-white/10 object-cover" 
+              />
+              
+              <div className="flex-1 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-200">{user.name}</h3>
+                <div className="flex items-center gap-1.5">
+                  {/* mix-blend-mode: screen se image ka background dark navy blue pe transparent ho jayega */}
                   <img 
-                    src={user.profilePic} 
-                    alt={user.name} 
-                    className="w-12 h-12 rounded-xl border border-white/10 object-cover group-hover:border-white/30 transition-colors duration-300" 
+                    src={user.fireIcon} 
+                    alt="streak" 
+                    className="w-6 h-6 object-contain mix-blend-screen opacity-90" 
                   />
-                </div>
-                <div className="flex-1 flex flex-col justify-center min-w-0">
-                  <h3 className="text-base font-bold text-slate-200 tracking-wide group-hover:text-white transition-colors duration-300 truncate">
-                    {user.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="w-2 h-2 rounded-full bg-blue-500/60 group-hover:bg-blue-400 transition-colors duration-300 shrink-0 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
-                    <span className="text-slate-300 font-mono text-xs tracking-wider truncate">
-                      {user.time}
-                    </span>
-                  </div>
-                </div>
-                <div className="shrink-0 flex items-center justify-center">
-                  <img 
-                    src={user.badgeIcon} 
-                    alt="badge" 
-                    className="w-9 h-9 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.2)] transition-all duration-300" 
-                  />
+                  <span className="text-[10px] font-bold text-slate-400 tracking-wider">{user.streak}</span>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -274,18 +236,19 @@ const ConsistencyCard = () => {
 // ==========================================
 // MAIN DASHBOARD COMPONENT (WRAPPER) - YAHAN FIX KIYA HAI
 // ==========================================
+// ==========================================
+// MAIN DASHBOARD COMPONENT (WRAPPER)
+// ==========================================
 const Dashboard = () => {
   return (
-    // Yahan se 'overflow-x-auto' hata diya hai jo shadow cut kar raha tha
     <div className="w-full flex justify-center items-start p-4 sm:p-6 md:p-10 mt-12 sm:mt-16">
-      {/* Width thodi si increase ki (1068 -> 1100px) taaki shadow ko render hone ki space mile */}
       <div className="flex flex-col w-full max-w-[1100px]">
         
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-6 tracking-wide text-left">
-          Your Progress, At a Glance.
+        {/* Yahan rounded-4xl ko rounded-xl kiya hai, aur w-fit add kiya hai taaki border text tak hi rahe */}
+        <h2 className="text-xl sm:text-2xl border border-white/10 rounded-xl p-3 font-bold text-slate-100 mb-9 tracking-wide text-left w-fit shadow-sm bg-white/5">
+          Your Progress At a Glance
         </h2>
         
-        {/* Added pb-4 so shadow doesn't cut at the bottom either */}
         <div className="flex flex-col lg:flex-row gap-6 justify-start items-center lg:items-start w-full pb-4">
           <Leaderboard />
           <MomentumCard />
@@ -296,5 +259,4 @@ const Dashboard = () => {
     </div>
   );
 };
-
 export default Dashboard;
