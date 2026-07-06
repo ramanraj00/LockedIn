@@ -7,10 +7,12 @@
   font-display: swap;
 }
 
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
+html, body {
+  /* 1. Ye command Mac/Safari ko page bounce (slide) karne se strictly rok degi */
+  overscroll-behavior-y: none; 
+  
+  /* 2. Ye The 'Safety Net': Background ko apne dark theme jaisa set karna. 
+     Isse agar mobile pe kabhi slide ho bhi gaya, toh ganda white border nahi aayega, 
+     balki invisible rahega! */
+  background-color: #020617; 
 }
