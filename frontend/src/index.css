@@ -1,5 +1,11 @@
 @import "tailwindcss";
-
+@font-face {
+  font-family: 'EurostileExtendedBlack';
+  src: url('/fonts/EurostileExtendedBlack.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 html,
 body,

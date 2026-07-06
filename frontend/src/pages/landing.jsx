@@ -5,6 +5,7 @@ import InteractiveDropdownDashboard from "../components/dropwdown/dropdownCrad";
 import PerformanceDashboard from "@/components/dropwdown/feature";
 import StatSection from "../components/dropwdown/StatSection";
 import Leaderboard from "@/components/dropwdown/leaderboardcard";
+import Footer from "@/components/dropwdown/footer";
 import { motion } from "framer-motion";
 
 // ─── AMBIENT BACKGROUND (Liquid Blue Gradient Blobs) ───
@@ -179,6 +180,7 @@ function Landing() {
           {/* 👆 KHEL KHATAM 👆 */}
 
         </div>
+        <Footer/>
       </div>
       
     </div>
