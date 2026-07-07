@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, memo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,33 +33,41 @@ function Navbar() {
   const handleScroll = (id) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      // ✅ "smooth" ki jagah "auto" kar diya, ab seedhe section open hoga
+      element.scrollIntoView({ behavior: "auto" });
       setIsOpen(false);
     }
   };
 
+  const navigateToSignup = () => {
+    window.location.href = "/signup";
+  };
+
+  const navigateToLogin = () => {
+    window.location.href = "/login";
+  };
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300`}>
-      {/* DESKTOP ROW */}
-      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-6">
+    <nav className={`fixed top-0 left-0 right-0 z-[999] bg-transparent transition-all duration-300 pointer-events-none`}>
+      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-6 pointer-events-auto">
         
-        {/* LOGO - Scroll effect restricted to desktop (md) only */}
+        {/* LOGO */}
         <div
           onClick={() => handleScroll("hero-section")}
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
           className={`cursor-pointer text-2xl font-black tracking-tighter select-none transition-all duration-300 text-white ${
             scrolled
-              ? "md:bg-white md:text-black md:rounded-2xl md:px-4 md:py-1.5 md:shadow-lg"
-              : ""
+              ? "opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto md:bg-white md:text-black md:rounded-2xl md:px-4 md:py-1.5 md:shadow-lg"
+              : "opacity-100"
           }`}
         >
           LockedIn
         </div>
         
-        {/* Desktop Navigation links — hidden on scroll */}
+        {/* Desktop Navigation links */}
         <div
           className={`hidden md:flex items-center gap-16 text-zinc-400 transition-all duration-300 ${
-            scrolled ? "opacity-0 pointer-events-none" : "opacity-100"
+            scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
           }`}
         >
           <span
@@ -69,21 +77,26 @@ function Navbar() {
             Home
           </span>
           <span
-            onClick={() => handleScroll("features-section")}
+            onClick={() => handleScroll("dashboard-section")}
             className="cursor-pointer font-medium hover:text-white transition-colors duration-200"
           >
             Features
+          </span>
+          <span
+            onClick={() => handleScroll("leaderboard-section")}
+            className="cursor-pointer font-medium hover:text-white transition-colors duration-200"
+          >
+            More
           </span>
         </div>
         
         {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          {/* Login button — hidden on scroll */}
           <div 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             className={`border border-dashed rounded-xl p-1 transition-all duration-300 ${
-              scrolled ? "opacity-0 pointer-events-none" : ""
+              scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
             }`}
             style={{
               borderColor: position.x !== 0 || position.y !== 0 ? "rgba(255, 255, 255, 0.4)" : "transparent", 
@@ -96,6 +109,7 @@ function Navbar() {
               transition={{ type: 'spring', stiffness: 150, damping: 25, mass: 0.3 }}
             >
               <button 
+                onClick={navigateToLogin}
                 style={{ fontFamily: "'Instrument Sans', sans-serif" }}
                 className="bg-transparent hover:text-white text-zinc-200 font-medium rounded-lg px-4 py-2 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
@@ -104,50 +118,50 @@ function Navbar() {
             </motion.div>
           </div>
           
-          {/* Small Uiverse Signup button — always visible on desktop */}
           <button 
+            onClick={navigateToSignup}
             style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-            className="text-sm font-bold text-[#fafafa] uppercase px-4 py-1.5 rounded-lg border-2 border-[#fafafa] bg-[#252525] shadow-[2px_2px_#fafafa] cursor-pointer transition-all active:shadow-none active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap"
+            className={`text-sm font-bold text-[#fafafa] uppercase px-4 py-1.5 rounded-lg border-2 border-[#fafafa] bg-[#252525] shadow-[2px_2px_#fafafa] cursor-pointer transition-all active:shadow-none active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap ${
+              scrolled ? "pointer-events-auto" : ""
+            }`}
           >
             Signup
           </button>
         </div>
         
-        {/* Mobile Hamburger Trigger — ALWAYS visible on mobile, no scroll movement */}
+        {/* Mobile Hamburger Trigger */}
         <button
           onClick={() => setIsOpen(true)}
-          className="md:hidden text-zinc-400 hover:text-white transition-all duration-300 p-1"
+          className={`md:hidden text-zinc-400 hover:text-white transition-all duration-300 p-2 rounded-full pointer-events-auto ${
+            scrolled ? "bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]" : ""
+          }`}
         >
           <Menu size={24} />
         </button>
         
       </div>
       
-      {/* PREMIUM GLASSMORPHISM SIDEBAR SYSTEM FOR MOBILE */}
+      {/* MOBILE DRAWER */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Smooth Backdrop Mask Layer */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 md:hidden"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 md:hidden pointer-events-auto"
             />
-            {/* 📍 Frosted Glass Side Sheet Panel Container */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.28, ease: "easeOut" }}
-              className="fixed top-0 right-0 bottom-0 w-[290px] sm:w-[320px] bg-white/[0.01] backdrop-blur-2xl border-l border-white/[0.04] rounded-l-3xl p-6 z-50 md:hidden flex flex-col justify-between shadow-[0_0_60px_rgba(0,0,0,0.4)] overflow-hidden"
+              className="fixed top-0 right-0 bottom-0 w-[290px] sm:w-[320px] bg-white/[0.01] backdrop-blur-2xl border-l border-white/[0.04] rounded-l-3xl p-6 z-50 md:hidden flex flex-col justify-between shadow-[0_0_60px_rgba(0,0,0,0.4)] overflow-hidden pointer-events-auto"
             >
-              {/* HIGH-LIGHT PRECISE GLASS EDGE SHINE OVERLAY */}
               <div className="absolute top-0 left-0 bottom-0 w-[1px] bg-gradient-to-b from-white/0 via-white/25 via-white/10 to-white/0 pointer-events-none z-20" />
               <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-white/25 to-white/0 pointer-events-none z-20" />
               
-              {/* DYNAMIC VECTOR NOISE SHADER LAYER */}
               <div 
                 className="absolute inset-0 pointer-events-none opacity-[0.038] mix-blend-overlay z-0"
                 style={{
@@ -155,10 +169,8 @@ function Navbar() {
                 }}
               />
               
-              {/* DEEP MIDNIGHT BLUE RADIAL TINT OVERLAY MATRIX */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#141633]/80 via-[#0a0c1f]/90 to-[#050614]/98 pointer-events-none z-0" />
               
-              {/* Top Content Row Area (Isolated Layer) */}
               <div className="flex flex-col gap-8 relative z-10">
                 <div className="flex items-center justify-between">
                   <div
@@ -174,7 +186,7 @@ function Navbar() {
                     <X size={24} />
                   </button>
                 </div>
-                {/* Navigation items */}
+                
                 <div className="flex flex-col gap-3">
                   <span
                     onClick={() => handleScroll("hero-section")}
@@ -184,26 +196,33 @@ function Navbar() {
                     Home
                   </span>
                   <span
-                    onClick={() => handleScroll("features-section")}
+                    onClick={() => handleScroll("dashboard-section")}
                     style={{ fontFamily: "'Instrument Sans', sans-serif" }}
                     className="cursor-pointer text-sm font-medium text-zinc-300 hover:text-white bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3.5 transition-all duration-200 block shadow-inner"
                   >
                     Features
                   </span>
+                  <span
+                    onClick={() => handleScroll("leaderboard-section")}
+                    style={{ fontFamily: "'Instrument Sans', sans-serif" }}
+                    className="cursor-pointer text-sm font-medium text-zinc-300 hover:text-white bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3.5 transition-all duration-200 block shadow-inner"
+                  >
+                    More
+                  </span>
                 </div>
               </div>
               
-              {/* Bottom Interface Buttons Layout Area */}
               <div className="flex flex-col gap-3 mb-4 relative z-10">
                 <button 
+                  onClick={navigateToLogin}
                   style={{ fontFamily: "'Instrument Sans', sans-serif" }}
                   className="w-full text-center py-3 text-white font-medium rounded-xl border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] active:scale-[0.99] transition-all text-sm"
                 >
                   Login
                 </button>
                 
-                {/* Small Uiverse Signup Button for Mobile Drawer */}
                 <button 
+                  onClick={navigateToSignup}
                   style={{ fontFamily: "'Instrument Sans', sans-serif" }}
                   className="w-full text-center text-sm font-bold text-[#fafafa] uppercase px-4 py-2.5 rounded-lg border-2 border-[#fafafa] bg-[#252525] shadow-[2px_2px_#fafafa] cursor-pointer transition-all active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
                 >

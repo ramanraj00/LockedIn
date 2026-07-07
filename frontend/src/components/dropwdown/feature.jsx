@@ -153,67 +153,74 @@ const BarChart = memo(function BarChart() {
   );
 });
 
-// ─── 2. STOPWATCH COMPONENT ───
 const CIRCUMFERENCE = 2 * Math.PI * 72;
-
-const Stopwatch = memo(function Stopwatch() {
+// ─── 1. EXTRACTED CLOCK DISPLAY (Har second sirf ye re-render hoga) ───
+const ClockDisplay = memo(({ isRunning, resetCounter }) => {
   const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-
+  // Timer logic ab sirf is chote component me hai
   useEffect(() => {
     if (!isRunning) return;
     const interval = setInterval(() => setTime((p) => p + 1), 1000);
     return () => clearInterval(interval);
   }, [isRunning]);
-
-  const mins = Math.floor(time / 60)
-    .toString()
-    .padStart(2, "0");
-  const secs = (time % 60).toString().padStart(2, "0");
-
-  const handleToggle = useCallback(() => setIsRunning((p) => !p), []);
-  const handleReset = useCallback(() => {
-    setIsRunning(false);
+  // Jab parent se Reset button click ho, tab time zero ho jaye
+  useEffect(() => {
     setTime(0);
-  }, []);
-
+  }, [resetCounter]);
+  const mins = Math.floor(time / 60).toString().padStart(2, "0");
+  const secs = (time % 60).toString().padStart(2, "0");
   const progress = (time % 60) / 60;
   const offset = CIRCUMFERENCE - progress * CIRCUMFERENCE;
-
+  return (
+    <div className="relative w-[160px] h-[160px] flex items-center justify-center">
+      <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+        <circle
+          cx="80"
+          cy="80"
+          r="72"
+          fill="none"
+          stroke="rgba(129,140,248,0.8)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={CIRCUMFERENCE}
+          strokeDashoffset={offset}
+          style={{
+            transition: "stroke-dashoffset 0.3s ease",
+            willChange: "stroke-dashoffset",
+          }}
+        />
+      </svg>
+      <span className="font-mono text-4xl font-extrabold tracking-widest text-white z-10 drop-shadow-md">
+        {mins}:{secs}
+      </span>
+    </div>
+  );
+});
+// ─── 2. MAIN STOPWATCH COMPONENT (Ab ye har second lag nahi marega) ───
+const Stopwatch = memo(function Stopwatch() {
+  const [isRunning, setIsRunning] = useState(false);
+  const [resetCounter, setResetCounter] = useState(0);
+  const handleToggle = useCallback(() => setIsRunning((p) => !p), []);
+  
+  const handleReset = useCallback(() => {
+    setIsRunning(false);
+    setResetCounter((p) => p + 1); // Ye child component ko bata dega ki reset karna hai
+  }, []);
   return (
     <OpenCard className="flex flex-col w-full h-full p-2">
+      
+      {/* 1. Header (Static - no re-render) */}
       <div className="flex justify-start w-full mb-2">
         <span className="text-xs font-bold tracking-widest text-slate-200 uppercase px-3 py-1.5 border border-white/10 rounded-2xl bg-white/5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] w-fit">
           Stopwatch
         </span>
       </div>
-
+      {/* 2. The Clock (Sirf iske andar number badlega) */}
       <div className="flex-1 flex items-center justify-center w-full">
-        <div className="relative w-[160px] h-[160px] flex items-center justify-center">
-          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
-            <circle
-              cx="80"
-              cy="80"
-              r="72"
-              fill="none"
-              stroke="rgba(129,140,248,0.8)"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={offset}
-              style={{
-                transition: "stroke-dashoffset 0.3s ease",
-                willChange: "stroke-dashoffset",
-              }}
-            />
-          </svg>
-          <span className="font-mono text-4xl font-extrabold tracking-widest text-white z-10 drop-shadow-md">
-            {mins}:{secs}
-          </span>
-        </div>
+        <ClockDisplay isRunning={isRunning} resetCounter={resetCounter} />
       </div>
-
+      {/* 3. Controls (Sirf button click par hi update honge) */}
       <div className="flex items-center gap-2 w-full mt-auto pt-2">
         <button
           onClick={handleToggle}

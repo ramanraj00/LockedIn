@@ -211,14 +211,25 @@ const DARK_CARD_BG = "rgba(39, 39, 42, 0.75)";
 
 const InteractiveCards = memo(() => {
   const [activeCard, setActiveCard] = useState(1);
-  const [isStaticPhase, setIsStaticPhase] = useState(true);
+  
+  // 🌟 FIX: Initial load pe hi mobile check kar liya. 
+  // Mobile (<768px) pe sidha false taaki static phase na aaye aur direct alternate ho.
+  const [isStaticPhase, setIsStaticPhase] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 768; 
+    }
+    return true;
+  });
 
   useEffect(() => {
+    // Agar already false hai (like on mobile), toh 2 second wait mat karo
+    if (!isStaticPhase) return; 
+
     const staticTimer = setTimeout(() => {
       setIsStaticPhase(false);
     }, 2000);
     return () => clearTimeout(staticTimer);
-  }, []);
+  }, [isStaticPhase]);
 
   useEffect(() => {
     if (isStaticPhase) return;
@@ -228,7 +239,6 @@ const InteractiveCards = memo(() => {
     return () => clearInterval(cardInterval);
   }, [isStaticPhase]);
 
-  // 🌟 FIX 1: White Cards (Capsules) ka Text aur Size clean kiya hai (no extra styling, just fixed font size)
   const card1Content = (
     <>
       <motion.div
@@ -259,7 +269,6 @@ const InteractiveCards = memo(() => {
       animate="visible"
       className="flex flex-col gap-3 text-xs sm:text-sm font-medium text-zinc-200"
     >
-      {/* 🌟 GLASS FIX 2: Andar ke items ka color soft kiya taaki glass ke sath blend ho */}
       <motion.div
         variants={itemVariants}
         className="flex items-center gap-2.5 bg-black/20 p-2.5 rounded-lg border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
@@ -284,16 +293,15 @@ const InteractiveCards = memo(() => {
     </motion.div>
   );
 
-  // Tera original layout class wapas (Left-Right positioning)
+  // 👇 YAHAN CHANGE HAI: Class ke end mein `translate-y-[3px]` laga diya hai card ko exactly 3px neeche karne ke liye.
   const darkCardClass =
-    "w-[92%] sm:w-full md:w-80 border border-white/10 rounded-2xl p-4 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl overflow-hidden mx-auto md:mx-0 md:ml-auto md:-mr-12 -mt-4 md:mt-0";
+    "w-[92%] sm:w-full md:w-80 border border-white/10 rounded-2xl p-4 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl overflow-hidden mx-auto md:mx-0 md:ml-auto md:-mr-12 -mt-4 md:mt-0 translate-y-[12px]";
 
   return (
     <div
       className="relative w-full max-w-xs sm:max-w-sm md:max-w-7xl flex flex-col md:flex-row items-center justify-center gap-4 mt-1 md:mt-2 pt-2 md:pt-10"
       style={{ contain: "layout style" }}
     >
-      {/* 🌟 FIX 3: min-h-[260px] taaki page stretch/shrink na ho transition ke time */}
       <div className="w-full min-h-[260px] flex items-start justify-center text-left z-20">
         <AnimatePresence mode="wait">
           {isStaticPhase ? (
@@ -301,7 +309,6 @@ const InteractiveCards = memo(() => {
               key="both-cards-static"
               initial={false}
               exit={{ opacity: 0, transition: { duration: 0.2 } }}
-              // Tera original flex layout
               className="w-full flex flex-col md:flex-row items-center md:items-start"
             >
               {/* Card 1 */}
@@ -319,7 +326,6 @@ const InteractiveCards = memo(() => {
                 initial={false}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 className={darkCardClass}
-                // OPTIMIZATION: Fix Safari glassmorphism flicker
                 style={{ background: DARK_CARD_BG, WebkitBackfaceVisibility: "hidden" }}
               >
                 {renderCard2Content(true)}
@@ -341,7 +347,6 @@ const InteractiveCards = memo(() => {
               key="black-checklist-card"
               {...card2Enter}
               className={darkCardClass}
-              // OPTIMIZATION: Fix Safari glassmorphism flicker
               style={{ background: DARK_CARD_BG, WebkitBackfaceVisibility: "hidden" }}
             >
               {renderCard2Content(false)}
