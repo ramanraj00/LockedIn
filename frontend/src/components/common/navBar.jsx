@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // 👈 1. Naya Import Add kiya
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +10,8 @@ function Navbar() {
   const loginRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const STRENGTH = 0.35;
+
+  const navigate = useNavigate(); // 👈 2. Router ka Hook initialize kiya
 
   useEffect(() => {
     const onScroll = () => {
@@ -33,18 +36,20 @@ function Navbar() {
   const handleScroll = (id) => {
     const element = document.getElementById(id);
     if (element) {
-      // ✅ "smooth" ki jagah "auto" kar diya, ab seedhe section open hoga
       element.scrollIntoView({ behavior: "auto" });
       setIsOpen(false);
     }
   };
 
+  // 👇 3. Yahan 'window.location.href' ko hata kar 'navigate' laga diya hai
   const navigateToSignup = () => {
-    window.location.href = "/signup";
+    navigate("/signup"); 
+    setIsOpen(false); // Mobile menu auto-close
   };
 
   const navigateToLogin = () => {
-    window.location.href = "/login";
+    navigate("/login");
+    setIsOpen(false); // Mobile menu auto-close
   };
 
   return (
