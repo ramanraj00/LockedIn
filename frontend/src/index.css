@@ -6,6 +6,12 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'Pixeloid';
+  src: url('/fonts/pixeloid/PixeloidSans.ttf') format('truetype'); 
+  font-weight: normal;
+  font-style: normal;
+}
 
 html, body {
   /* 1. Ye command Mac/Safari ko page bounce (slide) karne se strictly rok degi */
