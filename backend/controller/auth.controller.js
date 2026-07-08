@@ -18,13 +18,17 @@ exports.signup = async (req, res) => {
     const { name, password, imageUrl , publicKey } = req.body;
     const email = req.body.email.toLowerCase();
 
-    const existingUser = await usermodel.findOne({ email });
+    
+const existingUser = await usermodel.findOne({ email });
 
-    if (existingUser) {
-      return res.status(400).json({
-        message: "Unable to create account",
-      });
-    }
+console.log("Email:", email);
+console.log("Existing User:", existingUser);
+
+if (existingUser) {
+  return res.status(400).json({
+    message: "Unable to create account",
+  });
+}
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -42,10 +46,17 @@ exports.signup = async (req, res) => {
   { expiresIn: "7d" }
 );
 
-    res.status(201).json({
-      message: "Account created Successfully",
-      token
-    });
+   res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,      // development
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+});
+
+res.status(201).json({
+    message: "Account created Successfully"
+});
+
   } catch (err) {
     res.status(500).json({
       message: "Error creating account",
@@ -79,10 +90,16 @@ exports.signin = async (req, res) => {
       expiresIn: "7d",
     });
 
-    return res.json({
-      token,
-      message: "Login Successful",
-    });
+   res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+});
+
+return res.json({
+    message: "Login Successful"
+});
   } catch (err) {
     res.status(500).json({
       message: "Login error",
@@ -215,4 +232,18 @@ exports.googleAuth = async (req, res) => {
       message: "Google Authentication failed",
     });
   }
+};
+
+// Logout ------------------------------------------------------------------------
+
+exports.logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false, // Development
+  });
+
+  return res.status(200).json({
+    message: "Logout Successful",
+  });
 };

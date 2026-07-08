@@ -14,7 +14,7 @@ const { googleAuthSchema } = require("../validators/googleauthvalidator");
 
 const loginLimiter = ratelimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 100,
   message: "Too many login attempts",
 });
 
@@ -45,5 +45,16 @@ router.post("/google-auth",
   userValidationMiddleware(googleAuthSchema),
   authController.googleAuth
 );
+
+router.post("/logout", authController.logout);
+
+router.post("/google-auth",
+  userValidationMiddleware(googleAuthSchema),
+  authController.googleAuth
+);
+
+router.post("/logout", authController.logout);
+
+module.exports = router;
 
 module.exports = router;
