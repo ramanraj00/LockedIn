@@ -40,11 +40,12 @@ const userSchema = new Schema({
 
     resetToken:{
         type:String,
-        select:false
+        default: undefined
     },
 
     resetTokenExpiry:{
         type:Date,
+         default: undefined
 
     },
 

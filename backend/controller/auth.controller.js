@@ -21,8 +21,7 @@ exports.signup = async (req, res) => {
     
 const existingUser = await usermodel.findOne({ email });
 
-console.log("Email:", email);
-console.log("Existing User:", existingUser);
+
 
 if (existingUser) {
   return res.status(400).json({
@@ -160,7 +159,9 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const user = await usermodel.findById(decoded.id);
+   const user = await usermodel.findById(decoded.id).select("+resetToken +resetTokenExpiry");
+
+    
 
     if (!user || user.resetToken !== token) {
       return res.status(400).json({
