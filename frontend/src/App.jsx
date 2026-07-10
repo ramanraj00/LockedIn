@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom"; // Yaha se BrowserRouter hata 
 
 import Landing from "../src/pages/landing.jsx"; 
 import Login from "../src/pages/login.jsx"; 
+import ResetPassword from './components/loginpages/ResetPassword.jsx';
 
 function App() {
   return (
@@ -14,6 +15,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       
       <Route path="/signup" element={<Login />} />
+
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
       
     </Routes>
   );
