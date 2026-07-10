@@ -197,15 +197,23 @@ exports.googleAuth = async (req, res) => {
   try {
     const token = req.body.token;
 
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: CLIENT_ID,
+    // YAHAN SE CHANGE HAI -------------------
+    // Backend Google ki official API ko call karke verify karega
+    const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${token}` }
     });
+    
+    if (!googleResponse.ok) {
+        return res.status(400).json({ message: "Invalid Google Token" });
+    }
 
-    const payload = ticket.getPayload();
+    const payload = await googleResponse.json();
+    // YAHAN TAK CHANGE THA ------------------
 
+    // Iske aage tumhara purana code chalega (jisme `user = await usermodel.findOne({ email: payload.email })` likha hua hai)
     let user = await usermodel.findOne({ email: payload.email });
-
+    
+    // ... baaki poora code waisa hi rahega jaisa pehle tha
     if (!user) {
       user = await usermodel.create({
         name: payload.name,
@@ -228,12 +236,15 @@ exports.googleAuth = async (req, res) => {
     return res.json({
       message: "Login successful",
     });
-  } catch (error) {
+    } catch (error) {
+   
     return res.status(400).json({
       message: "Google Authentication failed",
     });
   }
 };
+
+
 
 // Logout ------------------------------------------------------------------------
 
@@ -247,4 +258,9 @@ exports.logout = (req, res) => {
   return res.status(200).json({
     message: "Logout Successful",
   });
+};
+
+exports.checkAuth = (req, res) => {
+    // Agar control yahan tak pahuncha, iska matlab authMiddleware pass ho gaya!
+    res.status(200).json({ success: true, message: "Authorized" });
 };

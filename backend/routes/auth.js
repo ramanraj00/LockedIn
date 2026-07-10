@@ -5,12 +5,13 @@ const ratelimit = require("express-rate-limit");
 const authController = require("../controller/auth.controller");
 
 const userValidationMiddleware = require("../middleware/uservalidation");
+const authMiddleware = require("../middleware/authMiddleware"); // 👈 Ye line add karni zaroori thi!
 
 const { userValidSchema } = require("../validators/user.validator");
 const { userloginSchema } = require("../validators/login.validator");
 const { forgetpasswordvalidatorSchemna } = require("../validators/forgetemailvalidator");
 const { resetPasswordSchema } = require("../validators/resetPasswordvalidator");
-const { googleAuthSchema } = require("../validators/googleauthvalidator");
+const googleAuthSchema = require("../validators/googleauthvalidator");
 
 const loginLimiter = ratelimit({
   windowMs: 15 * 60 * 1000,
@@ -18,6 +19,8 @@ const loginLimiter = ratelimit({
   message: "Too many login attempts",
 });
 
+// 🔥 NEW SECURE ROUTE
+router.get("/check-auth", authMiddleware, authController.checkAuth);
 
 router.post("/signup",
   userValidationMiddleware(userValidSchema),
@@ -47,14 +50,5 @@ router.post("/google-auth",
 );
 
 router.post("/logout", authController.logout);
-
-router.post("/google-auth",
-  userValidationMiddleware(googleAuthSchema),
-  authController.googleAuth
-);
-
-router.post("/logout", authController.logout);
-
-module.exports = router;
 
 module.exports = router;
