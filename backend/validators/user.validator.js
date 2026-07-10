@@ -29,10 +29,7 @@ const userValidSchema = z.object({
     .optional(),
 
 
-     imageUrl: z
-     .string()
-     .url()
-     .optional()
+     imageUrl: z.string().optional()
     
 
 })

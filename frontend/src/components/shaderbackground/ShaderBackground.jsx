@@ -14,14 +14,12 @@ const FRAGMENT_SHADER = `
   uniform vec2 u_mouse;
   uniform float u_time;
   uniform float u_glow_intensity;
-  uniform float u_fade_offset;
+  uniform float u_fade_offset; // Fade float animation ke liye
 
   vec3 getLight(vec2 p, vec2 mouse) {
     vec2 dir = p - mouse;
     
-    // SUBLIMINAL FLOAT ANIMATION
-    // Light jab fade hogi toh ekdum naturally aur dheere se upar drift karegi.
-    // Is offset ko directly 'dir.y' me minus kiya hai taaki movement strictly vertically UP ho.
+    // SUBLIMINAL FLOAT ANIMATION: Fade hote waqt light organically vertically upar drift karegi
     dir.y -= u_fade_offset;
     
     float rad = 28.0 * 3.14159 / 180.0;
@@ -44,19 +42,26 @@ const FRAGMENT_SHADER = `
     float dist = length(rocketDir);
     
     // IMAGE-ACCURATE PREMIUM COLORS
-    vec3 color = vec3(0.0, 0.12, 0.85); // Rich Royal Blue Base
+    vec3 color = vec3(0.0, 0.12, 0.85); // Rich Royal Blue Core
     
-    // Subtle Mint Green sirf extreme left par
-    float mintFactor = smoothstep(0.3, -1.2, dir.x);
+    // === DYNAMIC COLOR PUSH EFFECT ===
+    // Glass ki physical diagonal ridges ke sath mouse ki vertical speed (dir.y) ko joda hai.
+    // Jab tum vertical move karoge, Mint aur Purple colors ek dusre ko fiercely push karenge!
+    float absoluteY = p.x * c + p.y * s;
+    float phase = absoluteY * 8.0 - u_time * 0.05; 
+    float colorPush = sin(phase * 6.28318 + dir.y * 12.0) * 0.2;
+    
+    // Mint Green (Pushed dynamically by the wave)
+    float mintFactor = smoothstep(0.3 + colorPush, -1.2 + colorPush, dir.x);
     color = mix(color, vec3(0.0, 0.85, 0.65), mintFactor);
     
-    // Deep Violet/Purple right side par
-    float purpleFactor = smoothstep(-0.3, 1.2, dir.x);
+    // Deep Purple (Pushed dynamically by the wave)
+    float purpleFactor = smoothstep(-0.3 + colorPush, 1.2 + colorPush, dir.x);
     color = mix(color, vec3(0.4, 0.0, 0.95), purpleFactor);
     
-    // Luminous Sky Blue core ekdum center me
     color = mix(color, vec3(0.0, 0.6, 1.0), exp(-dist * 2.5));
 
+    // ANIMATION SMOOTHNESS FIX
     float flow = sin(tubeDir.y * 3.0 - u_time * 1.5) * 0.5 + 0.5;
     float tailMask = smoothstep(0.0, -1.0, tubeDir.y); 
     float pulse = mix(1.0, 0.7 + flow * 0.5, tailMask);
@@ -66,7 +71,7 @@ const FRAGMENT_SHADER = `
     
     float glow = exp(-dist * falloff) * intensity * pulse;
     
-    // DEEP NAVY AMBIENT: Background ko pure dark-grey ki jagah ek expensive dark blue/indigo tint diya hai
+    // PREMIUM NAVY BACKGROUND: Dark grey ki jagah deep indigo blue jisse blue light POP kare
     vec3 ambient = vec3(0.03, 0.04, 0.08); 
     
     return ambient + color * glow;
@@ -168,7 +173,7 @@ export default function ShaderBackground() {
   
   const currentGlowRef = useRef(0.0);
   const lastMousePosRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const fadeOffsetRef = useRef(0.0); // Track offset for floating up
+  const fadeOffsetRef = useRef(0.0); 
 
   const createShader = useCallback((gl, type, source) => {
     const shader = gl.createShader(type);
@@ -262,13 +267,12 @@ export default function ShaderBackground() {
       const fadeSpeed = targetIntensity > currentGlowRef.current ? 0.2 : 0.015;
       currentGlowRef.current += (targetIntensity - currentGlowRef.current) * fadeSpeed;
       
-      // EXTREMELY SUBTLE, ORGANIC FLOAT ANIMATION
-      // Jab mouse rukta hai, toh light bohot organically (0.003 factor) upar drift karti hai.
-      // Ye itna smooth aur slow hai ki subliminal level par feel hoga, par directly aakhon me nahi chubhega.
+      // EXTREMELY SUBTLE FLOAT ANIMATION 
       if (speed <= 0.1 && currentGlowRef.current > 0.001) {
+          // Slowly and organically drift upwards
           fadeOffsetRef.current += (0.5 - fadeOffsetRef.current) * 0.003; 
       } else if (speed > 0.1) {
-          // Wapas grab karne par organically snap back hota hai
+          // Snap back smoothly when mouse moves again
           fadeOffsetRef.current += (0.0 - fadeOffsetRef.current) * 0.15;
       }
       
