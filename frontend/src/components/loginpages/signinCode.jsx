@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ShaderBackground from '../shaderbackground/ShaderBackground'; // 👈 adjust path as needed
 
 const AVATARS = [
     "/avatars/gwen.png",
@@ -17,25 +18,6 @@ const Signin = () => {
     const [error, setError] = useState(null); 
     const [successMsg, setSuccessMsg] = useState(null); 
     const [fieldErrors, setFieldErrors] = useState({}); 
-    
-    // 🌟 TYPEWRITER EFFECT
-    const [quote, setQuote] = useState("");
-    const fullQuote = "Secure your digital universe. One tap, infinite possibilities.";
-
-    useEffect(() => {
-        let i = 0;
-        let currentString = "";
-        const timer = setInterval(() => {
-            if (i < fullQuote.length) {
-                currentString += fullQuote.charAt(i);
-                setQuote(currentString);
-                i++;
-            } else {
-                clearInterval(timer);
-            }
-        }, 40);
-        return () => clearInterval(timer);
-    }, []);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -198,20 +180,22 @@ const Signin = () => {
                 `}
             </style>
 
-            <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-4 lg:p-8 bg-slate-950">
-                <div className="w-full max-w-[1100px] min-h-screen md:min-h-[700px] flex flex-col md:flex-row bg-[#0B1120] md:rounded-3xl overflow-hidden md:border border-white/[0.05] md:shadow-[0_0_80px_rgba(0,0,0,0.8)] relative">
+            {/* 🎨 WebGL SHADER BACKGROUND — replaces static gradient */}
+            <ShaderBackground />
+
+            <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10">
+                <div className="w-full max-w-[1100px] min-h-screen md:min-h-[700px] flex flex-col md:flex-row bg-[#01040a]/80 backdrop-blur-sm md:rounded-3xl overflow-hidden md:border border-white/[0.05] md:shadow-[0_20px_80px_rgba(0,0,0,0.5)] relative">
                     
-                    {/* 🖼️ LEFT SIDE - ORIGINAL IMAGE RESTORED */}
+                    {/* 🖼️ LEFT SIDE */}
                     <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black min-h-screen md:min-h-full z-0">
                         <img 
                             src="/lokind.jpg" 
                             alt="Background" 
                             className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100"
                         />
-                        {/* Mobile Gradient (To blend smoothly on mobile without tinting the top heavily) */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-slate-950/95 md:hidden pointer-events-none"></div>
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
                         
-                        <div className="relative z-10 flex flex-col h-[35vh] md:h-full p-8 md:p-12 justify-between pointer-events-none">
+                        <div className="relative z-10 flex flex-col h-[35vh] md:h-full p-8 md:p-10 pb-6 md:pb-8 justify-between pointer-events-none">
                             <div className="animate-fade-in pt-4 md:pt-0 pointer-events-auto">
                                 <span 
                                     onClick={() => navigate('/')}
@@ -222,21 +206,25 @@ const Signin = () => {
                                 </span>
                             </div>
                             
-                            <div className="text-white text-sm md:text-xl font-medium max-w-[280px] md:max-w-sm leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] pb-2 md:pb-10">
-                                <span className="opacity-70 text-indigo-400">"</span>
-                                {quote}
-                                <span className="animate-pulse text-indigo-400">|</span>
-                                <span className="opacity-70 text-indigo-400">"</span>
+                            <div className="flex flex-col pointer-events-auto mb-0">
+                                <span className="text-white/80 text-[12px] md:text-[13px] font-medium mb-1 md:mb-2 drop-shadow-md">
+                                    You can easily
+                                </span>
+                                <div className="text-white text-[22px] md:text-[28px] lg:text-[30px] font-bold leading-[1.2] tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                                    Get access your personal<br />
+                                    hub for clarity and<br />
+                                    productivity
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
-                    {/* ⚫ RIGHT SIDE (Midnight Blue / Slate Glassmorphism) */}
-                    <div className="w-full md:w-[55%] mt-[35vh] md:mt-0 bg-slate-900/60 md:bg-slate-900/70 backdrop-blur-[24px] md:border-l border-white/[0.06] border-t md:border-t-0 border-white/[0.1] p-6 sm:p-8 md:p-10 lg:p-16 flex flex-col justify-center relative overflow-hidden z-10 rounded-t-[2.5rem] md:rounded-none shadow-[0_-20px_40px_rgba(0,0,0,0.5)] md:shadow-none animate-slide-up min-h-[65vh] md:min-h-full">
+                    {/* ⚫ RIGHT SIDE */}
+                    <div className="w-full md:w-[55%] mt-[35vh] md:mt-0 bg-gradient-to-br from-[#051330]/95 to-[#01040a]/95 backdrop-blur-[24px] md:border-l border-white/[0.04] p-6 sm:p-8 md:p-10 lg:p-16 flex flex-col justify-center relative overflow-hidden z-10 rounded-t-[2.5rem] md:rounded-none shadow-[0_-20px_40px_rgba(0,0,0,0.5)] md:shadow-none animate-slide-up min-h-[65vh] md:min-h-full">
                         
-                        {/* WOW FACTOR: Monochromatic Deep Blue Glows */}
                         <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/15 rounded-full blur-[90px] pointer-events-none"></div>
-                        <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[90px] pointer-events-none"></div>
+                        <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-blue-400/15 rounded-full blur-[90px] pointer-events-none"></div>
 
                         <div className="w-full max-w-[400px] mx-auto z-10">
                             
@@ -255,7 +243,7 @@ const Signin = () => {
                             <button 
                                 type="button"
                                 onClick={handleGoogleAuth}
-                                className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-700/50 bg-slate-800/30 hover:bg-slate-700/50 backdrop-blur-sm transition-colors text-slate-200 text-sm font-medium cursor-pointer"
+                                className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] backdrop-blur-sm transition-colors text-white text-sm font-medium cursor-pointer"
                             >
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M22.56 12.25C22.56 11.47 22.49 10.73 22.36 10H12V14.26H17.92C17.67 15.63 16.89 16.79 15.72 17.57V20.34H19.29C21.37 18.42 22.56 15.6 22.56 12.25Z" fill="#4285F4"/>
@@ -267,9 +255,9 @@ const Signin = () => {
                             </button>
 
                             <div className="flex items-center gap-4 my-5 opacity-70">
-                                <div className="h-[1px] flex-1 bg-slate-700/50"></div>
-                                <span className="text-slate-500 text-[11px] uppercase tracking-widest font-semibold">Or</span>
-                                <div className="h-[1px] flex-1 bg-slate-700/50"></div>
+                                <div className="h-[1px] flex-1 bg-white/10"></div>
+                                <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">Or</span>
+                                <div className="h-[1px] flex-1 bg-white/10"></div>
                             </div>
 
                             {error && (
@@ -286,7 +274,7 @@ const Signin = () => {
                             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                                 
                                 <div className="flex flex-col gap-2.5">
-                                    <label className="text-[13px] text-slate-400 font-medium ml-1">Choose your Avatar</label>
+                                    <label className="text-[13px] text-slate-300 font-medium ml-1">Choose your Avatar</label>
                                     <div className="flex items-center justify-between gap-3 px-1">
                                         {AVATARS.map((avatar, index) => (
                                             <div 
@@ -298,7 +286,7 @@ const Signin = () => {
                                                         : 'opacity-50 hover:opacity-80'
                                                 }`}
                                             >
-                                                <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover bg-slate-800/50" />
+                                                <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover bg-white/5" />
                                             </div>
                                         ))}
                                     </div>
@@ -314,11 +302,11 @@ const Signin = () => {
                                             onChange={handleChange} 
                                             disabled={loading}
                                             placeholder=" " 
-                                            className={`peer w-full bg-slate-800/40 border ${fieldErrors.name ? 'border-red-500/60 animate-shake' : 'border-slate-700/50'} rounded-xl px-4 pt-5 pb-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-slate-800/60 transition-all disabled:opacity-50`} 
+                                            className={`peer w-full bg-white/[0.03] border ${fieldErrors.name ? 'border-red-500/60 animate-shake' : 'border-white/[0.06]'} rounded-xl px-4 pt-5 pb-2.5 text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/[0.06] transition-all disabled:opacity-50`} 
                                         />
                                         <label 
                                             htmlFor="name"
-                                            className={`absolute left-4 top-2 text-slate-500 text-[11px] font-medium transition-all duration-200 pointer-events-none
+                                            className={`absolute left-4 top-2 text-slate-400 text-[11px] font-medium transition-all duration-200 pointer-events-none
                                             translate-y-0
                                             peer-placeholder-shown:translate-y-2.5 peer-placeholder-shown:text-[13px] peer-placeholder-shown:font-normal
                                             peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:text-indigo-400 peer-focus:font-medium
@@ -340,11 +328,11 @@ const Signin = () => {
                                             onChange={handleChange} 
                                             disabled={loading}
                                             placeholder=" " 
-                                            className={`peer w-full bg-slate-800/40 border ${fieldErrors.email ? 'border-red-500/60 animate-shake' : 'border-slate-700/50'} rounded-xl px-4 pt-5 pb-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-slate-800/60 transition-all disabled:opacity-50`} 
+                                            className={`peer w-full bg-white/[0.03] border ${fieldErrors.email ? 'border-red-500/60 animate-shake' : 'border-white/[0.06]'} rounded-xl px-4 pt-5 pb-2.5 text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/[0.06] transition-all disabled:opacity-50`} 
                                         />
                                         <label 
                                             htmlFor="email"
-                                            className={`absolute left-4 top-2 text-slate-500 text-[11px] font-medium transition-all duration-200 pointer-events-none
+                                            className={`absolute left-4 top-2 text-slate-400 text-[11px] font-medium transition-all duration-200 pointer-events-none
                                             translate-y-0
                                             peer-placeholder-shown:translate-y-2.5 peer-placeholder-shown:text-[13px] peer-placeholder-shown:font-normal
                                             peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:text-indigo-400 peer-focus:font-medium
@@ -366,11 +354,11 @@ const Signin = () => {
                                             onChange={handleChange} 
                                             disabled={loading}
                                             placeholder=" " 
-                                            className={`peer w-full bg-slate-800/40 border ${fieldErrors.password ? 'border-red-500/60 animate-shake' : 'border-slate-700/50'} rounded-xl px-4 pt-5 pb-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-slate-800/60 transition-all pr-12 disabled:opacity-50`} 
+                                            className={`peer w-full bg-white/[0.03] border ${fieldErrors.password ? 'border-red-500/60 animate-shake' : 'border-white/[0.06]'} rounded-xl px-4 pt-5 pb-2.5 text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/[0.06] transition-all pr-12 disabled:opacity-50`} 
                                         />
                                         <label 
                                             htmlFor="password"
-                                            className={`absolute left-4 top-2 text-slate-500 text-[11px] font-medium transition-all duration-200 pointer-events-none
+                                            className={`absolute left-4 top-2 text-slate-400 text-[11px] font-medium transition-all duration-200 pointer-events-none
                                             translate-y-0
                                             peer-placeholder-shown:translate-y-2.5 peer-placeholder-shown:text-[13px] peer-placeholder-shown:font-normal
                                             peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:text-indigo-400 peer-focus:font-medium
@@ -382,7 +370,7 @@ const Signin = () => {
                                             type="button" 
                                             onClick={() => setShowPassword(!showPassword)}
                                             disabled={loading}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                                         </button>
