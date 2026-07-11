@@ -48,7 +48,7 @@ const Signup = () => {
 
                 setSuccessMsg("Logged in with Google Successfully!");
                 setIsFlipping(true); 
-                setTimeout(() => navigate('/dashboard'), 1200); 
+                setTimeout(() => navigate('/profile'), 1200); 
 
             } catch (err) {
                 setError("Network error. Try again."); setLoading(false);

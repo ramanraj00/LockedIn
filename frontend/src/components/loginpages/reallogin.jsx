@@ -42,7 +42,8 @@ const Login = () => {
 
                 setSuccessMsg("Logged in with Google Successfully!");
                 setIsFlipping(true); 
-                setTimeout(() => navigate('/dashboard'), 1200); 
+                // 🔥 YAHAN DASHBOARD THA, ISKO PROFILE KAR DIYA HAI 🔥
+                setTimeout(() => navigate('/profile'), 1200); 
 
             } catch (err) {
                 setError("Network error. Try again."); setLoading(false);
@@ -78,7 +79,8 @@ const Login = () => {
 
             setSuccessMsg("Login Successful!");
             setIsFlipping(true);
-            setTimeout(() => navigate('/dashboard'), 1200); 
+            // Yeh pehle se sahi tha
+            setTimeout(() => navigate('/profile'), 1200); 
         } catch (err) {
             setError("Something went wrong."); setLoading(false);
         }
@@ -150,7 +152,6 @@ const Login = () => {
                     }}
                 >
                     
-                    {/* 🔥 DESKTOP ISSUE FIXED HERE */}
                     <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-[100dvh] md:h-auto z-0">
                         <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
@@ -167,7 +168,6 @@ const Login = () => {
                         </div>
                     </div>
 
-                    {/* 🔥 DESKTOP ISSUE FIXED HERE */}
                     <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none h-[88dvh] md:h-auto bg-transparent">
                         
                         <div className="w-full max-w-[400px] mx-auto z-10 relative flex flex-col justify-center">
