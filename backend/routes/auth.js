@@ -49,6 +49,12 @@ router.post("/google-auth",
   authController.googleAuth
 );
 
+// 🔥 NEW ROUTE FOR PROFILE DATA 🔥
+router.get("/me", authMiddleware, authController.getProfile);
+// Profile Update Routes
+router.put("/profile", authMiddleware, authController.updateProfile);
+router.put("/profile/link", authMiddleware, authController.addLink);
+
 router.post("/logout", authController.logout);
 
 module.exports = router;

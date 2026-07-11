@@ -244,6 +244,67 @@ exports.googleAuth = async (req, res) => {
   }
 };
 
+// Get Profile Data ------------------------------------------------------------------------
+
+exports.getProfile = async (req, res) => {
+    try {
+        // authMiddleware hamesha token verify karke user ki ID req mein daal deta hai
+        // Assuming your authMiddleware sets req.userId or req.user
+        const userId = req.userId || (req.user && req.user.id) || req.user;
+        
+        if (!userId) {
+             return res.status(401).json({ success: false, message: "Unauthorized: User ID missing" });
+        }
+
+        const user = await usermodel.findById(userId).select("-password"); 
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ success: false, message: "Server error", error: error.message });
+    }
+};
+
+// UPDATE ABOUT SECTION
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.userId || (req.user && req.user.id) || req.user;
+        const { about } = req.body;
+
+        const user = await usermodel.findByIdAndUpdate(
+            userId, 
+            { about }, 
+            { new: true }
+        ).select("-password");
+
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error updating profile" });
+    }
+};
+
+// ADD NEW LINK
+exports.addLink = async (req, res) => {
+    try {
+        const userId = req.userId || (req.user && req.user.id) || req.user;
+        const { platform, url } = req.body;
+
+        const user = await usermodel.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Naya link array me add karna
+        user.links.push({ platform: platform || "other", url });
+        await user.save();
+
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error adding link" });
+    }
+};
 
 
 // Logout ------------------------------------------------------------------------
