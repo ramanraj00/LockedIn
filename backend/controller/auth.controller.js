@@ -193,12 +193,12 @@ exports.resetPassword = async (req, res) => {
 
 // google auth------------------------------------------------------------------------
 
+// google auth------------------------------------------------------------------------
+
 exports.googleAuth = async (req, res) => {
   try {
     const token = req.body.token;
 
-    // YAHAN SE CHANGE HAI -------------------
-    // Backend Google ki official API ko call karke verify karega
     const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${token}` }
     });
@@ -208,16 +208,17 @@ exports.googleAuth = async (req, res) => {
     }
 
     const payload = await googleResponse.json();
-    // YAHAN TAK CHANGE THA ------------------
-
-    // Iske aage tumhara purana code chalega (jisme `user = await usermodel.findOne({ email: payload.email })` likha hua hai)
-    let user = await usermodel.findOne({ email: payload.email });
     
-    // ... baaki poora code waisa hi rahega jaisa pehle tha
+    // 🔥 FIX: Google se aaye email ko bhi hamesha lowercase karo
+    const userEmail = payload.email.toLowerCase();
+
+    // Ab duplicate account check properly match hoga
+    let user = await usermodel.findOne({ email: userEmail });
+    
     if (!user) {
       user = await usermodel.create({
         name: payload.name,
-        email: payload.email,
+        email: userEmail,
         googleId: payload.sub,
         imageUrl: payload.picture,
         authProvider: "google",
@@ -230,20 +231,19 @@ exports.googleAuth = async (req, res) => {
 
     res.cookie("token", jwtToken, {
       httpOnly: true,
-      secure: true,
+      secure: false, // development ke liye false rakhna best hai
+      sameSite: "lax"
     });
 
     return res.json({
       message: "Login successful",
     });
     } catch (error) {
-   
     return res.status(400).json({
       message: "Google Authentication failed",
     });
   }
 };
-
 // Get Profile Data ------------------------------------------------------------------------
 
 exports.getProfile = async (req, res) => {
