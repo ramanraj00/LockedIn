@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
-import ShaderBackground from '../shaderbackground/ShaderBackground'; // Path check kar lena
+import ShaderBackground from '../shaderbackground/ShaderBackground'; 
 
 const Login = () => {
     const navigate = useNavigate();
-    const [view, setView] = useState('login'); // 'login' | 'forgot_email'
+    const [view, setView] = useState('login'); 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null); 
@@ -23,7 +23,6 @@ const Login = () => {
         if (error) setError(null);
     };
 
-    // 🔴 CUSTOM GOOGLE LOGIN HOOK
     const loginWithGoogle = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             setError(null); setLoading(true);
@@ -52,7 +51,6 @@ const Login = () => {
         onError: () => setError("Google Authentication Failed")
     });
 
-    // 🔴 NORMAL LOGIN
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null);
@@ -86,7 +84,6 @@ const Login = () => {
         }
     };
 
-    // 🔴 FORGOT PASSWORD
     const handleForgotPassword = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null);
@@ -136,13 +133,14 @@ const Login = () => {
                 `}
             </style>
 
-            <ShaderBackground />
+            <div className="hidden md:block">
+                <ShaderBackground />
+            </div>
 
-            <div className="min-h-screen w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10 overflow-hidden">
+            <div className="h-[100dvh] w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10 overflow-hidden">
                 
-                {/* 🔴 MERA NAYA GLASS EFFECT 🔴 */}
                 <div 
-                    className={`w-full max-w-[1100px] min-h-screen md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
+                    className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
                     style={{
                         background: "rgba(20, 24, 54, 0.4)",
                         border: "1px solid rgba(255, 255, 255, 0.05)",
@@ -152,25 +150,29 @@ const Login = () => {
                     }}
                 >
                     
-                    <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black min-h-screen md:min-h-full z-0">
+                    {/* 🔥 DESKTOP ISSUE FIXED HERE */}
+                    <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-[100dvh] md:h-auto z-0">
                         <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
-                        <div className="relative z-10 flex flex-col h-[35vh] md:h-full p-8 md:p-10 pb-6 md:pb-8 justify-between pointer-events-none">
-                            <div className="animate-fade-in pt-4 md:pt-0 pointer-events-auto">
-                                <span onClick={() => navigate('/')} className="text-white text-4xl md:text-5xl tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] cursor-pointer" style={{ fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
+                        
+                        <div className="relative z-10 flex flex-col h-[12dvh] md:h-auto md:flex-1 p-5 md:p-10 pb-0 md:pb-8 justify-center md:justify-between pointer-events-none">
+                            <div className="animate-fade-in pointer-events-auto flex justify-center md:justify-start">
+                                <span onClick={() => navigate('/')} className="text-white text-3xl md:text-5xl tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] cursor-pointer" style={{ fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
                             </div>
-                            <div className="flex flex-col pointer-events-auto mb-0">
+                            
+                            <div className="hidden md:flex flex-col pointer-events-auto mb-0">
                                 <span className="text-white/80 text-[12px] font-medium mb-1 md:mb-2">Welcome back to your</span>
                                 <div className="text-white text-[22px] md:text-[28px] lg:text-[30px] font-bold leading-[1.2] tracking-tight">Personal hub for clarity<br />and productivity</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="w-full md:w-[55%] mt-[35vh] md:mt-0 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none min-h-[65vh] md:min-h-full bg-transparent">
+                    {/* 🔥 DESKTOP ISSUE FIXED HERE */}
+                    <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none h-[88dvh] md:h-auto bg-transparent">
                         
                         <div className="w-full max-w-[400px] mx-auto z-10 relative flex flex-col justify-center">
                             
-                            <div className="text-center mb-5 transition-all">
+                            <div className="hidden md:block text-center mb-5 transition-all">
                                 <h2 className="text-2xl font-semibold text-white mb-1.5 tracking-tight" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>
                                     {view === 'login' ? 'Log In to Account' : 'Reset Password'}
                                 </h2>
@@ -179,10 +181,9 @@ const Login = () => {
                                 </p>
                             </div>
 
-                            {/* CUSTOM PREMIUM GOOGLE BUTTON */}
                             {view === 'login' && (
                                 <div className="animate-fade-in w-full flex flex-col items-center">
-                                    <button onClick={() => loginWithGoogle()} type="button" className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white text-[13px] font-medium transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
+                                    <button onClick={() => loginWithGoogle()} type="button" className="w-full flex items-center justify-center gap-3 py-2.5 md:py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white text-[13px] font-medium transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -192,7 +193,7 @@ const Login = () => {
                                         Log in with Google
                                     </button>
                                     
-                                    <div className="flex items-center w-full gap-4 my-4 opacity-40">
+                                    <div className="flex items-center w-full gap-4 my-2.5 md:my-4 opacity-40">
                                         <div className="h-[1px] flex-1 bg-white/20"></div>
                                         <span className="text-slate-300 text-[11px] uppercase tracking-widest font-bold">Or</span>
                                         <div className="h-[1px] flex-1 bg-white/20"></div>
@@ -200,25 +201,25 @@ const Login = () => {
                                 </div>
                             )}
 
-                            <div className="h-[46px] w-full mb-3 flex items-center justify-center">
+                            <div className="min-h-[32px] md:min-h-[46px] w-full mb-2 md:mb-3 flex items-center justify-center">
                                 {error ? (
-                                    <div className="w-full h-full flex items-center gap-3 px-4 rounded-xl bg-[#2a0e12]/80 border border-red-500/20 text-red-400 text-[12px] font-medium animate-shake backdrop-blur-md"><span className="truncate">{error}</span></div>
+                                    <div className="w-full py-2 md:py-0 md:h-full flex items-center gap-3 px-4 rounded-xl bg-black/80 border border-white/30 text-red-400 text-[12.5px] md:text-[13px] font-medium animate-shake backdrop-blur-md"><span className="truncate">{error}</span></div>
                                 ) : successMsg ? (
-                                    <div className="w-full h-full flex items-center gap-3 px-4 rounded-xl bg-[#062417]/80 border border-emerald-500/20 text-emerald-400 text-[12px] font-medium backdrop-blur-md"><span className="truncate">{successMsg}</span></div>
+                                    <div className="w-full py-2 md:py-0 md:h-full flex items-center gap-3 px-4 rounded-xl bg-black/80 border border-white/30 text-emerald-400 text-[12.5px] md:text-[13px] font-medium backdrop-blur-md"><span className="truncate">{successMsg}</span></div>
                                 ) : null}
                             </div>
 
-                            <form onSubmit={handleFormSubmit} className="flex flex-col gap-3">
-                                <div key={view} className="animate-fade-in flex flex-col gap-3 w-full">
+                            <form onSubmit={handleFormSubmit} className="flex flex-col gap-2.5 md:gap-3">
+                                <div key={view} className="animate-fade-in flex flex-col gap-2.5 md:gap-3 w-full">
 
-                                    <div className="flex flex-col relative pb-[18px]">
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors" />
+                                    <div className="flex flex-col relative pb-[14px] md:pb-[18px]">
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors" />
                                     </div>
 
                                     {view === 'login' && (
-                                        <div className="flex flex-col relative pb-[18px]">
+                                        <div className="flex flex-col relative pb-[14px] md:pb-[18px]">
                                             <div className="relative">
-                                                <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors pr-12" />
+                                                <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors pr-12" />
                                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"><Eye size={16} /></button>
                                             </div>
                                             <span onClick={() => !loading && setView('forgot_email')} className="absolute bottom-0 right-1 text-[10px] text-slate-400 hover:text-white cursor-pointer transition-colors">Forgot password?</span>
@@ -226,12 +227,12 @@ const Login = () => {
                                     )}
                                 </div>
 
-                                <button type="submit" disabled={loading || successMsg} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-xl hover:bg-white/20 hover:scale-[1.01] transition-all mt-1 flex justify-center items-center shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+                                <button type="submit" disabled={loading || successMsg} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-2.5 md:py-3 rounded-xl hover:bg-white/20 hover:scale-[1.01] transition-all mt-1 flex justify-center items-center shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-[13px]">
                                     {loading ? "Processing..." : view === 'login' ? "Log In" : "Send Reset Link"}
                                 </button>
                             </form>
 
-                            <div className="mt-4 text-center text-xs text-slate-400 font-medium">
+                            <div className="mt-3 md:mt-4 text-center text-xs text-slate-400 font-medium">
                                 {view === 'login' ? (
                                     <>Don't have an account? <span onClick={() => navigate('/signup')} className="text-slate-300 hover:text-white hover:underline cursor-pointer transition-colors">Sign up</span></>
                                 ) : (
