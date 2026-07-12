@@ -10,8 +10,9 @@ import ResetPassword from './components/loginpages/ResetPassword.jsx';
 import ProtectedRoute from './components/loginpages/ProtectedRoute.jsx'; 
 import Dashboard from './components/loginpages/dashboard.jsx'; 
 
-// 👇 YAHAN PROFILE COMPONENT IMPORT KARO (path apne hisaab se dekh lena)
 import Profile from './components/Profile/Profile.jsx'; 
+// 👇 WORKSPACE COMPONENT IMPORT KARO (folder path apne hisaab se dekh lena)
+import Workspace from './components/Workspace/Workspace.jsx'; 
 
 function App() {
   return (
@@ -31,12 +32,21 @@ function App() {
         } 
       />
 
-      {/* 👇 YEH NAYI ROUTE ADD KARNI HAI */}
       <Route 
         path="/profile" 
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* 👇 YEH NAYI WORKSPACE ROUTE ADD HO GAYI */}
+      <Route 
+        path="/workspace" 
+        element={
+          <ProtectedRoute>
+            <Workspace />
           </ProtectedRoute>
         } 
       />
