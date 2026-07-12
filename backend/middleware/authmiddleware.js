@@ -11,9 +11,12 @@ const authMiddleware = (req, res, next) => {
         });
     }
 
-    try {
+       try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.userId = decoded.id; // User ki id request me daal di
+        req.userId = decoded.id; // (Yeh line pehle se hai, isko rehne do taaki purane routes na tutein)
+        
+        req.user = { id: decoded.id }; // 👈 BAS YEH 1 NAYI LINE ADD KARDO
+        
         next(); // Aage route me jaane do
     } catch(err) {
         res.status(403).json({

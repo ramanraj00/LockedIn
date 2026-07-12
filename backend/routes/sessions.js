@@ -62,44 +62,42 @@ if (daySession.status === "completed") {
 
 //---------------------------------------------------------------------------------------
 
-router.patch("/session/:id/pause", async function (req, res) {
+router.patch("/day/:id", async function (req, res) {
   try {
     const userId = req.user.id;
-    const session = await timermodel.findOne({
-      _id: req.params.id,
-      userId,
-    });
+    const { title, deadline, status } = req.body;  // ← status ADD kiya
 
-    if (!session) {
+    const updateData = {};
+
+    if (title) updateData.title = title;
+    if (deadline) updateData.deadline = deadline;
+    if (status) updateData.status = status;          // ← ye line ADD karo
+
+    const daySession = await dailysessionmodel.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId,
+      },
+      updateData,
+      {
+        new: true,
+      },
+    );
+
+    if (!daySession) {
       return res.status(404).json({
         message: "Session not found",
       });
     }
 
-    if (session.status !== "running") {
-      return res.status(400).json({
-        message: "Session is not running",
-      });
-    }
-
-    const endTime = new Date();
-
-    session.duration =
-      (session.duration || 0) +
-      Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000);
-
-    session.endTime = endTime;
-    session.status = "paused";
-
-    await session.save();
-
     res.status(200).json({
-      message: "Session paused successfully",
-      session,
+      message: "session is updated",
+      daySession,
     });
   } catch (err) {
     res.status(500).json({
-      message: err.message,
+      message: "Something went wrong",
+      error: err.message,
     });
   }
 });
@@ -336,5 +334,45 @@ router.patch("/day/:id", async function (req, res) {
     });
   }
 });
+
+// 1. GET ALL DAYSESSIONS FOR USER
+router.get("/day/all", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    // Naye boxes upar dikhane ke liye sort by date descending
+    const daySessions = await dailysessionmodel.find({ userId }).sort({ date: -1 });
+    res.status(200).json({ daySessions });
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
+// 2. CREATE TODAY'S DAYSESSION
+router.post("/day/add", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Set date to today midnight (taaki din me 1 hi bane)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existing = await dailysessionmodel.findOne({ userId, date: today });
+    if (existing) {
+      return res.status(400).json({ message: "Workspace for today already exists" });
+    }
+
+    const newDay = await dailysessionmodel.create({
+      title: "My Workspace",
+      date: today,
+      userId
+    });
+
+    res.status(201).json({ message: "Workspace created", daySession: newDay });
+  } catch (err) {
+       console.log("🔥 CRASH KA ASLI REASON:", err); 
+    res.status(500).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
 
 module.exports = router;

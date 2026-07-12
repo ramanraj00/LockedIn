@@ -193,8 +193,6 @@ exports.resetPassword = async (req, res) => {
 
 // google auth------------------------------------------------------------------------
 
-// google auth------------------------------------------------------------------------
-
 exports.googleAuth = async (req, res) => {
   try {
     const token = req.body.token;
@@ -287,22 +285,16 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
-// ADD NEW LINK
-exports.addLink = async (req, res) => {
+// UPDATE LINKS (Add & Delete dono ke liye)
+exports.updateLinks = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;
-        const { platform, url } = req.body;
+        const { links } = req.body;
 
-        const user = await usermodel.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        // Naya link array me add karna
-        user.links.push({ platform: platform || "other", url });
-        await user.save();
-
+        const user = await usermodel.findByIdAndUpdate(userId, { links }, { new: true }).select("-password");
         res.status(200).json({ success: true, user });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error adding link" });
+        res.status(500).json({ success: false, message: "Error updating links" });
     }
 };
 

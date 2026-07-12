@@ -53,7 +53,9 @@ router.post("/google-auth",
 router.get("/me", authMiddleware, authController.getProfile);
 // Profile Update Routes
 router.put("/profile", authMiddleware, authController.updateProfile);
-router.put("/profile/link", authMiddleware, authController.addLink);
+router.put("/profile/links", authMiddleware, authController.updateLinks);
+
+
 
 router.post("/logout", authController.logout);
 
