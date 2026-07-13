@@ -3,6 +3,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ShaderBackground from '../shaderbackground/ShaderBackground'; 
+import { deriveKEK, generateWorkspaceDEK, generateRecoveryKey, generateUserSalt, encryptDEK } from '../../utils/e2eMasterKey';
 
 const AVATARS = [
     "/avatars/gwen.png", "/avatars/spidey.png", "/avatars/buttercup.png", "/avatars/henry.png"
@@ -16,6 +17,10 @@ const Signup = () => {
     const [successMsg, setSuccessMsg] = useState(null); 
     const [fieldErrors, setFieldErrors] = useState({}); 
     const [isFlipping, setIsFlipping] = useState(false);
+    
+    // RECOVERY KEY MODAL STATES
+    const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+    const [recoveryKey, setRecoveryKey] = useState("");
 
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', imageUrl: AVATARS[0]
@@ -72,13 +77,35 @@ const Signup = () => {
 
         setLoading(true);
         try {
+            // 🔥 ADVANCED E2E CRYPTO SETUP 🔥
+            const PBKDF2_ITERATIONS = 250000;
+            const KDF_TYPE = "PBKDF2"; 
+            
+            const userSalt = generateUserSalt();
+            const passwordKEK = await deriveKEK(formData.password, userSalt, PBKDF2_ITERATIONS);
+            const dek = await generateWorkspaceDEK();
+            
+            const encryptedDEK_pwd = await encryptDEK(dek, passwordKEK);
+            
+            const recKey = generateRecoveryKey(); 
+            const recoveryKEK = await deriveKEK(recKey, userSalt, PBKDF2_ITERATIONS);
+            const encryptedDEK_rec = await encryptDEK(dek, recoveryKEK);
+
             const response = await fetch("http://localhost:3000/api/auth/signup", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: formData.name, email: formData.email, 
-                    password: formData.password, imageUrl: window.location.origin + formData.imageUrl
+                    name: formData.name, 
+                    email: formData.email, 
+                    password: formData.password,
+                    imageUrl: window.location.origin + formData.imageUrl,
+                    // Send E2E Payload
+                    encryptedDEK_pwd,
+                    encryptedDEK_rec,
+                    userSalt,
+                    pbkdf2Iterations: PBKDF2_ITERATIONS,
+                    kdf: KDF_TYPE
                 })
             });
 
@@ -87,12 +114,21 @@ const Signup = () => {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
 
-            setSuccessMsg(data.message || "Account created Successfully!");
-            setIsFlipping(true);
-            setTimeout(() => navigate('/login'), 1200); 
+            setRecoveryKey(recKey);
+            setShowRecoveryModal(true);
+            setLoading(false);
+
         } catch (err) {
-            setError("Something went wrong."); setLoading(false);
+            setError("Encryption error during signup."); 
+            setLoading(false);
         }
+    };
+
+    const handleAcknowledgeRecoveryKey = () => {
+        setSuccessMsg("Account created Successfully!");
+        setShowRecoveryModal(false);
+        setIsFlipping(true);
+        setTimeout(() => navigate('/login'), 1200); 
     };
 
     return (
@@ -112,33 +148,43 @@ const Signup = () => {
                 `}
             </style>
 
+            {/* RECOVERY KEY MODAL */}
+            {showRecoveryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+                    <div className="bg-[#0A0A0A] border border-indigo-500/30 p-8 rounded-2xl max-w-2xl w-full shadow-[0_0_80px_rgba(99,102,241,0.15)] text-center relative overflow-hidden">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"></div>
+                        <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Your Secret Recovery Key</h2>
+                        <p className="text-slate-400 text-sm mb-6">
+                            Write this down or save it in a password manager. <strong className="text-red-400">We do not store this key. If you forget your password and lose this key, your workspace data cannot be recovered.</strong>
+                        </p>
+                        <div className="bg-black/60 border border-white/10 p-5 rounded-xl mb-8 font-mono text-sm sm:text-base md:text-lg text-indigo-400 tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                            <span className="whitespace-pre-wrap leading-relaxed">{recoveryKey.split('-').reduce((acc, curr, i) => acc + curr + ((i + 1) % 4 === 0 ? '\n' : '-'), '').trim()}</span>
+                        </div>
+                        <button 
+                            onClick={handleAcknowledgeRecoveryKey}
+                            className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)]"
+                        >
+                            I have securely saved this key
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="hidden md:block">
                 <ShaderBackground />
             </div>
 
             <div className="h-[100dvh] w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10 overflow-hidden">
-                
-                <div 
-                    className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
-                    style={{
-                        background: "rgba(20, 24, 54, 0.4)",
-                        border: "1px solid rgba(255, 255, 255, 0.05)",
-                        borderTop: "1px solid rgba(255, 255, 255, 0.15)",
-                        borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
-                        boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)`
-                    }}
+                <div className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
+                    style={{ background: "rgba(20, 24, 54, 0.4)", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "1px solid rgba(255, 255, 255, 0.15)", borderLeft: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)` }}
                 >
-                    
-                    {/* 🔥 DESKTOP ISSUE FIXED HERE: md:h-auto and md:flex-1 allows proper stretching */}
                     <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-[100dvh] md:h-auto z-0">
                         <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
-                        
                         <div className="relative z-10 flex flex-col h-[12dvh] md:h-auto md:flex-1 p-5 md:p-10 pb-0 md:pb-8 justify-center md:justify-between pointer-events-none">
                             <div className="animate-fade-in pointer-events-auto flex justify-center md:justify-start">
                                 <span onClick={() => navigate('/')} className="text-white text-3xl md:text-5xl tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] cursor-pointer" style={{ fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
                             </div>
-                            
                             <div className="hidden md:flex flex-col pointer-events-auto mb-0">
                                 <span className="text-white/80 text-[12px] font-medium mb-1 md:mb-2">You can easily</span>
                                 <div className="text-white text-[22px] md:text-[28px] lg:text-[30px] font-bold leading-[1.2] tracking-tight">Get access your personal<br />hub for clarity and<br />productivity</div>
@@ -146,18 +192,12 @@ const Signup = () => {
                         </div>
                     </div>
 
-                    {/* 🔥 DESKTOP ISSUE FIXED HERE: md:h-auto */}
                     <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none h-[88dvh] md:h-auto bg-transparent">
-                        
                         <div className="w-full max-w-[400px] mx-auto z-10 relative flex flex-col justify-center">
                             
                             <div className="hidden md:block text-center mb-5 transition-all">
-                                <h2 className="text-2xl font-semibold text-white mb-1.5 tracking-tight" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>
-                                    Sign Up Account
-                                </h2>
-                                <p className="text-slate-400 text-sm font-medium">
-                                    Enter your personal data to create your account.
-                                </p>
+                                <h2 className="text-2xl font-semibold text-white mb-1.5 tracking-tight" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>Sign Up Account</h2>
+                                <p className="text-slate-400 text-sm font-medium">Enter your personal data to create your account.</p>
                             </div>
 
                             <div className="animate-fade-in w-full flex flex-col items-center">
@@ -170,7 +210,6 @@ const Signup = () => {
                                     </svg>
                                     Continue with Google
                                 </button>
-                                
                                 <div className="flex items-center w-full gap-4 my-2.5 md:my-4 opacity-40">
                                     <div className="h-[1px] flex-1 bg-white/20"></div>
                                     <span className="text-slate-300 text-[11px] uppercase tracking-widest font-bold">Or</span>

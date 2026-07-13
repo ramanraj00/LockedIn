@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCrypto } from '../../context/CryptoContext'; 
 import { X, LogOut, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 
 const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
@@ -10,7 +11,7 @@ const COLORS = {
     sidebar: '#15181C',
     border: 'rgba(255,255,255,0.15)',
     borderHover: 'rgba(255,255,255,0.12)',
-   textPrimary: '#B0B0B4',   // 🔥 Softer white — easy on eyes
+    textPrimary: '#B0B0B4',   
     textSecondary: '#9CA3AF',
     textMuted: '#A1A1AA',
 };
@@ -31,50 +32,11 @@ const formatTime = (seconds) => {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
-const E2E = {
-    _keyCache: null,
-    async getKey() {
-        if (this._keyCache) return this._keyCache;
-        const stored = localStorage.getItem('lockedin_e2e_key');
-        if (stored) {
-            try {
-                const rawKey = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
-                this._keyCache = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', true, ['encrypt', 'decrypt']);
-                return this._keyCache;
-            } catch { localStorage.removeItem('lockedin_e2e_key'); }
-        }
-        const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
-        const exported = await crypto.subtle.exportKey('raw', key);
-        localStorage.setItem('lockedin_e2e_key', btoa(String.fromCharCode(...new Uint8Array(exported))));
-        this._keyCache = key;
-        return key;
-    },
-    async encrypt(plaintext) {
-        const key = await this.getKey();
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encoded = new TextEncoder().encode(plaintext);
-        const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
-        const combined = new Uint8Array(iv.length + new Uint8Array(cipherBuf).length);
-        combined.set(iv);
-        combined.set(new Uint8Array(cipherBuf), iv.length);
-        return btoa(String.fromCharCode(...combined));
-    },
-    async decrypt(cipherB64) {
-        try {
-            if (!cipherB64 || cipherB64.length < 30) return cipherB64;
-            const key = await this.getKey();
-            const combined = Uint8Array.from(atob(cipherB64), c => c.charCodeAt(0));
-            if (combined.length < 28) return cipherB64;
-            const iv = combined.slice(0, 12);
-            const ciphertext = combined.slice(12);
-            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-            return new TextDecoder().decode(decrypted);
-        } catch { return cipherB64; }
-    }
-};
-
 const Workspace = () => {
     const navigate = useNavigate();
+
+    // 🔥 NEW: GET E2E CRYPTO FUNCTIONS FROM CONTEXT 🔥
+    const { dek, isLocked, encryptData, decryptData } = useCrypto();
 
     const [daySessions, setDaySessions] = useState([]);
     const [tasksByDay, setTasksByDay] = useState({});
@@ -94,8 +56,7 @@ const Workspace = () => {
     const sidebarRef = useRef(null);
     const [confirmAction, setConfirmAction] = useState(null);
     
-    // 🔥 NEW: Warning before deleting last task on old container
-    const [deleteWarning, setDeleteWarning] = useState(null); // { taskId, dayId }
+    const [deleteWarning, setDeleteWarning] = useState(null); 
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -110,7 +71,6 @@ const Workspace = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // 🔥 Auto-dismiss error after 3 seconds
     useEffect(() => {
         if (globalError) {
             const timer = setTimeout(() => setGlobalError(null), 3000);
@@ -118,14 +78,21 @@ const Workspace = () => {
         }
     }, [globalError]);
 
+    // 🔥 NEW: DECRYPT ALL TASKS USING CRYPTOCONTEXT
     useEffect(() => {
+        if (isLocked) return; // Wait until unlocked
+
         const decryptAll = async () => {
             const updated = { ...decryptedTexts };
             let changed = false;
             for (const dayId of Object.keys(tasksByDay)) {
                 for (const task of tasksByDay[dayId]) {
                     if (!(task._id in updated)) {
-                        updated[task._id] = await E2E.decrypt(task.encryptedDescription);
+                        try {
+                            updated[task._id] = await decryptData(task.encryptedDescription);
+                        } catch (err) {
+                            updated[task._id] = "⚠️ Decryption Failed";
+                        }
                         changed = true;
                     }
                 }
@@ -133,7 +100,7 @@ const Workspace = () => {
             if (changed) setDecryptedTexts(updated);
         };
         decryptAll();
-    }, [tasksByDay]);
+    }, [tasksByDay, isLocked, decryptData]);
 
     const fetchWorkspaceData = async () => {
         try {
@@ -154,7 +121,9 @@ const Workspace = () => {
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchWorkspaceData(); }, []);
+    useEffect(() => { 
+        if (!isLocked) fetchWorkspaceData(); 
+    }, [isLocked]); // Only fetch when unlocked
 
     const fetchTasks = async (dayId) => {
         try {
@@ -213,7 +182,7 @@ const Workspace = () => {
         } catch (err) {}
     };
 
-        const handleCompleteDay = async (dayId) => {
+    const handleCompleteDay = async (dayId) => {
         const running = getRunningSession(dayId);
         if (running) {
             const startT = localStartTimes[dayId] || new Date(running.startTime).getTime();
@@ -227,13 +196,11 @@ const Workspace = () => {
         }
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
 
-        // 🔥 Status = task-based, NOT always "completed"
         const tasks = tasksByDay[dayId] || [];
         const taskStatus = tasks.length === 0 ? 'active' : tasks.every(t => t.status === true) ? 'completed' : 'pending';
 
         try {
             await fetch(`http://localhost:3000/api/session/day/${dayId}/complete`, { method: "PATCH", credentials: "include" });
-            // Override status with task-based value
             await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: taskStatus }), credentials: "include"
@@ -252,21 +219,27 @@ const Workspace = () => {
         } catch (err) { console.error(err); }
     };
 
-        const confirmAddTask = async (dayId) => {
+    // 🔥 NEW: ENCRYPT TASK DESCRIPTION BEFORE SENDING TO DB
+    const confirmAddTask = async (dayId) => {
         if (!newTaskText.trim()) return;
         const plaintext = newTaskText.trim();
         setNewTaskText("");
         setAddingTaskDayId(null);
         try {
-            const encryptedDescription = await E2E.encrypt(plaintext);
+            const encryptedDescription = await encryptData(plaintext); // E2E
+            
             const res = await fetch("http://localhost:3000/api/task/addtask", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ daySessionId: dayId, encryptedDescription, encryptedAESKey: "e2e_v1" }),
+                body: JSON.stringify({ 
+                    daySessionId: dayId, 
+                    encryptedDescription, 
+                    encryptedAESKey: "e2e_v2" 
+                }),
                 credentials: "include"
             });
+            
             if (res.ok) {
                 fetchTasks(dayId);
-                // 🔥 New task added = at least 1 not done = pending
                 await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
                     method: "PATCH", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ status: "pending" }), credentials: "include"
@@ -276,11 +249,10 @@ const Workspace = () => {
         } catch (err) { setGlobalError(err.message); }
     };
 
-        const handleToggleTask = async (taskId, currentStatus, dayId) => {
+    const handleToggleTask = async (taskId, currentStatus, dayId) => {
         const updatedTasks = (tasksByDay[dayId] || []).map(t => t._id === taskId ? { ...t, status: !currentStatus } : t);
         setTasksByDay(prev => ({ ...prev, [dayId]: updatedTasks }));
 
-        // 🔥 Compute new status from updated tasks
         const newStatus = updatedTasks.length === 0 ? 'active' : updatedTasks.every(t => t.status === true) ? 'completed' : 'pending';
 
         try {
@@ -288,7 +260,6 @@ const Workspace = () => {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: !currentStatus }), credentials: "include"
             });
-            // 🔥 Sync day status in DB
             await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: newStatus }), credentials: "include"
@@ -297,7 +268,6 @@ const Workspace = () => {
         } catch (err) {}
     };
 
-    // 🔥 DELETE TASK: Shows warning if last task on old container
     const handleDeleteTask = async (taskId, dayId) => {
         const tasks = tasksByDay[dayId] || [];
         const day = daySessions.find(d => d._id === dayId);
@@ -308,7 +278,6 @@ const Workspace = () => {
             return;
         }
 
-        // Normal delete
         setTasksByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).filter(t => t._id !== taskId) }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         try {
@@ -317,13 +286,11 @@ const Workspace = () => {
         } catch (err) {}
     };
 
-    // 🔥 Confirmed: delete last task + remove entire old container
     const confirmDeleteLastTask = async () => {
         if (!deleteWarning) return;
         const { taskId, dayId } = deleteWarning;
         setDeleteWarning(null);
 
-        // Remove task from UI
         setTasksByDay(prev => ({ ...prev, [dayId]: [] }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
 
@@ -331,18 +298,15 @@ const Workspace = () => {
             await fetch(`http://localhost:3000/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" });
         } catch {}
 
-        // Delete entire day session + timer data
         handleDeleteDaySession(dayId);
     };
 
-        const handleDeleteDaySession = async (dayId) => {
-        // Remove from UI immediately
+    const handleDeleteDaySession = async (dayId) => {
         setDaySessions(prev => prev.filter(d => d._id !== dayId));
         setTasksByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         setTimersByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
 
-        // One call — backend deletes daySession + sessions + tasks
         try {
             await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
                 method: "DELETE", credentials: "include"
@@ -351,7 +315,6 @@ const Workspace = () => {
     };
 
     // ═══════════════ TIMER HANDLERS ═══════════════
-
     const handleStartTimer = async (dayId) => {
         const exactStart = Date.now();
         const optimisticId = 'opt_' + exactStart;
@@ -385,9 +348,7 @@ const Workspace = () => {
         }
     };
 
-    // 🔥 PAUSE FIX: Always query server for the REAL running session, then pause it
     const handlePauseTimer = async (dayId) => {
-        // Step 1: Optimistic freeze — find ANY running session locally and pause it
         const sessions = timersByDay[dayId] || [];
         const localRunning = sessions.find(s => s.status === 'running');
         const localRunningId = localRunning?._id;
@@ -404,15 +365,13 @@ const Workspace = () => {
         }
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
 
-        // Step 2: Query server for the REAL running session (don't trust frontend IDs)
         try {
             const sessRes = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
             if (!sessRes.ok) return;
             const sessData = await sessRes.json();
             const realRunning = (sessData.sessions || []).find(s => s.status === 'running');
-            if (!realRunning) return; // Already paused on server — our optimistic update is fine
+            if (!realRunning) return; 
 
-            // Step 3: Pause using the CONFIRMED server-side session ID
             const res = await fetch(`http://localhost:3000/api/session/session/${realRunning._id}/pause`, {
                 method: "PATCH", credentials: "include"
             });
@@ -500,13 +459,34 @@ const Workspace = () => {
     const getRunningSession = (dayId) => (timersByDay[dayId] || []).find(s => s.status === 'running');
     const getPausedSession = (dayId) => [...(timersByDay[dayId] || [])].reverse().find(s => s.status === 'paused');
 
-    // 🔥 STATUS: Pure task-based. completed = all done. pending = any not done. active = no tasks.
     const getDeadlineStatus = (day) => {
         const tasks = tasksByDay[day._id] || [];
         if (tasks.length === 0) return 'active';
         if (tasks.every(t => t.status === true)) return 'completed';
         return 'pending';
     };
+
+
+    // 🔥 NEW: RENDER LOCKED SCREEN IF F5 WAS PRESSED OR KEY IS MISSING 🔥
+    if (isLocked) {
+        return (
+            <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textPrimary, fontFamily: "'Inter', sans-serif" }}>
+                <div style={{ backgroundColor: COLORS.card, padding: 40, borderRadius: 16, border: `1px solid ${COLORS.border}`, textAlign: 'center', maxWidth: 400, width: '100%' }}>
+                    <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
+                    <h2 style={{ fontSize: 24, fontWeight: 600, color: 'white', marginBottom: 12 }}>Workspace Locked</h2>
+                    <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 24, lineHeight: 1.5 }}>
+                        Your encryption key was cleared for security reasons because the page was refreshed.
+                    </p>
+                    <button 
+                        onClick={() => navigate('/login')}
+                        style={{ backgroundColor: '#6366f1', color: 'white', border: 'none', padding: '12px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%', transition: 'background 0.2s' }}
+                    >
+                        Log In to Unlock Keys
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -725,7 +705,6 @@ const Workspace = () => {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        {/* 🔥 Warning UI when deleting last task on old container */}
                                                         {deleteWarning?.taskId === task._id ? (
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                                                                 <span style={{ fontSize: 12, color: '#FBBF24', whiteSpace: 'nowrap' }}>

@@ -2,15 +2,19 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
-import { BrowserRouter } from 'react-router-dom' // 👈 Ye line add karni hai
+import { BrowserRouter } from 'react-router-dom' 
 import { GoogleOAuthProvider } from '@react-oauth/google';
+// 🔥 IMPORT CRYPTO PROVIDER
+import { CryptoProvider } from './context/CryptoContext.jsx'; // Path apne hisaab se check kar lena
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* 👈 App ko wapas BrowserRouter ke andar daal do */}
     <BrowserRouter> 
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-        <App />
+        {/* 🔥 APP KO CRYPTO PROVIDER SE WRAP KAR DIYA */}
+        <CryptoProvider>
+          <App />
+        </CryptoProvider>
       </GoogleOAuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

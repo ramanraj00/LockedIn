@@ -1,49 +1,61 @@
-const { optional } = require("zod");
-const {mongoose} = require("../database/db");
-const { required } = require("zod/mini");
-const {Schema} = mongoose;
+const { mongoose } = require("../database/db");
+const { Schema } = mongoose;
 
-// this is where we get user details 
 const userSchema = new Schema({
-    name:{
-        type:String,
-        required:true,
-        trim:true
+    name: {
+        type: String,
+        required: true,
+        trim: true
     },
-    email:{
-        type:String,
-        required:true,
-        trim:true,
-        unique:true,
-        lowercase:true
+    email: {
+        type: String,
+        required: true,
+        trim: true,
+        unique: true,
+        lowercase: true
     },
-    password:{
-        type:String,
+    password: {
+        type: String,
         select: false
     },
-    publicKey:{
-        type:String
+    googleId: {
+       type: String
     },
-    googleId:{
-       type:String
-    },
-    authProvider:{
+    authProvider: {
         type: String,
         enum: ["local", "google"],
         default: "local"
     },
-    resetToken:{
-        type:String,
+    resetToken: {
+        type: String,
         default: undefined
     },
-    resetTokenExpiry:{
-        type:Date,
-         default: undefined
+    resetTokenExpiry: {
+        type: Date,
+        default: undefined
     },
-    imageUrl:{
-        type:String,
+    imageUrl: {
+        type: String,
     },
-    // 🔥 NEW PROFILE FIELDS ADDED BELOW 🔥
+    // 🔥 NAYE E2E CRYPTO FIELDS 🔥
+    encryptedDEK_pwd: {
+        type: Object, // 👈 Isko Object karna hai kyunki IV aur Data dono aayenge
+    },
+    encryptedDEK_rec: {
+        type: Object, // 👈 Isko bhi Object
+    },
+    userSalt: {
+        type: String, // Ye string hi rahega kyunki ye sirf text hai
+    },
+    pbkdf2Iterations: {
+        type: Number,
+        default: 250000
+    },
+    kdf: {
+        type: String,
+        default: "PBKDF2"
+    },
+    // 🔥 PROFILE FIELDS 🔥
     about: {
         type: String,
         default: "I am a new user, excited to join LockedIn!"
@@ -61,9 +73,10 @@ const userSchema = new Schema({
     }]
 },
 {
-    timestamps:true
-}
-)
+    timestamps: true,
 
-const usermodel = mongoose.model("userCredential",userSchema);
+    strict: false
+});
+
+const usermodel = mongoose.model("userCredential", userSchema);
 module.exports = usermodel;

@@ -3,6 +3,8 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ShaderBackground from '../shaderbackground/ShaderBackground'; 
+import { deriveKEK, decryptDEK } from '../../utils/e2eMasterKey';
+import { useCrypto } from '../../context/CryptoContext';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -12,6 +14,8 @@ const Login = () => {
     const [error, setError] = useState(null); 
     const [successMsg, setSuccessMsg] = useState(null); 
     const [isFlipping, setIsFlipping] = useState(false);
+
+    const { setDek } = useCrypto(); // Get context setter
 
     const [formData, setFormData] = useState({
         email: '', password: ''
@@ -42,7 +46,6 @@ const Login = () => {
 
                 setSuccessMsg("Logged in with Google Successfully!");
                 setIsFlipping(true); 
-                // 🔥 YAHAN DASHBOARD THA, ISKO PROFILE KAR DIYA HAI 🔥
                 setTimeout(() => navigate('/profile'), 1200); 
 
             } catch (err) {
@@ -77,9 +80,34 @@ const Login = () => {
                 setError(data.message || "Invalid credentials"); setLoading(false); return;
             }
 
+            // 🔥 E2E DECRYPTION (RAM ONLY) 🔥
+            console.log("LOGIN RESPONSE DATA:", data);
+
+            if (data.encryptedDEK_pwd && data.userSalt && data.pbkdf2Iterations) {
+                try {
+                    console.log("Keys Backend se aa gayi! Decrypting...");
+                    if (data.kdf && data.kdf !== "PBKDF2") {
+                        throw new Error(`Unsupported KDF algorithm: ${data.kdf}`);
+                    }
+                    const passwordKEK = await deriveKEK(formData.password, data.userSalt, data.pbkdf2Iterations);
+                    console.log("passwordKEK successfully derived.");
+                    
+                    const dek = await decryptDEK(data.encryptedDEK_pwd, passwordKEK);
+                    console.log("Decryption SUCCESS! Setting DEK in RAM...");
+                    
+                    setDek(dek);
+                } catch (cryptoErr) {
+                    console.error("E2E Decryption Failed", cryptoErr);
+                    setError("Encryption validation failed (Wrong password or tampered data)."); 
+                    setLoading(false);
+                    return;
+                }
+            } else {
+                 console.log("Backend ne Keys nahi bheji!! Naya account zaroori hai, ya signup update nahi hua.");
+            }
+
             setSuccessMsg("Login Successful!");
             setIsFlipping(true);
-            // Yeh pehle se sahi tha
             setTimeout(() => navigate('/profile'), 1200); 
         } catch (err) {
             setError("Something went wrong."); setLoading(false);
@@ -89,7 +117,6 @@ const Login = () => {
     const handleForgotPassword = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null);
-
         if (!formData.email) {
             setError("Please enter your email"); return;
         }
@@ -140,27 +167,16 @@ const Login = () => {
             </div>
 
             <div className="h-[100dvh] w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10 overflow-hidden">
-                
-                <div 
-                    className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
-                    style={{
-                        background: "rgba(20, 24, 54, 0.4)",
-                        border: "1px solid rgba(255, 255, 255, 0.05)",
-                        borderTop: "1px solid rgba(255, 255, 255, 0.15)",
-                        borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
-                        boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)`
-                    }}
+                <div className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
+                    style={{ background: "rgba(20, 24, 54, 0.4)", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "1px solid rgba(255, 255, 255, 0.15)", borderLeft: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)` }}
                 >
-                    
                     <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-[100dvh] md:h-auto z-0">
                         <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
-                        
                         <div className="relative z-10 flex flex-col h-[12dvh] md:h-auto md:flex-1 p-5 md:p-10 pb-0 md:pb-8 justify-center md:justify-between pointer-events-none">
                             <div className="animate-fade-in pointer-events-auto flex justify-center md:justify-start">
                                 <span onClick={() => navigate('/')} className="text-white text-3xl md:text-5xl tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] cursor-pointer" style={{ fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
                             </div>
-                            
                             <div className="hidden md:flex flex-col pointer-events-auto mb-0">
                                 <span className="text-white/80 text-[12px] font-medium mb-1 md:mb-2">Welcome back to your</span>
                                 <div className="text-white text-[22px] md:text-[28px] lg:text-[30px] font-bold leading-[1.2] tracking-tight">Personal hub for clarity<br />and productivity</div>
@@ -169,7 +185,6 @@ const Login = () => {
                     </div>
 
                     <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none h-[88dvh] md:h-auto bg-transparent">
-                        
                         <div className="w-full max-w-[400px] mx-auto z-10 relative flex flex-col justify-center">
                             
                             <div className="hidden md:block text-center mb-5 transition-all">
@@ -192,7 +207,6 @@ const Login = () => {
                                         </svg>
                                         Log in with Google
                                     </button>
-                                    
                                     <div className="flex items-center w-full gap-4 my-2.5 md:my-4 opacity-40">
                                         <div className="h-[1px] flex-1 bg-white/20"></div>
                                         <span className="text-slate-300 text-[11px] uppercase tracking-widest font-bold">Or</span>
@@ -211,7 +225,6 @@ const Login = () => {
 
                             <form onSubmit={handleFormSubmit} className="flex flex-col gap-2.5 md:gap-3">
                                 <div key={view} className="animate-fade-in flex flex-col gap-2.5 md:gap-3 w-full">
-
                                     <div className="flex flex-col relative pb-[14px] md:pb-[18px]">
                                         <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors" />
                                     </div>
@@ -239,7 +252,6 @@ const Login = () => {
                                     <span onClick={() => !loading && setView('login')} className="flex items-center justify-center gap-1.5 text-slate-400 hover:text-white cursor-pointer transition-colors"><ArrowLeft size={14} /> Back to Log In</span>
                                 )}
                             </div>
-
                         </div>
                     </div>
                 </div>
