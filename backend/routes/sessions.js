@@ -374,5 +374,63 @@ router.post("/day/add", async (req, res) => {
   }
 });
 
+// PAUSE SESSION ROUTE
+router.patch("/session/:id/pause", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Find the running session
+    const session = await timermodel.findOne({ 
+      _id: req.params.id, 
+      userId, 
+      status: "running" 
+    });
+
+    if (!session) {
+      return res.status(404).json({ message: "Running session not found" });
+    }
+
+    // Calculate duration and mark as paused
+    const endTime = new Date();
+    const duration = Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000);
+
+    session.endTime = endTime;
+    session.duration = (session.duration || 0) + duration;
+    session.status = "paused";
+
+    await session.save();
+
+    res.status(200).json({ message: "Session paused", session });
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
+// RESET ALL SESSIONS FOR A DAY ROUTE
+router.delete("/day/:id/sessions/reset", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const daySessionId = req.params.id;
+
+    // 1. Delete all time session chunks for this day
+    await timermodel.deleteMany({ daySessionId, userId });
+
+    // 2. Reset the total time in the main DaySession model to 0
+    const daySession = await dailysessionmodel.findOneAndUpdate(
+      { _id: daySessionId, userId },
+      { $set: { totalDaytime: 0, status: "active" } },
+      { new: true }
+    );
+
+    if (!daySession) {
+      return res.status(404).json({ message: "Day session not found" });
+    }
+
+    res.status(200).json({ message: "Timer reset to 00:00:00 successfully", daySession });
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
 
 module.exports = router;
