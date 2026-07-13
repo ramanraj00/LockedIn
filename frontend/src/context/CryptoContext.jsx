@@ -1,5 +1,4 @@
-// frontend/src/context/CryptoContext.jsx
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const CryptoContext = createContext();
 
@@ -8,11 +7,54 @@ export const useCrypto = () => {
 };
 
 export const CryptoProvider = ({ children }) => {
-    // This state holds the raw CryptoKey object ONLY in RAM.
-    const [dek, setDek] = useState(null);
+    const [dek, setDekState] = useState(null);
+    const [isRestoring, setIsRestoring] = useState(true); // 🔥 Magic state: Refresh par redirect rokti hai
 
-    // Derived state: if DEK is null, workspace is locked
-    const isLocked = dek === null;
+    // Derived state: Jab tak restore process chal raha hai, tab tak 'isLocked' ko false rakho
+    const isLocked = dek === null && !isRestoring;
+
+    // 🔥 PAGE LOAD PAR: Session Storage se DEK wapas laao
+    useEffect(() => {
+        const restoreKey = async () => {
+            const savedBase64 = sessionStorage.getItem('workspace_dek');
+            if (savedBase64) {
+                try {
+                    const rawKey = Uint8Array.from(atob(savedBase64), c => c.charCodeAt(0));
+                    const importedKey = await window.crypto.subtle.importKey(
+                        "raw",
+                        rawKey,
+                        "AES-GCM",
+                        true, // extractable
+                        ["encrypt", "decrypt"]
+                    );
+                    setDekState(importedKey);
+                } catch (err) {
+                    console.error("Failed to restore DEK from session:", err);
+                    sessionStorage.removeItem('workspace_dek');
+                }
+            }
+            setIsRestoring(false);
+        };
+        restoreKey();
+    }, []);
+
+    // 🔥 CUSTOM setDek: RAM me bhi save karega aur SessionStorage me bhi
+    const setDek = useCallback(async (newDek) => {
+        setDekState(newDek); // React state update
+        
+        if (newDek) {
+            try {
+                // CryptoKey ko raw buffer me export karke base64 string banate hain (Session Storage ke liye)
+                const exported = await window.crypto.subtle.exportKey("raw", newDek);
+                const base64Key = btoa(String.fromCharCode(...new Uint8Array(exported)));
+                sessionStorage.setItem('workspace_dek', base64Key);
+            } catch (err) {
+                console.error("Could not export key to SessionStorage.", err);
+            }
+        } else {
+            sessionStorage.removeItem('workspace_dek');
+        }
+    }, []);
 
     const encryptData = useCallback(async (plainText) => {
         if (!dek) throw new Error("Encryption key not loaded in context. Workspace is locked.");
@@ -50,7 +92,8 @@ export const CryptoProvider = ({ children }) => {
     }, [dek]);
 
     const clearCrypto = useCallback(() => {
-        setDek(null);
+        setDekState(null);
+        sessionStorage.removeItem('workspace_dek');
     }, []);
 
     return (
