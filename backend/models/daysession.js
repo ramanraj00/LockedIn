@@ -22,6 +22,7 @@ const daysessionSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "userCredential",
       required: true,
+      index: true, 
     },
 
     totalDaytime: {

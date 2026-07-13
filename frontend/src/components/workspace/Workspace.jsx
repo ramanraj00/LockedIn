@@ -10,7 +10,7 @@ const COLORS = {
     sidebar: '#15181C',
     border: 'rgba(255,255,255,0.15)',
     borderHover: 'rgba(255,255,255,0.12)',
-    textPrimary: '#D4D4D8',   // 🔥 Softer white — easy on eyes
+   textPrimary: '#B0B0B4',   // 🔥 Softer white — easy on eyes
     textSecondary: '#9CA3AF',
     textMuted: '#A1A1AA',
 };
@@ -213,7 +213,7 @@ const Workspace = () => {
         } catch (err) {}
     };
 
-    const handleCompleteDay = async (dayId) => {
+        const handleCompleteDay = async (dayId) => {
         const running = getRunningSession(dayId);
         if (running) {
             const startT = localStartTimes[dayId] || new Date(running.startTime).getTime();
@@ -226,8 +226,18 @@ const Workspace = () => {
             }));
         }
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+
+        // 🔥 Status = task-based, NOT always "completed"
+        const tasks = tasksByDay[dayId] || [];
+        const taskStatus = tasks.length === 0 ? 'active' : tasks.every(t => t.status === true) ? 'completed' : 'pending';
+
         try {
             await fetch(`http://localhost:3000/api/session/day/${dayId}/complete`, { method: "PATCH", credentials: "include" });
+            // Override status with task-based value
+            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: taskStatus }), credentials: "include"
+            });
             fetchWorkspaceData();
         } catch (err) {}
     };
@@ -242,7 +252,7 @@ const Workspace = () => {
         } catch (err) { console.error(err); }
     };
 
-    const confirmAddTask = async (dayId) => {
+        const confirmAddTask = async (dayId) => {
         if (!newTaskText.trim()) return;
         const plaintext = newTaskText.trim();
         setNewTaskText("");
@@ -254,17 +264,34 @@ const Workspace = () => {
                 body: JSON.stringify({ daySessionId: dayId, encryptedDescription, encryptedAESKey: "e2e_v1" }),
                 credentials: "include"
             });
-            if (res.ok) fetchTasks(dayId);
+            if (res.ok) {
+                fetchTasks(dayId);
+                // 🔥 New task added = at least 1 not done = pending
+                await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: "pending" }), credentials: "include"
+                });
+            }
             else setGlobalError("Failed to add task");
         } catch (err) { setGlobalError(err.message); }
     };
 
-    const handleToggleTask = async (taskId, currentStatus, dayId) => {
-        setTasksByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).map(t => t._id === taskId ? { ...t, status: !currentStatus } : t) }));
+        const handleToggleTask = async (taskId, currentStatus, dayId) => {
+        const updatedTasks = (tasksByDay[dayId] || []).map(t => t._id === taskId ? { ...t, status: !currentStatus } : t);
+        setTasksByDay(prev => ({ ...prev, [dayId]: updatedTasks }));
+
+        // 🔥 Compute new status from updated tasks
+        const newStatus = updatedTasks.length === 0 ? 'active' : updatedTasks.every(t => t.status === true) ? 'completed' : 'pending';
+
         try {
             await fetch(`http://localhost:3000/api/task/patchtask/${taskId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: !currentStatus }), credentials: "include"
+            });
+            // 🔥 Sync day status in DB
+            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus }), credentials: "include"
             });
             fetchTasks(dayId);
         } catch (err) {}
@@ -308,27 +335,18 @@ const Workspace = () => {
         handleDeleteDaySession(dayId);
     };
 
-    // 🔥 Remove day session from frontend + cleanup backend
-    const handleDeleteDaySession = async (dayId) => {
+        const handleDeleteDaySession = async (dayId) => {
+        // Remove from UI immediately
         setDaySessions(prev => prev.filter(d => d._id !== dayId));
         setTasksByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         setTimersByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
 
+        // One call — backend deletes daySession + sessions + tasks
         try {
-            const res = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
-            if (res.ok) {
-                const data = await res.json();
-                const sessions = data.sessions || [];
-                const running = sessions.find(s => s.status === 'running');
-                if (running) {
-                    await fetch(`http://localhost:3000/api/session/session/${running._id}/pause`, { method: "PATCH", credentials: "include" });
-                }
-                await Promise.all(sessions.map(s =>
-                    fetch(`http://localhost:3000/api/session/session/${s._id}`, { method: "DELETE", credentials: "include" }).catch(() => {})
-                ));
-            }
-            await fetch(`http://localhost:3000/api/session/day/${dayId}`, { method: "DELETE", credentials: "include" }).catch(() => {});
+            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+                method: "DELETE", credentials: "include"
+            });
         } catch {}
     };
 
@@ -571,14 +589,18 @@ const Workspace = () => {
                         </button>
                     </div>
 
-                    {globalError && (
-                        <div style={{ marginBottom: 32, padding: '12px 16px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.06)', color: '#F87171', fontSize: 13, borderRadius: 8, animation: 'fadeIn 0.3s ease' }}>
+                                       {globalError && (
+                        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>
                             {globalError}
                         </div>
                     )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-                        {daySessions.map(day => {
+                                               {daySessions.filter(day => {
+                            if (isToday(day.date)) return true;
+                            const tasks = tasksByDay[day._id] || [];
+                            return tasks.length > 0;
+                        }).map(day => {
                             const isExpanded = expandedBoxes[day._id] !== false; 
                             const isEditing = editingDayId === day._id;
                             const tasks = tasksByDay[day._id] || [];
@@ -588,7 +610,6 @@ const Workspace = () => {
                             const statusLabel = getDeadlineStatus(day);
                             const isDayCompleted = day.status === 'completed';
                             const isConfirming = confirmAction?.dayId === day._id;
-
                             return (
                                 <div key={day._id} style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
                                     <div style={{ flex: '1 1 100%', border: `1px solid ${COLORS.border}`, borderRadius: 8, backgroundColor: COLORS.card, padding: 24, transition: 'all 0.3s ease-in-out' }}>

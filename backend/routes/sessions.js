@@ -102,6 +102,27 @@ router.patch("/day/:id", async function (req, res) {
   }
 });
 
+router.delete("/day/:id", async function (req, res) {
+    try {
+        const userId = req.user.id;
+        const daySession = await dailysessionmodel.findOne({
+            _id: req.params.id,
+            userId,
+        });
+        if (!daySession) {
+            return res.status(404).json({ message: "Day session not found" });
+        }
+        await timermodel.deleteMany({ daySessionId: req.params.id, userId });
+        const taskmodel = require("../models/tasks");
+        await taskmodel.deleteMany({ daySessionId: req.params.id });
+        await dailysessionmodel.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Day session and all related data deleted" });
+    } catch (err) {
+        res.status(500).json({ message: "Something went wrong", error: err.message });
+    }
+});
+
+
 //---------------------------------------------------------------------------------------
 
 router.post("/session/:id/resume", async (req, res) => {
@@ -430,6 +451,41 @@ router.delete("/day/:id/sessions/reset", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
+});
+
+// 🔥 CASCADE DELETE: Day session + all timer sessions + all tasks
+router.delete("/day/:id", async function (req, res) {
+    try {
+        const userId = req.user.id;
+
+        const daySession = await dailysessionmodel.findOne({
+            _id: req.params.id,
+            userId,
+        });
+
+        if (!daySession) {
+            return res.status(404).json({ message: "Day session not found" });
+        }
+
+        // 1. Delete all timer sessions (sessioncrediantials) for this day
+        await timermodel.deleteMany({ daySessionId: req.params.id, userId });
+
+        // 2. Delete all tasks for this day
+        const taskmodel = require("../models/tasks");
+        await taskmodel.deleteMany({ daySessionId: req.params.id });
+
+        // 3. Delete the day session itself
+        await dailysessionmodel.findByIdAndDelete(req.params.id);
+
+        res.status(200).json({
+            message: "Day session and all related data deleted",
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: "Something went wrong",
+            error: err.message,
+        });
+    }
 });
 
 
