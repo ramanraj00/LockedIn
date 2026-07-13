@@ -10,7 +10,7 @@ const COLORS = {
     sidebar: '#15181C',
     border: 'rgba(255,255,255,0.15)',
     borderHover: 'rgba(255,255,255,0.12)',
-    textPrimary: '#FFFFFF',
+    textPrimary: '#D4D4D8',   // 🔥 Softer white — easy on eyes
     textSecondary: '#9CA3AF',
     textMuted: '#A1A1AA',
 };
@@ -92,9 +92,10 @@ const Workspace = () => {
     const [decryptedTexts, setDecryptedTexts] = useState({});
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const sidebarRef = useRef(null);
-
-    // 🔥 NEW: Inline confirm (no more browser popup)
-    const [confirmAction, setConfirmAction] = useState(null); // { type: 'save'|'reset', dayId }
+    const [confirmAction, setConfirmAction] = useState(null);
+    
+    // 🔥 NEW: Warning before deleting last task on old container
+    const [deleteWarning, setDeleteWarning] = useState(null); // { taskId, dayId }
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -108,6 +109,14 @@ const Workspace = () => {
         const interval = setInterval(() => setNow(Date.now()), 100);
         return () => clearInterval(interval);
     }, []);
+
+    // 🔥 Auto-dismiss error after 3 seconds
+    useEffect(() => {
+        if (globalError) {
+            const timer = setTimeout(() => setGlobalError(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [globalError]);
 
     useEffect(() => {
         const decryptAll = async () => {
@@ -167,6 +176,12 @@ const Workspace = () => {
         } catch (err) {}
     };
 
+    const isToday = (dateStr) => {
+        const date = new Date(dateStr);
+        const today = new Date();
+        return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+    };
+
     const handleCreateDaySession = async () => {
         setIsCreatingBox(true);
         setGlobalError(null);
@@ -179,7 +194,7 @@ const Workspace = () => {
             if (res.ok) fetchWorkspaceData();
             else {
                 const errData = await res.json().catch(() => ({}));
-                setGlobalError(`Error: ${errData.error || errData.message}`);
+                setGlobalError(errData.error || errData.message || "Failed to create box");
             }
         } catch (err) { setGlobalError(err.message); }
         finally { setIsCreatingBox(false); }
@@ -198,7 +213,6 @@ const Workspace = () => {
         } catch (err) {}
     };
 
-    // 🔥 FIX: No more window.confirm — called from inline UI
     const handleCompleteDay = async (dayId) => {
         const running = getRunningSession(dayId);
         if (running) {
@@ -256,7 +270,18 @@ const Workspace = () => {
         } catch (err) {}
     };
 
+    // 🔥 DELETE TASK: Shows warning if last task on old container
     const handleDeleteTask = async (taskId, dayId) => {
+        const tasks = tasksByDay[dayId] || [];
+        const day = daySessions.find(d => d._id === dayId);
+        const isOld = day && !isToday(day.date);
+
+        if (tasks.length === 1 && isOld) {
+            setDeleteWarning({ taskId, dayId });
+            return;
+        }
+
+        // Normal delete
         setTasksByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).filter(t => t._id !== taskId) }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         try {
@@ -265,7 +290,49 @@ const Workspace = () => {
         } catch (err) {}
     };
 
-    // ═══════════════ TIMER HANDLERS — USE API RESPONSE, NO fetchTimers RACE ═══════════════
+    // 🔥 Confirmed: delete last task + remove entire old container
+    const confirmDeleteLastTask = async () => {
+        if (!deleteWarning) return;
+        const { taskId, dayId } = deleteWarning;
+        setDeleteWarning(null);
+
+        // Remove task from UI
+        setTasksByDay(prev => ({ ...prev, [dayId]: [] }));
+        setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
+
+        try {
+            await fetch(`http://localhost:3000/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" });
+        } catch {}
+
+        // Delete entire day session + timer data
+        handleDeleteDaySession(dayId);
+    };
+
+    // 🔥 Remove day session from frontend + cleanup backend
+    const handleDeleteDaySession = async (dayId) => {
+        setDaySessions(prev => prev.filter(d => d._id !== dayId));
+        setTasksByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+        setTimersByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+        setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+
+        try {
+            const res = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
+            if (res.ok) {
+                const data = await res.json();
+                const sessions = data.sessions || [];
+                const running = sessions.find(s => s.status === 'running');
+                if (running) {
+                    await fetch(`http://localhost:3000/api/session/session/${running._id}/pause`, { method: "PATCH", credentials: "include" });
+                }
+                await Promise.all(sessions.map(s =>
+                    fetch(`http://localhost:3000/api/session/session/${s._id}`, { method: "DELETE", credentials: "include" }).catch(() => {})
+                ));
+            }
+            await fetch(`http://localhost:3000/api/session/day/${dayId}`, { method: "DELETE", credentials: "include" }).catch(() => {});
+        } catch {}
+    };
+
+    // ═══════════════ TIMER HANDLERS ═══════════════
 
     const handleStartTimer = async (dayId) => {
         const exactStart = Date.now();
@@ -284,7 +351,6 @@ const Workspace = () => {
             });
             if (res.ok) {
                 const data = await res.json();
-                // 🔥 Replace optimistic with real session (NO fetchTimers = NO race condition)
                 setTimersByDay(prev => ({
                     ...prev,
                     [dayId]: (prev[dayId] || []).map(s => s._id === optimisticId ? data.session : s)
@@ -301,59 +367,48 @@ const Workspace = () => {
         }
     };
 
-    // 🔥 PAUSE FIX: Use API response directly — no fetchTimers overwriting paused state
-    const handlePauseTimer = async (dayId, sessionId) => {
-        // Step 1: Optimistic freeze
+    // 🔥 PAUSE FIX: Always query server for the REAL running session, then pause it
+    const handlePauseTimer = async (dayId) => {
+        // Step 1: Optimistic freeze — find ANY running session locally and pause it
         const sessions = timersByDay[dayId] || [];
-        const runSess = sessions.find(s => s._id === sessionId);
-        let elapsed = 0;
-        if (runSess) {
-            const startT = localStartTimes[dayId] || new Date(runSess.startTime).getTime();
-            elapsed = Math.max(0, Math.floor((Date.now() - startT) / 1000));
+        const localRunning = sessions.find(s => s.status === 'running');
+        const localRunningId = localRunning?._id;
+
+        if (localRunning) {
+            const startT = localStartTimes[dayId] || new Date(localRunning.startTime).getTime();
+            const elapsed = Math.max(0, Math.floor((Date.now() - startT) / 1000));
             setTimersByDay(prev => ({
                 ...prev,
                 [dayId]: (prev[dayId] || []).map(s =>
-                    s._id === sessionId ? { ...s, status: 'paused', duration: elapsed } : s
+                    s._id === localRunningId ? { ...s, status: 'paused', duration: elapsed } : s
                 )
             }));
         }
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
 
-        // Step 2: Find real ID if optimistic
-        let realId = sessionId;
-        if (sessionId.startsWith('opt_')) {
-            try {
-                const sessRes = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
-                if (sessRes.ok) {
-                    const sessData = await sessRes.json();
-                    const real = (sessData.sessions || []).find(s => s.status === 'running');
-                    if (real) realId = real._id;
-                    else return; // no running session to pause
-                }
-            } catch { return; }
-        }
-
-        // Step 3: Pause on server and use response
+        // Step 2: Query server for the REAL running session (don't trust frontend IDs)
         try {
-            const res = await fetch(`http://localhost:3000/api/session/session/${realId}/pause`, { method: "PATCH", credentials: "include" });
+            const sessRes = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
+            if (!sessRes.ok) return;
+            const sessData = await sessRes.json();
+            const realRunning = (sessData.sessions || []).find(s => s.status === 'running');
+            if (!realRunning) return; // Already paused on server — our optimistic update is fine
+
+            // Step 3: Pause using the CONFIRMED server-side session ID
+            const res = await fetch(`http://localhost:3000/api/session/session/${realRunning._id}/pause`, {
+                method: "PATCH", credentials: "include"
+            });
             if (res.ok) {
                 const data = await res.json();
-                // 🔥 Update with server's confirmed paused session — NO fetchTimers
                 setTimersByDay(prev => ({
                     ...prev,
                     [dayId]: (prev[dayId] || []).map(s =>
-                        (s._id === sessionId || s._id === realId) ? data.session : s
+                        (s._id === localRunningId || s._id === realRunning._id) ? data.session : s
                     )
                 }));
-            } else {
-                const errData = await res.json().catch(() => ({}));
-                console.error("Pause failed:", errData.message);
-                setGlobalError(errData.message || "Pause failed");
-                fetchTimers(dayId); // Fallback: re-sync with server
             }
         } catch (err) {
             console.error("Pause error:", err);
-            fetchTimers(dayId);
         }
     };
 
@@ -371,7 +426,6 @@ const Workspace = () => {
             const res = await fetch(`http://localhost:3000/api/session/session/${sessionId}/resume`, { method: "POST", credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
-                // Replace optimistic with real session
                 setTimersByDay(prev => ({
                     ...prev,
                     [dayId]: (prev[dayId] || []).map(s => s._id === optimisticId ? data.session : s)
@@ -382,7 +436,6 @@ const Workspace = () => {
         }
     };
 
-    // 🔥 RESET FIX: No window.confirm — called from inline UI
     const handleResetTimer = async (dayId) => {
         setTimersByDay(prev => ({ ...prev, [dayId]: [] }));
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
@@ -396,9 +449,9 @@ const Workspace = () => {
                 if (running) {
                     await fetch(`http://localhost:3000/api/session/session/${running._id}/pause`, { method: "PATCH", credentials: "include" });
                 }
-                await Promise.all(
-                    sessions.map(s => fetch(`http://localhost:3000/api/session/session/${s._id}`, { method: "DELETE", credentials: "include" }).catch(() => {}))
-                );
+                await Promise.all(sessions.map(s =>
+                    fetch(`http://localhost:3000/api/session/session/${s._id}`, { method: "DELETE", credentials: "include" }).catch(() => {})
+                ));
             }
         } catch (err) { console.error("Reset error:", err); }
         fetchTimers(dayId);
@@ -409,12 +462,6 @@ const Workspace = () => {
             await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
             navigate("/login");
         } catch { navigate("/login"); }
-    };
-
-    const isToday = (dateStr) => {
-        const date = new Date(dateStr);
-        const today = new Date();
-        return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
     };
 
     const getCalculatedTime = (dayId) => {
@@ -435,16 +482,12 @@ const Workspace = () => {
     const getRunningSession = (dayId) => (timersByDay[dayId] || []).find(s => s.status === 'running');
     const getPausedSession = (dayId) => [...(timersByDay[dayId] || [])].reverse().find(s => s.status === 'paused');
 
+    // 🔥 STATUS: Pure task-based. completed = all done. pending = any not done. active = no tasks.
     const getDeadlineStatus = (day) => {
-        if (day.status === 'completed') return 'completed';
         const tasks = tasksByDay[day._id] || [];
-        const allCompleted = tasks.length > 0 && tasks.every(t => t.status);
-        if (allCompleted) return 'completed';
-        if (!day.deadline) return 'active';
-        const daysDiff = (new Date(day.deadline).getTime() - Date.now()) / (1000 * 3600 * 24);
-        if (daysDiff < 0) return 'overdue';
-        if (daysDiff <= 2) return 'pending';
-        return 'active';
+        if (tasks.length === 0) return 'active';
+        if (tasks.every(t => t.status === true)) return 'completed';
+        return 'pending';
     };
 
     return (
@@ -476,10 +519,10 @@ const Workspace = () => {
                     font-size: 13px; font-weight: 400; cursor: pointer; transition: color 0.2s;
                     display: flex; align-items: center; justify-content: center;
                 }
-                .action-btn:hover { color: #FFFFFF !important; }
+                .action-btn:hover { color: ${COLORS.textPrimary} !important; }
                 .edit-input {
                     background: transparent; border: 1px solid ${COLORS.border}; 
-                    color: #FFF; font-size: 14px; padding: 4px 8px; border-radius: 4px; outline: none; width: 100%;
+                    color: ${COLORS.textPrimary}; font-size: 14px; padding: 4px 8px; border-radius: 4px; outline: none; width: 100%;
                 }
                 ::-webkit-scrollbar { width: 6px; }
                 ::-webkit-scrollbar-track { background: transparent; }
@@ -529,8 +572,8 @@ const Workspace = () => {
                     </div>
 
                     {globalError && (
-                        <div style={{ marginBottom: 32, padding: '12px 16px', border: '1px solid #EF4444', color: '#EF4444', fontSize: 13, borderRadius: 4 }}>
-                            {globalError} <button onClick={() => setGlobalError(null)} style={{ float: 'right', background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer' }}>x</button>
+                        <div style={{ marginBottom: 32, padding: '12px 16px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.06)', color: '#F87171', fontSize: 13, borderRadius: 8, animation: 'fadeIn 0.3s ease' }}>
+                            {globalError}
                         </div>
                     )}
 
@@ -557,11 +600,11 @@ const Workspace = () => {
                                                     <span style={{ fontSize: 20, fontWeight: 400 }}>
                                                         {new Date(day.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </span>
-                                                    <span style={{ fontSize: 11, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, padding: '2px 8px', borderRadius: 12, marginLeft: 16 }}>
+                                                    <span style={{ fontSize: 11, color: statusLabel === 'completed' ? '#34D399' : statusLabel === 'pending' ? '#FBBF24' : COLORS.textMuted, border: `1px solid ${statusLabel === 'completed' ? 'rgba(52,211,153,0.3)' : statusLabel === 'pending' ? 'rgba(251,191,36,0.3)' : COLORS.border}`, padding: '2px 8px', borderRadius: 12, marginLeft: 16 }}>
                                                         {statusLabel}
                                                     </span>
                                                     {!isExpanded && tasks.length > 0 && (
-                                                        <span style={{ fontSize: 11, color: COLORS.textPrimary, backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 12, marginLeft: 8 }}>
+                                                        <span style={{ fontSize: 11, color: COLORS.textPrimary, backgroundColor: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 12, marginLeft: 8 }}>
                                                             {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
                                                         </span>
                                                     )}
@@ -573,7 +616,6 @@ const Workspace = () => {
                                                 )}
                                             </div>
 
-                                            {/* CENTER: Timer + Buttons */}
                                             <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.02)', padding: '6px 16px', borderRadius: 12, border: `1px solid ${COLORS.border}` }}>
                                                     <span style={{ fontFamily: "'Courier New', monospace", fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, letterSpacing: '0.1em', marginRight: 4 }}>
@@ -582,7 +624,6 @@ const Workspace = () => {
                                                     
                                                     <div style={{ height: 20, width: 1, backgroundColor: COLORS.borderHover, margin: '0 4px' }}></div>
 
-                                                    {/* 🔥 INLINE CONFIRM — replaces ugly browser popup */}
                                                     {isConfirming ? (
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                             <span style={{ fontSize: 12, color: COLORS.textMuted, whiteSpace: 'nowrap' }}>
@@ -606,7 +647,7 @@ const Workspace = () => {
                                                                     {pausedSession ? "Resume" : "Start"}
                                                                 </button>
                                                             ) : (
-                                                                <button onClick={() => handlePauseTimer(day._id, runningSession._id)} className="timer-text-btn pause-btn">
+                                                                <button onClick={() => handlePauseTimer(day._id)} className="timer-text-btn pause-btn">
                                                                     Pause
                                                                 </button>
                                                             )}
@@ -646,7 +687,7 @@ const Workspace = () => {
                                                         <input type="text" autoFocus placeholder="new task..." value={newTaskText}
                                                             onChange={(e) => setNewTaskText(e.target.value)}
                                                             onKeyDown={(e) => { if(e.key === 'Enter') confirmAddTask(day._id); }}
-                                                            style={{ flex: 1, background: 'transparent', border: 'none', color: '#FFF', fontSize: 14, outline: 'none' }} />
+                                                            style={{ flex: 1, background: 'transparent', border: 'none', color: COLORS.textPrimary, fontSize: 14, outline: 'none' }} />
                                                         <button onClick={() => confirmAddTask(day._id)} className="action-btn">save</button>
                                                         <button onClick={() => { setAddingTaskDayId(null); setNewTaskText(''); }} className="action-btn">cancel</button>
                                                     </div>
@@ -658,15 +699,26 @@ const Workspace = () => {
                                                             {isEditing ? (
                                                                 <input type="text" className="edit-input" defaultValue={decryptedTexts[task._id] || task.encryptedDescription} />
                                                             ) : (
-                                                                <span style={{ color: '#FFFFFF', fontSize: 14, textDecoration: task.status ? 'line-through' : 'none' }}>
+                                                                <span style={{ color: COLORS.textPrimary, fontSize: 14, textDecoration: task.status ? 'line-through' : 'none' }}>
                                                                     {decryptedTexts[task._id] || task.encryptedDescription}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div style={{ display: 'flex', gap: 16 }}>
-                                                            <button onClick={() => handleToggleTask(task._id, task.status, day._id)} className="action-btn">{task.status ? 'undo' : 'done'}</button>
-                                                            <button onClick={() => handleDeleteTask(task._id, day._id)} className="action-btn">delete</button>
-                                                        </div>
+                                                        {/* 🔥 Warning UI when deleting last task on old container */}
+                                                        {deleteWarning?.taskId === task._id ? (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                                                <span style={{ fontSize: 12, color: '#FBBF24', whiteSpace: 'nowrap' }}>
+                                                                    time won't count in analytics
+                                                                </span>
+                                                                <button onClick={confirmDeleteLastTask} className="action-btn" style={{ color: '#EF4444' }}>delete</button>
+                                                                <button onClick={() => setDeleteWarning(null)} className="action-btn">keep</button>
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{ display: 'flex', gap: 16 }}>
+                                                                <button onClick={() => handleToggleTask(task._id, task.status, day._id)} className="action-btn">{task.status ? 'undo' : 'done'}</button>
+                                                                <button onClick={() => handleDeleteTask(task._id, day._id)} className="action-btn">delete</button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                                 {tasks.length === 0 && addingTaskDayId !== day._id && (
