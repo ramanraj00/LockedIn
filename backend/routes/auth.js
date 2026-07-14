@@ -17,8 +17,19 @@ const loginLimiter = ratelimit({
   message: "Too many login attempts",
 });
 
+const recoveryLimiter = ratelimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 5, // 5 attempts per 15 min
+  message: { message: "Too many recovery attempts. Try again later." },
+});
+// Ye route sabse neeche add kar do:
+router.post("/reset-vault-keys", authMiddleware, recoveryLimiter, authController.resetVaultKeys);
+
 router.get("/check-auth", authMiddleware, authController.checkAuth);
 
+
+
+router.post("/setup-keys", authMiddleware, authController.setupKeys);
 router.post("/signup", userValidationMiddleware(userValidSchema), loginLimiter, authController.signup);
 router.post("/signin", userValidationMiddleware(userloginSchema), loginLimiter, authController.signin);
 router.post("/forgetPassword", userValidationMiddleware(forgetpasswordvalidatorSchemna), authController.forgetPassword);

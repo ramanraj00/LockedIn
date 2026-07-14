@@ -1,28 +1,28 @@
 const jwt = require("jsonwebtoken");
-const JWT_SECRET = process.env.JWT_SECRET;
+const usermodel = require("../models/users");
 
-const authMiddleware = (req, res, next) => {
-    // Pehle Cookie me dhundo, agar wahan nahi mila tab Authorization Header me dhundo
-    const token = req.cookies?.token || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
+const authMiddleware = async (req, res, next) => {
+    try {
+        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+        if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-    if (!token) {
-       return res.status(401).json({
-            message: "Not authorized. Please login first."
-        });
-    }
-
-       try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.userId = decoded.id; // (Yeh line pehle se hai, isko rehne do taaki purane routes na tutein)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        req.user = { id: decoded.id }; // 👈 BAS YEH 1 NAYI LINE ADD KARDO
-        
-        next(); // Aage route me jaane do
-    } catch(err) {
-        res.status(403).json({
-            message: "Invalid or expired token"
-        });
+        const user = await usermodel.findById(decoded.id).select("crypto.lastVaultResetAt");
+        if (!user) return res.status(401).json({ message: "User not found" });
+
+        if (user.crypto && user.crypto.lastVaultResetAt) {
+            const tokenIssuedAt = decoded.iat * 1000;
+            if (tokenIssuedAt < user.crypto.lastVaultResetAt.getTime() - 1000) {
+                return res.status(401).json({ message: "Session expired due to security reset. Please log in again." });
+            }
+        }
+
+        req.user = decoded;
+        next();
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid or expired token" });
     }
-}
+};
 
 module.exports = authMiddleware;

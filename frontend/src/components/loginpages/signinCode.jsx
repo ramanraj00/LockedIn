@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ShaderBackground from '../shaderbackground/ShaderBackground'; 
 import { deriveKEK, generateWorkspaceDEK, generateRecoveryKey, generateUserSalt, encryptDEK } from '../../utils/e2eMasterKey';
+import { useCrypto } from '../../context/CryptoContext';
 
 const AVATARS = [
     "/avatars/gwen.png", "/avatars/spidey.png", "/avatars/buttercup.png", "/avatars/henry.png"
@@ -11,6 +12,8 @@ const AVATARS = [
 
 const Signup = () => {
     const navigate = useNavigate();
+    const { setDek } = useCrypto(); // 🔥 Context Access
+
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null); 
@@ -21,6 +24,7 @@ const Signup = () => {
     // RECOVERY KEY MODAL STATES
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
     const [recoveryKey, setRecoveryKey] = useState("");
+    const [recoverySaved, setRecoverySaved] = useState(false); // 🔥 Checkbox state
 
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', imageUrl: AVATARS[0]
@@ -53,7 +57,8 @@ const Signup = () => {
 
                 setSuccessMsg("Logged in with Google Successfully!");
                 setIsFlipping(true); 
-                setTimeout(() => navigate('/profile'), 1200); 
+                // Google users jayenge pehle login/vault setup par
+                setTimeout(() => navigate('/login'), 1200); 
 
             } catch (err) {
                 setError("Network error. Try again."); setLoading(false);
@@ -82,13 +87,14 @@ const Signup = () => {
             const KDF_TYPE = "PBKDF2"; 
             
             const userSalt = generateUserSalt();
+            const recoverySalt = generateUserSalt(); // 🔥 FIX: Naya salt recovery ke liye
+            
             const passwordKEK = await deriveKEK(formData.password, userSalt, PBKDF2_ITERATIONS);
             const dek = await generateWorkspaceDEK();
-            
             const encryptedDEK_pwd = await encryptDEK(dek, passwordKEK);
             
             const recKey = generateRecoveryKey(); 
-            const recoveryKEK = await deriveKEK(recKey, userSalt, PBKDF2_ITERATIONS);
+            const recoveryKEK = await deriveKEK(recKey, recoverySalt, PBKDF2_ITERATIONS);
             const encryptedDEK_rec = await encryptDEK(dek, recoveryKEK);
 
             const response = await fetch("http://localhost:3000/api/auth/signup", {
@@ -100,10 +106,10 @@ const Signup = () => {
                     email: formData.email, 
                     password: formData.password,
                     imageUrl: window.location.origin + formData.imageUrl,
-                    // Send E2E Payload
                     encryptedDEK_pwd,
                     encryptedDEK_rec,
                     userSalt,
+                    recoverySalt, // 🔥 FIX: Backend me pass kar diya
                     pbkdf2Iterations: PBKDF2_ITERATIONS,
                     kdf: KDF_TYPE
                 })
@@ -114,6 +120,7 @@ const Signup = () => {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
 
+            await setDek(dek, true); // 🔥 FIX: Automatically unlock in context
             setRecoveryKey(recKey);
             setShowRecoveryModal(true);
             setLoading(false);
@@ -128,7 +135,7 @@ const Signup = () => {
         setSuccessMsg("Account created Successfully!");
         setShowRecoveryModal(false);
         setIsFlipping(true);
-        setTimeout(() => navigate('/login'), 1200); 
+        setTimeout(() => navigate('/profile'), 1200); // 🔥 FIX: Seedha app me entry!
     };
 
     return (
@@ -148,23 +155,43 @@ const Signup = () => {
                 `}
             </style>
 
-            {/* RECOVERY KEY MODAL */}
+            {/* RECOVERY KEY MODAL - NAYA SLEEK UI */}
             {showRecoveryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
                     <div className="bg-[#0A0A0A] border border-indigo-500/30 p-8 rounded-2xl max-w-2xl w-full shadow-[0_0_80px_rgba(99,102,241,0.15)] text-center relative overflow-hidden">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"></div>
+                        
                         <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Your Secret Recovery Key</h2>
                         <p className="text-slate-400 text-sm mb-6">
-                            Write this down or save it in a password manager. <strong className="text-red-400">We do not store this key. If you forget your password and lose this key, your workspace data cannot be recovered.</strong>
+                            Write this down or save it in a password manager. <strong className="text-red-400">We do not store this key. If you forget your password and lose this key, your data cannot be recovered.</strong>
                         </p>
-                        <div className="bg-black/60 border border-white/10 p-5 rounded-xl mb-8 font-mono text-sm sm:text-base md:text-lg text-indigo-400 tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
-                            <span className="whitespace-pre-wrap leading-relaxed">{recoveryKey.split('-').reduce((acc, curr, i) => acc + curr + ((i + 1) % 4 === 0 ? '\n' : '-'), '').trim()}</span>
+                        
+                        <div className="bg-black/60 border border-white/10 p-5 rounded-xl mb-6 font-mono text-sm sm:text-base md:text-lg text-indigo-400 tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                            <span className="whitespace-pre-wrap leading-relaxed">{recoveryKey}</span>
                         </div>
+                        
+                        <div className="flex gap-3 mb-6">
+                            <button type="button" onClick={() => {navigator.clipboard.writeText(recoveryKey)}} className="flex-1 py-3 text-sm bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-colors">Copy Key</button>
+                            <button type="button" onClick={() => {
+                                const blob = new Blob([recoveryKey], {type: "text/plain"});
+                                const link = document.createElement("a");
+                                link.href = URL.createObjectURL(blob);
+                                link.download = "LockedIn-Recovery-Key.txt";
+                                link.click();
+                            }} className="flex-1 py-3 text-sm bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-colors">Download .TXT</button>
+                        </div>
+
+                        <label className="flex items-center justify-center gap-3 text-sm text-slate-300 cursor-pointer mb-6">
+                            <input type="checkbox" className="w-4 h-4 accent-indigo-500" checked={recoverySaved} onChange={(e) => setRecoverySaved(e.target.checked)} />
+                            I have saved my Recovery Key safely.
+                        </label>
+
                         <button 
+                            disabled={!recoverySaved}
                             onClick={handleAcknowledgeRecoveryKey}
-                            className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)]"
+                            className="w-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)]"
                         >
-                            I have securely saved this key
+                            Enter Workspace
                         </button>
                     </div>
                 </div>

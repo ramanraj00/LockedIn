@@ -37,24 +37,7 @@ const userSchema = new Schema({
     imageUrl: {
         type: String,
     },
-    // 🔥 NAYE E2E CRYPTO FIELDS 🔥
-    encryptedDEK_pwd: {
-        type: Object, // 👈 Isko Object karna hai kyunki IV aur Data dono aayenge
-    },
-    encryptedDEK_rec: {
-        type: Object, // 👈 Isko bhi Object
-    },
-    userSalt: {
-        type: String, // Ye string hi rahega kyunki ye sirf text hai
-    },
-    pbkdf2Iterations: {
-        type: Number,
-        default: 250000
-    },
-    kdf: {
-        type: String,
-        default: "PBKDF2"
-    },
+    
     // 🔥 PROFILE FIELDS 🔥
     about: {
         type: String,
@@ -70,11 +53,42 @@ const userSchema = new Schema({
     badges: [{
         name: String,
         imageUrl: String
-    }]
+    }],
+
+    // 🔥 NESTED E2E CRYPTO FIELDS 🔥
+    crypto: {
+        encryptedDEK_pwd: {
+            type: Object, // IV aur Data dono aayenge
+        },
+        encryptedDEK_rec: {
+            type: Object, 
+        },
+        userSalt: {
+            type: String, 
+        },
+        recoverySalt: {
+            type: String, // 16-byte random salt exclusively for Recovery KEK
+        },
+        pbkdf2Iterations: {
+            type: Number,
+            default: 250000
+        },
+        kdf: {
+            type: String,
+            default: "PBKDF2"
+        },
+        lastVaultResetAt: {
+            type: Date,
+            default: Date.now 
+        },
+        vaultVersion: {
+            type: Number,
+            default: 1 
+        }
+    }
 },
 {
     timestamps: true,
-
     strict: false
 });
 

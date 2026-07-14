@@ -5,6 +5,8 @@ import Landing from "../src/pages/landing.jsx";
 import Signup  from "./components/loginpages/signinCode.jsx";
 import Login from "./components/loginpages/reallogin.jsx";
 import ResetPassword from './components/loginpages/ResetPassword.jsx';
+// 🔥 YAHAN FORGOT PASSWORD IMPORT KIYA HAI
+import ForgotPassword from './components/loginpages/ForgotPassword.jsx'; 
 
 // 🔥 NAYE IMPORTS
 import ProtectedRoute from './components/loginpages/ProtectedRoute.jsx'; 
@@ -20,6 +22,10 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      
+      {/* 🔥 YEH NAYI ROUTE ADD KI HAI FORGOT PASSWORD KE LIYE */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       
       {/* 🛑 SECURE ROUTES */}
@@ -41,7 +47,7 @@ function App() {
         } 
       />
 
-      {/* 👇 YEH NAYI WORKSPACE ROUTE ADD HO GAYI */}
+      {/* 👇 YEH WORKSPACE ROUTE HAI */}
       <Route 
         path="/workspace" 
         element={
