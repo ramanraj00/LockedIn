@@ -2,6 +2,7 @@ const usermodel = require("../models/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendResetEmail = require("../Services/emailServices");
+const { OAuth2Client } = require('google-auth-library');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -11,14 +12,13 @@ if (!JWT_SECRET) {
 
 // SIGNUP ------------------------------------------------------------------------
 exports.signup = async (req, res) => {
-  console.log("\n🔥🔥 FRONTEND SE YE BODY AAYI HAI: 🔥🔥\n");
-  console.log(req.body);
   try {
     const { 
         name, password, imageUrl, 
-        encryptedDEK_pwd, encryptedDEK_rec, userSalt, recoverySalt, pbkdf2Iterations, kdf 
+        encryptedDEK_pwd, encryptedDEK_rec, userSalt, 
+        recoverySalt, // 🔥 YE WORD MISSING THA, ISKO ADD KARO
+        pbkdf2Iterations, kdf 
     } = req.body;
-    
     const email = req.body.email.toLowerCase();
     const existingUser = await usermodel.findOne({ email });
 
@@ -28,11 +28,18 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new usermodel({
+       const user = await usermodel.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       imageUrl,
+      // Save crypto fields
+      encryptedDEK_pwd,
+      encryptedDEK_rec,
+      userSalt,
+      recoverySalt, // 🔥 YAHAN BHI ADD KARO TAAKI DB ME SAVE HO
+      pbkdf2Iterations,
+      kdf
     });
 
     // Agar frontend Signup ke time crypto keys bhejta hai (Optional, naye UX me ye setupKeys handle karta hai)
@@ -135,7 +142,7 @@ exports.forgetPassword = async (req, res) => {
   }
 };
 
-// Verify Reset Token (No Crypto Data Returned Anymore!)
+// Verify Reset Token (Returns Crypto Data for Recovery Key Validation)
 exports.verifyResetToken = async (req, res) => {
     try {
         const token = req.params.token;
@@ -155,12 +162,18 @@ exports.verifyResetToken = async (req, res) => {
             return res.status(400).json({ message: "Token expired" });
         }
 
-        // Sirf 200 OK bhejenge. Crypto data ki zarurat nahi.
+        // 🔥 FIX: Return Crypto data so frontend can mathematically verify the Recovery Key!
         return res.status(200).json({
-            message: "Token is valid"
+            message: "Token is valid",
+            // Fallback to handle both old architecture and new architecture
+            encryptedDEK_rec: user.crypto ? user.crypto.encryptedDEK_rec : user.encryptedDEK_rec,
+            recoverySalt: user.crypto ? user.crypto.recoverySalt : user.recoverySalt,
+            pbkdf2Iterations: user.crypto ? user.crypto.pbkdf2Iterations : user.pbkdf2Iterations,
+            kdf: user.crypto ? user.crypto.kdf : user.kdf
         });
 
     } catch (error) {
+        console.error("verifyResetToken Error:", error);
         res.status(500).json({ message: "Something went wrong" });
     }
 };
@@ -200,71 +213,72 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// Google Auth -------------------------------------------------------------------
 exports.googleAuth = async (req, res) => {
-    try {
-        const { token } = req.body;
-        
-        const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+  try {
+    const { token } = req.body; // Frontend se access_token aa raha hai
+    
+    // 🔥 FIX: Seedha Google API ko token bhej kar user details nikal lo
+    const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!googleResponse.ok) {
+      throw new Error("Invalid access token from Google");
+    }
+
+    const payload = await googleResponse.json();
+    const email = payload.email.toLowerCase(); 
+    
+    // 🔥 PEHLE EMAIL SE DHOONDO
+    let user = await usermodel.findOne({ email: email });
+    let isNewUser = false;
+
+    if (!user) {
+        // Agar user nahi hai, toh NAYA account banao
+        user = new usermodel({
+            name: payload.name,
+            email: email,
+            googleId: payload.sub,
+            authProvider: "google",
+            imageUrl: payload.picture,
         });
-        
-        if (!googleResponse.ok) {
-            throw new Error("Failed to fetch user profile from Google");
-        }
-        
-        const payload = await googleResponse.json();
-        const { sub, email, name, picture } = payload;
-
-        let user = await usermodel.findOne({ email });
-
-        if (!user) {
-            user = new usermodel({
-                name,
-                email,
-                googleId: sub,
-                authProvider: 'google',
-                imageUrl: picture,
-            });
+        await user.save();
+        isNewUser = true;
+    } else {
+        // 🔥 ACCOUNT LINKING MAGIC 🔥
+        if (!user.googleId) {
+            user.googleId = payload.sub;
             await user.save();
         }
-
-        const jwtToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-
-        res.cookie("token", jwtToken, {
-            httpOnly: true,
-            secure: false, 
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-
+        
+        // Agar vault setup complete nahi hai, toh Vault Setup screen pe bhejo
         if (!user.crypto || !user.crypto.encryptedDEK_pwd) {
-            return res.status(200).json({
-                message: "User needs Vault Password setup.",
-                isNewUser: true,
-                user: { id: user._id, email: user.email, name: user.name }
-            });
+            isNewUser = true; 
         }
-        res.status(200).json({
-            message: "Login successful",
-            isNewUser: false,
-            cryptoKeys: {
-                encryptedDEK_pwd: user.crypto.encryptedDEK_pwd,
-                encryptedDEK_rec: user.crypto.encryptedDEK_rec,
-                userSalt: user.crypto.userSalt,
-                recoverySalt: user.crypto.recoverySalt,
-                pbkdf2Iterations: user.crypto.pbkdf2Iterations,
-                kdf: user.crypto.kdf
-            },
-            user: { id: user._id, email: user.email, name: user.name }
-        });
-
-    } catch (err) {
-        console.error("Google Auth Error:", err);
-        res.status(500).json({ message: "Google Authentication failed", error: err.message });
     }
+
+    // JWT set kardo cookie me
+    const jwtToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
+    res.cookie("token", jwtToken, {
+        httpOnly: true,
+        secure: false, // Production me true karna
+        sameSite: "lax",
+    });
+
+    return res.status(200).json({ 
+        message: "Google Auth Successful", 
+        isNewUser: isNewUser,
+        cryptoKeys: user.crypto && user.crypto.encryptedDEK_pwd ? user.crypto : null
+    });
+
+  } catch (error) {
+    console.error("🔥 Google Auth Error:", error);
+    return res.status(400).json({ 
+        message: "Google login failed: " + (error.message || "Unable to link account.") 
+    });
+  }
 };
 
 // Get Profile Data --------------------------------------------------------------

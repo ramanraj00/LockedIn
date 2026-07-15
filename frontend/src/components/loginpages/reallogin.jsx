@@ -180,24 +180,54 @@ const Login = () => {
             setLoading(false);
         }
     };
-
-    // 🟢 5. RECOVER VAULT
+         // 🟢 4. RECOVER VAULT (FORGOT VAULT PASSWORD)
     const handleRecoverySubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-        if (recoveryKeyInput.length < 32) return setError("Invalid Recovery Key format.");
-        
-        setLoading(true);
+        setError(null); setLoading(true);
+
         try {
-            const { encryptedDEK_rec, recoverySalt, pbkdf2Iterations } = cryptoData;
-            const recoveryKEK = await deriveKEK(recoveryKeyInput, recoverySalt, pbkdf2Iterations);
-            const masterDEK = await decryptDEK(encryptedDEK_rec, recoveryKEK);
+            if (!cryptoData || !cryptoData.encryptedDEK_rec) {
+                throw new Error("Recovery data missing.");
+            }
+
+            const { encryptedDEK_rec, pbkdf2Iterations } = cryptoData;
             
-            setRecoveredDEK(masterDEK);
+            // 🚀 THE ULTIMATE BUG KILLER 🚀
+            // \s+ will remove all hidden newlines, spaces, and tabs from the textarea!
+            const rawKey = recoveryKeyInput.replace(/\s+/g, '').toUpperCase();
+            
+            const keysToTry = [
+                rawKey, // System 1 (With Hyphens)
+                rawKey.replace(/-/g, '') // System 2 (Without Hyphens)
+            ];
+            
+            const saltsToTry = [];
+            if (cryptoData.recoverySalt) saltsToTry.push(cryptoData.recoverySalt);
+            if (cryptoData.userSalt) saltsToTry.push(cryptoData.userSalt);
+
+            let masterDEK = null;
+
+            for (const key of keysToTry) {
+                for (const salt of saltsToTry) {
+                    try {
+                        const recoveryKEK = await deriveKEK(key, salt, pbkdf2Iterations);
+                        masterDEK = await decryptDEK(encryptedDEK_rec, recoveryKEK);
+                        if (masterDEK) break; 
+                    } catch (err) {} // Failures ignore karega
+                }
+                if (masterDEK) break;
+            }
+
+            if (!masterDEK) throw new Error("Invalid Recovery Key. Please check the characters.");
+            
+            // Decrypt successful! 🎉
+            await setDek(masterDEK, keepUnlocked); 
+            setRecoveredDEK(masterDEK); 
             setView('new_vault_password');
             setLoading(false);
+
         } catch (err) {
-            setError("Unable to recover your encrypted workspace. Please verify your Recovery Key.");
+            setError(`Failed: ${err.message || "Decryption failed"}`);
             setLoading(false);
         }
     };

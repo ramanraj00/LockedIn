@@ -21,13 +21,14 @@ const ResetPassword = () => {
     const [oldIterations, setOldIterations] = useState(250000);
 
     useEffect(() => {
-        const verifyToken = async () => {
+         const verifyToken = async () => {
             try {
                 const res = await fetch(`http://localhost:3000/api/auth/verify-reset-token/${token}`);
                 const data = await res.json();
                 if (res.ok && data.encryptedDEK_rec) {
                     setEncryptedDEKRec(data.encryptedDEK_rec);
-                    setOldSalt(data.userSalt);
+                    // 🔥 FIX: Yahan 'data.userSalt' ko hatakar 'data.recoverySalt' kar do
+                    setOldSalt(data.recoverySalt); 
                     setOldIterations(data.pbkdf2Iterations);
                 }
             } catch (err) {
@@ -42,7 +43,7 @@ const ResetPassword = () => {
         setError(null); setSuccessMsg(null);
 
         const formattedKey = recoveryKey.replace(/-/g, '').trim().toUpperCase();
-        if (formattedKey.length < 64) { // 64 hex chars = 32 bytes = 256 bits
+        if (formattedKey.length < 64) { 
             setError("Invalid Recovery Key Format."); return;
         }
 
@@ -146,7 +147,6 @@ const ResetPassword = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                            {/* RECOVERY KEY INPUT */}
                             <div className="flex flex-col relative pb-[12px]">
                                 <div className="relative">
                                     <input 
@@ -163,7 +163,6 @@ const ResetPassword = () => {
                                 </div>
                             </div>
 
-                            {/* NEW PASSWORD INPUT */}
                             <div className="flex flex-col relative pb-[12px]">
                                 <div className="relative">
                                     <input 

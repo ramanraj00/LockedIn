@@ -14,7 +14,7 @@ export const generateUserSalt = () => {
 // 2. Derive KEK using dynamic salt and iterations
 export const deriveKEK = async (secretString, saltBase64, iterations = 250000) => {
     // Remove dashes if they exist (for Recovery Key usage)
-    const normalizedSecret = secretString.replace(/-/g, '').trim().toUpperCase();
+   const normalizedSecret = secretString.replace(/[\s-]/g, '').toUpperCase();
 
     const keyMaterial = await window.crypto.subtle.importKey(
         "raw",

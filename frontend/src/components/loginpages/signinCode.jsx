@@ -12,7 +12,7 @@ const AVATARS = [
 
 const Signup = () => {
     const navigate = useNavigate();
-    const { setDek } = useCrypto(); // 🔥 Context Access
+    const { setDek } = useCrypto(); // 🔥 AUTO-UNLOCK KE LIYE CONTEXT
 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const Signup = () => {
     // RECOVERY KEY MODAL STATES
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
     const [recoveryKey, setRecoveryKey] = useState("");
-    const [recoverySaved, setRecoverySaved] = useState(false); // 🔥 Checkbox state
+    const [recoverySaved, setRecoverySaved] = useState(false); 
 
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', imageUrl: AVATARS[0]
@@ -57,7 +57,6 @@ const Signup = () => {
 
                 setSuccessMsg("Logged in with Google Successfully!");
                 setIsFlipping(true); 
-                // Google users jayenge pehle login/vault setup par
                 setTimeout(() => navigate('/login'), 1200); 
 
             } catch (err) {
@@ -67,11 +66,14 @@ const Signup = () => {
         onError: () => setError("Google Authentication Failed")
     });
 
-    const handleSignup = async (e) => {
+       const handleSignup = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null); setFieldErrors({});
 
         let tempErrors = {};
+         // 🔥 X-RAY CODE ADDED HERE 🔥
+        console.log("=== X-RAY DEBUG START ===");
+        console.log("2. CryptoData from DB:", cryptoData);
         if (!formData.name) tempErrors.name = "Name is required";
         if (!formData.email) tempErrors.email = "Email is required";
         if (!formData.password) tempErrors.password = "Password is required";
@@ -82,21 +84,33 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            // 🔥 ADVANCED E2E CRYPTO SETUP 🔥
+            // 🔥 ADVANCED E2E SETUP 🔥
             const PBKDF2_ITERATIONS = 250000;
             const KDF_TYPE = "PBKDF2"; 
             
+            // 1. Generate Unique Salts
             const userSalt = generateUserSalt();
-            const recoverySalt = generateUserSalt(); // 🔥 FIX: Naya salt recovery ke liye
-            
+            const recoverySalt = generateUserSalt(); // 🔥 Naya Recovery Salt (Added)
+
+            // 2. Derive Password KEK
             const passwordKEK = await deriveKEK(formData.password, userSalt, PBKDF2_ITERATIONS);
-            const dek = await generateWorkspaceDEK();
+            
+            // 3. Generate 256-bit DEK (Ye line galti se delete ho gayi thi)
+            const dek = await generateWorkspaceDEK(); 
+            
+            // 4. Encrypt DEK with Password KEK
             const encryptedDEK_pwd = await encryptDEK(dek, passwordKEK);
             
+            // 5. Generate 256-bit Recovery Key
             const recKey = generateRecoveryKey(); 
+            
+            // 6. Derive Recovery KEK (Ab recoverySalt use kar raha hai)
             const recoveryKEK = await deriveKEK(recKey, recoverySalt, PBKDF2_ITERATIONS);
+            
+            // 7. Encrypt DEK with Recovery KEK
             const encryptedDEK_rec = await encryptDEK(dek, recoveryKEK);
 
+            // 🔥 SEND TO BACKEND 
             const response = await fetch("http://localhost:3000/api/auth/signup", {
                 method: "POST",
                 credentials: "include",
@@ -104,14 +118,15 @@ const Signup = () => {
                 body: JSON.stringify({
                     name: formData.name, 
                     email: formData.email, 
-                    password: formData.password,
+                    password: formData.password, 
                     imageUrl: window.location.origin + formData.imageUrl,
+                    // E2E Fields
                     encryptedDEK_pwd,
                     encryptedDEK_rec,
                     userSalt,
-                    recoverySalt, // 🔥 FIX: Backend me pass kar diya
+                    recoverySalt, // 🔥 Added to body
                     pbkdf2Iterations: PBKDF2_ITERATIONS,
-                    kdf: KDF_TYPE
+                    kdf: KDF_TYPE 
                 })
             });
 
@@ -120,13 +135,13 @@ const Signup = () => {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
 
-            await setDek(dek, true); // 🔥 FIX: Automatically unlock in context
+            // SHOW RECOVERY KEY MODAL
             setRecoveryKey(recKey);
             setShowRecoveryModal(true);
             setLoading(false);
 
         } catch (err) {
-            setError("Encryption error during signup."); 
+            setError("Encryption error: " + err.message); 
             setLoading(false);
         }
     };
@@ -135,7 +150,7 @@ const Signup = () => {
         setSuccessMsg("Account created Successfully!");
         setShowRecoveryModal(false);
         setIsFlipping(true);
-        setTimeout(() => navigate('/profile'), 1200); // 🔥 FIX: Seedha app me entry!
+        setTimeout(() => navigate('/profile'), 1200); // 🔥 SEEDHA PROFILE ME ENTRY!
     };
 
     return (
@@ -155,7 +170,7 @@ const Signup = () => {
                 `}
             </style>
 
-            {/* RECOVERY KEY MODAL - NAYA SLEEK UI */}
+            {/* RECOVERY KEY MODAL - SLEEK UI */}
             {showRecoveryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
                     <div className="bg-[#0A0A0A] border border-indigo-500/30 p-8 rounded-2xl max-w-2xl w-full shadow-[0_0_80px_rgba(99,102,241,0.15)] text-center relative overflow-hidden">
@@ -248,7 +263,7 @@ const Signup = () => {
                                 {error ? (
                                     <div className="w-full py-2 md:py-0 md:h-full flex items-center gap-3 px-4 rounded-xl bg-black/80 border border-white/30 text-red-400 text-[12.5px] md:text-[13px] font-medium animate-shake backdrop-blur-md"><span className="truncate">{error}</span></div>
                                 ) : successMsg ? (
-                                    <div className="w-full py-2 md:py-0 md:h-full flex items-center gap-3 px-4 rounded-xl bg-black/80 border border-white/30 text-emerald-400 text-[12.5px] md:text-[13px] font-medium backdrop-blur-md"><span className="truncate">{successMsg}</span></div>
+                                    <div className="w-full py-2 md:py-0 md:h-full flex items-center gap-3 px-4 rounded-xl bg-black/80 border border-emerald-500/30 text-emerald-400 text-[12.5px] md:text-[13px] font-medium backdrop-blur-md"><span className="truncate">{successMsg}</span></div>
                                 ) : null}
                             </div>
 
