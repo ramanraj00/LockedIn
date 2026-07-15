@@ -29,6 +29,7 @@ const userValidSchema = z
     encryptedDEK_pwd: z.any().optional(),
     encryptedDEK_rec: z.any().optional(),
     userSalt: z.string().optional(),
+    recoverySalt: z.string().optional(), // 🚀 BOOM! YE GAYAB THA!
     pbkdf2Iterations: z.number().optional(),
     kdf: z.string().optional(),
   })

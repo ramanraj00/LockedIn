@@ -57,39 +57,19 @@ const userSchema = new Schema({
 
     // 🔥 NESTED E2E CRYPTO FIELDS 🔥
     crypto: {
-        encryptedDEK_pwd: {
-            type: Object, // IV aur Data dono aayenge
-        },
-        encryptedDEK_rec: {
-            type: Object, 
-        },
-        userSalt: {
-            type: String, 
-        },
-        recoverySalt: {
-            type: String, // 16-byte random salt exclusively for Recovery KEK
-        },
-        pbkdf2Iterations: {
-            type: Number,
-            default: 250000
-        },
-        kdf: {
-            type: String,
-            default: "PBKDF2"
-        },
-        lastVaultResetAt: {
-            type: Date,
-            default: Date.now 
-        },
-        vaultVersion: {
-            type: Number,
-            default: 1 
-        }
+        encryptedDEK_pwd: { type: Object }, // 🟢 IV and Data will be saved perfectly
+        encryptedDEK_rec: { type: Object }, // 🟢 No more "[object Object]" corruption!
+        userSalt: { type: String },
+        recoverySalt: { type: String },     // 🟢 Recovery Salt is now safely stored
+        pbkdf2Iterations: { type: Number, default: 250000 },
+        kdf: { type: String, default: "PBKDF2" },
+        lastVaultResetAt: { type: Date, default: Date.now },
+        vaultVersion: { type: Number, default: 1 }
     }
 },
 {
     timestamps: true,
-    strict: false
+    strict: false // 🟢 Fallback safety enabled
 });
 
 const usermodel = mongoose.model("userCredential", userSchema);

@@ -181,26 +181,45 @@ const Login = () => {
         }
     };
          // 🟢 4. RECOVER VAULT (FORGOT VAULT PASSWORD)
-    const handleRecoverySubmit = async (e) => {
+             // 🟢 4. RECOVER VAULT (FORGOT VAULT PASSWORD)
+        const handleRecoverySubmit = async (e) => {
         e.preventDefault();
         setError(null); setLoading(true);
 
+        // 🚨 AUTO-DIAGNOSTIC SCANNER 🚨
+        if (!cryptoData) {
+            alert("❌ ERROR 1: cryptoData is completely NULL! Backend ne data nahi bheja.");
+            setLoading(false); return;
+        }
+        if (!cryptoData.recoverySalt) {
+            alert("❌ ERROR 2: recoverySalt is MISSING from Database! Mongoose ne ise drop kar diya.");
+            setLoading(false); return;
+        }
+        if (!cryptoData.encryptedDEK_rec) {
+            alert("❌ ERROR 3: encryptedDEK_rec is MISSING from Database!");
+            setLoading(false); return;
+        }
+        if (typeof cryptoData.encryptedDEK_rec === 'string') {
+            alert("❌ ERROR 4: Database ne tumhari key ko string '[object Object]' me convert karke CORRUPT kar diya hai!");
+            setLoading(false); return;
+        }
+        if (!cryptoData.encryptedDEK_rec.iv) {
+            alert("❌ ERROR 5: encryptedDEK_rec.iv is missing. Object format kharab ho gaya hai.");
+            setLoading(false); return;
+        }
+        
         try {
-            if (!cryptoData || !cryptoData.encryptedDEK_rec) {
+            // ... (baaki ka tumhara poora try block wesa hi rahega) ...
+            if (!cryptoData || (!cryptoData.encryptedDEK_rec && !cryptoData.encryptedDEK_pwd)) {
                 throw new Error("Recovery data missing.");
             }
 
             const { encryptedDEK_rec, pbkdf2Iterations } = cryptoData;
             
             // 🚀 THE ULTIMATE BUG KILLER 🚀
-            // \s+ will remove all hidden newlines, spaces, and tabs from the textarea!
-            const rawKey = recoveryKeyInput.replace(/\s+/g, '').toUpperCase();
+            const rawKey = recoveryKeyInput.replace(/[\s-]/g, '').toUpperCase();
             
-            const keysToTry = [
-                rawKey, // System 1 (With Hyphens)
-                rawKey.replace(/-/g, '') // System 2 (Without Hyphens)
-            ];
-            
+            const keysToTry = [ rawKey, rawKey.replace(/-/g, '') ];
             const saltsToTry = [];
             if (cryptoData.recoverySalt) saltsToTry.push(cryptoData.recoverySalt);
             if (cryptoData.userSalt) saltsToTry.push(cryptoData.userSalt);
@@ -213,7 +232,7 @@ const Login = () => {
                         const recoveryKEK = await deriveKEK(key, salt, pbkdf2Iterations);
                         masterDEK = await decryptDEK(encryptedDEK_rec, recoveryKEK);
                         if (masterDEK) break; 
-                    } catch (err) {} // Failures ignore karega
+                    } catch (err) {} 
                 }
                 if (masterDEK) break;
             }
@@ -376,6 +395,7 @@ const Login = () => {
                                         setTimeout(() => window.location.href = '/', 1200); 
                                     }} disabled={!recoverySaved} className="w-full bg-emerald-500/20 text-emerald-400 py-3 rounded-xl disabled:opacity-50 mt-2 transition-all">
                                         Log In Again
+
                                     </button>
                                 </div>
                             ) : view === 'setup_recovery_display' ? (

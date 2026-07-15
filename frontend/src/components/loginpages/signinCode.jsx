@@ -66,14 +66,11 @@ const Signup = () => {
         onError: () => setError("Google Authentication Failed")
     });
 
-       const handleSignup = async (e) => {
+           const handleSignup = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null); setFieldErrors({});
 
         let tempErrors = {};
-         // 🔥 X-RAY CODE ADDED HERE 🔥
-        console.log("=== X-RAY DEBUG START ===");
-        console.log("2. CryptoData from DB:", cryptoData);
         if (!formData.name) tempErrors.name = "Name is required";
         if (!formData.email) tempErrors.email = "Email is required";
         if (!formData.password) tempErrors.password = "Password is required";
@@ -84,33 +81,20 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            // 🔥 ADVANCED E2E SETUP 🔥
             const PBKDF2_ITERATIONS = 250000;
             const KDF_TYPE = "PBKDF2"; 
             
-            // 1. Generate Unique Salts
             const userSalt = generateUserSalt();
-            const recoverySalt = generateUserSalt(); // 🔥 Naya Recovery Salt (Added)
+            const recoverySalt = generateUserSalt(); // Naya Recovery Salt
 
-            // 2. Derive Password KEK
             const passwordKEK = await deriveKEK(formData.password, userSalt, PBKDF2_ITERATIONS);
-            
-            // 3. Generate 256-bit DEK (Ye line galti se delete ho gayi thi)
             const dek = await generateWorkspaceDEK(); 
-            
-            // 4. Encrypt DEK with Password KEK
             const encryptedDEK_pwd = await encryptDEK(dek, passwordKEK);
             
-            // 5. Generate 256-bit Recovery Key
             const recKey = generateRecoveryKey(); 
-            
-            // 6. Derive Recovery KEK (Ab recoverySalt use kar raha hai)
             const recoveryKEK = await deriveKEK(recKey, recoverySalt, PBKDF2_ITERATIONS);
-            
-            // 7. Encrypt DEK with Recovery KEK
             const encryptedDEK_rec = await encryptDEK(dek, recoveryKEK);
 
-            // 🔥 SEND TO BACKEND 
             const response = await fetch("http://localhost:3000/api/auth/signup", {
                 method: "POST",
                 credentials: "include",
@@ -120,7 +104,6 @@ const Signup = () => {
                     email: formData.email, 
                     password: formData.password, 
                     imageUrl: window.location.origin + formData.imageUrl,
-                    // E2E Fields
                     encryptedDEK_pwd,
                     encryptedDEK_rec,
                     userSalt,
@@ -135,11 +118,9 @@ const Signup = () => {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
 
-            // SHOW RECOVERY KEY MODAL
             setRecoveryKey(recKey);
             setShowRecoveryModal(true);
             setLoading(false);
-
         } catch (err) {
             setError("Encryption error: " + err.message); 
             setLoading(false);
