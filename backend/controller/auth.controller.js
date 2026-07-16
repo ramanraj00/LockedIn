@@ -57,9 +57,7 @@ exports.signup = async (req, res) => {
     }
 
     await user.save();
-
-    console.log("🔥 SAVED USER IN DB 🔥:", user);
-
+    
     const token = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("token", token, {

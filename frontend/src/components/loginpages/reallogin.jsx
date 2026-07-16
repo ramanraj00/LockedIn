@@ -186,27 +186,7 @@ const Login = () => {
         e.preventDefault();
         setError(null); setLoading(true);
 
-        // 🚨 AUTO-DIAGNOSTIC SCANNER 🚨
-        if (!cryptoData) {
-            alert("❌ ERROR 1: cryptoData is completely NULL! Backend ne data nahi bheja.");
-            setLoading(false); return;
-        }
-        if (!cryptoData.recoverySalt) {
-            alert("❌ ERROR 2: recoverySalt is MISSING from Database! Mongoose ne ise drop kar diya.");
-            setLoading(false); return;
-        }
-        if (!cryptoData.encryptedDEK_rec) {
-            alert("❌ ERROR 3: encryptedDEK_rec is MISSING from Database!");
-            setLoading(false); return;
-        }
-        if (typeof cryptoData.encryptedDEK_rec === 'string') {
-            alert("❌ ERROR 4: Database ne tumhari key ko string '[object Object]' me convert karke CORRUPT kar diya hai!");
-            setLoading(false); return;
-        }
-        if (!cryptoData.encryptedDEK_rec.iv) {
-            alert("❌ ERROR 5: encryptedDEK_rec.iv is missing. Object format kharab ho gaya hai.");
-            setLoading(false); return;
-        }
+      
         
         try {
             // ... (baaki ka tumhara poora try block wesa hi rahega) ...

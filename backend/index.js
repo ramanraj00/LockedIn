@@ -10,6 +10,7 @@ const authRoute = require("./routes/auth");
 const taskRoute = require("./routes/task");
 const sessionRoute = require("./routes/sessions");
 const dashboardRoute = require("./routes/dashboards");
+const calendarRoutes = require("./routes/calendar.route");
 const authMiddleware = require("./middleware/authMiddleware");
 const cookieParser = require("cookie-parser");
 const app = express();   // 
@@ -31,6 +32,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/task", authMiddleware, taskRoute);
 app.use("/api/session", authMiddleware, sessionRoute);
 app.use("/api/dashboard", authMiddleware, dashboardRoute);
+app.use("/api/calendar", calendarRoutes);
 app.listen(3000, () => {
   console.log("Server running on port 3000");
 });
