@@ -211,70 +211,65 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+// google auth -------------------------------------------------------------------
 exports.googleAuth = async (req, res) => {
   try {
-    const { token } = req.body; // Frontend se access_token aa raha hai
-    
-    // 🔥 FIX: Seedha Google API ko token bhej kar user details nikal lo
-    const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const token = req.body.token;
 
+    const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    
     if (!googleResponse.ok) {
-      throw new Error("Invalid access token from Google");
+        return res.status(400).json({ message: "Invalid Google Token" });
     }
 
     const payload = await googleResponse.json();
-    const email = payload.email.toLowerCase(); 
-    
-    // 🔥 PEHLE EMAIL SE DHOONDO
-    let user = await usermodel.findOne({ email: email });
-    let isNewUser = false;
+    const userEmail = payload.email.toLowerCase();
 
+    let user = await usermodel.findOne({ email: userEmail });
+    let isNewUser = false;
+    
     if (!user) {
-        // Agar user nahi hai, toh NAYA account banao
-        user = new usermodel({
-            name: payload.name,
-            email: email,
-            googleId: payload.sub,
-            authProvider: "google",
-            imageUrl: payload.picture,
-        });
-        await user.save();
-        isNewUser = true;
-    } else {
-        // 🔥 ACCOUNT LINKING MAGIC 🔥
-        if (!user.googleId) {
-            user.googleId = payload.sub;
-            await user.save();
-        }
-        
-        // Agar vault setup complete nahi hai, toh Vault Setup screen pe bhejo
-        if (!user.crypto || !user.crypto.encryptedDEK_pwd) {
-            isNewUser = true; 
-        }
+      isNewUser = true;
+      user = await usermodel.create({
+        name: payload.name,
+        email: userEmail,
+        googleId: payload.sub,
+        imageUrl: payload.picture,
+        authProvider: "google",
+      });
     }
 
-    // JWT set kardo cookie me
-    const jwtToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
+    const jwtToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // 🔥 FIX 1: maxAge laga diya taaki cookie drop na ho (Same as Email Auth)
     res.cookie("token", jwtToken, {
-        httpOnly: true,
-        secure: false, // Production me true karna
-        sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
     });
 
-    return res.status(200).json({ 
-        message: "Google Auth Successful", 
-        isNewUser: isNewUser,
-        cryptoKeys: user.crypto && user.crypto.encryptedDEK_pwd ? user.crypto : null
+       // 🔥 THE FIX: user.crypto ke andar se keys nikalni hain!
+    return res.json({
+      message: "Login successful",
+      isNewUser: isNewUser,
+      cryptoKeys: (user.crypto && user.crypto.encryptedDEK_pwd) ? {
+          encryptedDEK_pwd: user.crypto.encryptedDEK_pwd,
+          encryptedDEK_rec: user.crypto.encryptedDEK_rec,
+          userSalt: user.crypto.userSalt,
+          recoverySalt: user.crypto.recoverySalt,
+          pbkdf2Iterations: user.crypto.pbkdf2Iterations,
+          kdf: user.crypto.kdf
+      } : null
     });
-
   } catch (error) {
-    console.error("🔥 Google Auth Error:", error);
-    return res.status(400).json({ 
-        message: "Google login failed: " + (error.message || "Unable to link account.") 
+    console.error("Google Auth Error:", error);
+    return res.status(400).json({
+      message: "Google Authentication failed",
     });
   }
 };
@@ -357,10 +352,25 @@ exports.setupKeys = async (req, res) => {
             pbkdf2Iterations,
             kdf: kdf || "PBKDF2",
             vaultVersion: 1,
-            lastVaultResetAt: Date.now()
+            lastVaultResetAt: Date.now() // 🔥 Yahan time update ho gaya
         };
 
         await user.save();
+
+        // 🚀 THE MAGIC FIX: Naya Token banao taaki Vault ke time se sync ho jaye
+        const jwt = require("jsonwebtoken"); // Ensure jwt is imported at top of file, wese hoga hi
+        const jwtToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, {
+            expiresIn: "7d",
+        });
+
+        // 🔥 Nayi cookie bhej do jisse browser reload hone par fail na ho
+        res.cookie("token", jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
+        });
+
         res.status(200).json({ message: "Workspace keys securely set up!" });
     } catch (err) {
         console.error("Setup Keys Error:", err);

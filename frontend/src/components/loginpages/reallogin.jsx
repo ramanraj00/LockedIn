@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ShaderBackground from '../shaderbackground/ShaderBackground'; 
 import { deriveKEK, decryptDEK, encryptDEK, generateWorkspaceDEK, generateUserSalt, generateRecoveryKey } from '../../utils/e2eMasterKey';
@@ -11,6 +11,7 @@ const generateRecoverySalt = () => generateUserSalt();
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation(); // 🔥 NEW: Signup page se data pakadne ke liye!
     
     // 🔥 VIEWS
     const [view, setView] = useState('login'); 
@@ -24,15 +25,27 @@ const Login = () => {
     const [vaultPassword, setVaultPassword] = useState('');
     const [recoveryKeyDisplay, setRecoveryKeyDisplay] = useState(null);
     const [recoverySaved, setRecoverySaved] = useState(false);
-    const [keepUnlocked, setKeepUnlocked] = useState(false); 
     
     // Recovery States
     const [recoveryKeyInput, setRecoveryKeyInput] = useState('');
     const [recoveredDEK, setRecoveredDEK] = useState(null); 
 
     const { setDek } = useCrypto();
-
     const [formData, setFormData] = useState({ email: '', password: '' });
+
+    // 🔥 MAGIC INTERCEPTOR: Agar user Signup page se Google Login karke aaya hai
+    useEffect(() => {
+        if (location.state && location.state.fromSignup) {
+            if (location.state.isNewUser || !location.state.cryptoKeys) {
+                setView('vault_setup'); // Seedha Vault Setup dikhao (Bina doosri baar login karwaye)
+            } else {
+                setCryptoData(location.state.cryptoKeys);
+                setView('vault_unlock');
+            }
+            // State clear kardo taaki refresh par wapas trigger na ho
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -59,23 +72,23 @@ const Login = () => {
                 setError(data.message || "Invalid credentials"); setLoading(false); return;
             }
 
-            // Authentication successful -> Check if vault exists
             if (data.cryptoKeys) {
                 setCryptoData(data.cryptoKeys);
                 
-                // 🚀 AUTO-UNLOCK MAGIC: Ussi password se vault decrypt karlo chupke se!
                 try {
                     const { encryptedDEK_pwd, userSalt, pbkdf2Iterations } = data.cryptoKeys;
                     const passwordKEK = await deriveKEK(formData.password, userSalt, pbkdf2Iterations);
                     const masterDEK = await decryptDEK(encryptedDEK_pwd, passwordKEK);
                     
-                    await setDek(masterDEK, true); // Session me save ho jayega automatically
+                    // 🔥 Hamesha True (Keep unlocked)
+                    await setDek(masterDEK, true); 
                     setSuccessMsg("Logged in & Vault Unlocked!");
                     setIsFlipping(true);
-                    setTimeout(() => navigate('/profile'), 1200); 
-                    return; // Stop here, no need to show vault_unlock view!
+                    
+                    // 🔥 SPA Navigation is BACK!
+                  setTimeout(() =>navigate('/profile'), 1200);
+                    return; 
                 } catch (autoUnlockErr) {
-                    // Agar kisi wajah se fail hua (e.g., password baad me change kiya), tabhi fallback view dikhao
                     setView('vault_unlock');
                 }
             } else {
@@ -150,7 +163,7 @@ const Login = () => {
 
             if (!setupRes.ok) throw new Error("Failed to save keys.");
             
-            await setDek(masterDEK, keepUnlocked); 
+            await setDek(masterDEK, true); 
             setRecoveryKeyDisplay(recoveryKey);
             setView('setup_recovery_display'); 
             setLoading(false);
@@ -171,32 +184,28 @@ const Login = () => {
             const passwordKEK = await deriveKEK(vaultPassword, userSalt, pbkdf2Iterations);
             const masterDEK = await decryptDEK(encryptedDEK_pwd, passwordKEK);
             
-            await setDek(masterDEK, keepUnlocked); 
+            await setDek(masterDEK, true); 
             setSuccessMsg("Vault Unlocked!");
             setIsFlipping(true);
-            setTimeout(() => navigate('/profile'), 1200); 
+             setTimeout(() => navigate('/profile'), 1200); // Isko 
         } catch (err) {
             setError("Unable to decrypt your workspace. Please verify your Vault Password.");
             setLoading(false);
         }
     };
-         // 🟢 4. RECOVER VAULT (FORGOT VAULT PASSWORD)
-             // 🟢 4. RECOVER VAULT (FORGOT VAULT PASSWORD)
-        const handleRecoverySubmit = async (e) => {
+    
+    // 🟢 5. RECOVER VAULT 
+    const handleRecoverySubmit = async (e) => {
         e.preventDefault();
         setError(null); setLoading(true);
 
-      
-        
         try {
-            // ... (baaki ka tumhara poora try block wesa hi rahega) ...
             if (!cryptoData || (!cryptoData.encryptedDEK_rec && !cryptoData.encryptedDEK_pwd)) {
                 throw new Error("Recovery data missing.");
             }
 
             const { encryptedDEK_rec, pbkdf2Iterations } = cryptoData;
             
-            // 🚀 THE ULTIMATE BUG KILLER 🚀
             const rawKey = recoveryKeyInput.replace(/[\s-]/g, '').toUpperCase();
             
             const keysToTry = [ rawKey, rawKey.replace(/-/g, '') ];
@@ -219,8 +228,7 @@ const Login = () => {
 
             if (!masterDEK) throw new Error("Invalid Recovery Key. Please check the characters.");
             
-            // Decrypt successful! 🎉
-            await setDek(masterDEK, keepUnlocked); 
+            await setDek(masterDEK, true); 
             setRecoveredDEK(masterDEK); 
             setView('new_vault_password');
             setLoading(false);
@@ -299,12 +307,13 @@ const Login = () => {
 
             <div className="hidden md:block"><ShaderBackground /></div>
 
-            <div className="h-[100dvh] w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10 overflow-hidden">
-                <div className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
+            {/* 🔥 CROP FIX PRESERVED */}
+            <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 lg:p-8 relative z-10 overflow-y-auto py-10">
+                <div className={`w-full max-w-[1100px] md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl rounded-3xl overflow-hidden relative transition-all duration-300 my-auto shadow-2xl ${isFlipping ? 'animate-page-turn' : ''}`}
                     style={{ background: "rgba(20, 24, 54, 0.4)", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "1px solid rgba(255, 255, 255, 0.15)", borderLeft: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)` }}
                 >
                     {/* LEFT PANEL */}
-                    <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-[100dvh] md:h-auto z-0">
+                    <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-full md:h-auto z-0">
                         <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
                         <div className="relative z-10 flex flex-col h-[12dvh] md:h-auto md:flex-1 p-5 md:p-10 pb-0 md:pb-8 justify-center md:justify-between pointer-events-none">
@@ -333,7 +342,6 @@ const Login = () => {
                                 </p>
                             </div>
 
-                            {/* Error / Success Alerts */}
                             <div className="min-h-[32px] md:min-h-[46px] w-full mb-2 md:mb-3 flex items-center justify-center">
                                 {error ? (
                                     <div className="w-full py-2 md:py-0 md:h-full flex items-center gap-3 px-4 rounded-xl bg-black/80 border border-white/30 text-red-400 text-[12.5px] md:text-[13px] font-medium animate-shake backdrop-blur-md"><span className="truncate">{error}</span></div>
@@ -372,10 +380,9 @@ const Login = () => {
                                         setSuccessMsg("Reset Complete! Please Log In.");
                                         setIsFlipping(true);
                                         sessionStorage.removeItem("workspace_dek");
-                                        setTimeout(() => window.location.href = '/', 1200); 
+                                        setTimeout(() => navigate('/'), 1200); 
                                     }} disabled={!recoverySaved} className="w-full bg-emerald-500/20 text-emerald-400 py-3 rounded-xl disabled:opacity-50 mt-2 transition-all">
                                         Log In Again
-
                                     </button>
                                 </div>
                             ) : view === 'setup_recovery_display' ? (
@@ -398,9 +405,10 @@ const Login = () => {
                                         <input type="checkbox" className="w-4 h-4 accent-emerald-500" checked={recoverySaved} onChange={(e) => setRecoverySaved(e.target.checked)} />
                                         I have saved my Recovery Key.
                                     </label>
-                                    <button onClick={() => {
+                                                                       <button onClick={() => {
                                         setSuccessMsg("Vault Setup Complete!");
                                         setIsFlipping(true);
+                                        // 🔥 YE WALI LINE BADALNI HAI 👇
                                         setTimeout(() => navigate('/profile'), 1200); 
                                     }} disabled={!recoverySaved} className="w-full bg-emerald-500/20 text-emerald-400 py-3 rounded-xl disabled:opacity-50 mt-2 transition-all">
                                         Enter Workspace
@@ -409,7 +417,6 @@ const Login = () => {
                             ) : (
                                 <form onSubmit={handleFormSubmit} className="flex flex-col gap-2.5 md:gap-3">
                                     
-                                    {/* 🔥 LOG IN VIEW */}
                                     {view === 'login' && (
                                         <div className="animate-fade-in flex flex-col items-center w-full">
                                             
@@ -430,13 +437,13 @@ const Login = () => {
                                             </div>
 
                                             <div className="flex flex-col gap-2.5 md:gap-3 w-full">
-                                                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors" />
+                                                {/* 🔥 BORDER FIX PRESERVED */}
+                                                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.05] border border-transparent rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:bg-white/[0.08] transition-colors" />
                                                 <div className="relative">
-                                                    <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Login Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white pr-12 outline-none focus:border-white/30 transition-colors" />
+                                                    <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Login Password" className="w-full bg-white/[0.05] border border-transparent rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white pr-12 outline-none focus:bg-white/[0.08] transition-colors" />
                                                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"><Eye size={16} /></button>
                                                 </div>
                                                 
-                                                {/* 🔥 FORGOT PASSWORD LINK - RIGHT ALIGNED 🔥 */}
                                                 <div className="flex justify-end mt-0.5 pr-1">
                                                     <span onClick={() => navigate('/forgot-password')} className="text-[11px] text-slate-400 hover:text-emerald-400 cursor-pointer transition-colors">Forgot Password?</span>
                                                 </div>
@@ -444,31 +451,30 @@ const Login = () => {
                                         </div>
                                     )}
 
-                                    {/* OTHER VIEWS */}
                                     {view === 'vault_setup' && (
                                         <div className="animate-fade-in flex flex-col gap-3 w-full">
                                             <div className="relative">
-                                                <input type={showPassword ? "text" : "password"} value={vaultPassword} onChange={(e) => setVaultPassword(e.target.value)} placeholder="Create Vault Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-white pr-12 outline-none focus:border-white/30 transition-colors" />
+                                                <input type={showPassword ? "text" : "password"} value={vaultPassword} onChange={(e) => setVaultPassword(e.target.value)} placeholder="Create Vault Password" className="w-full bg-white/[0.05] border border-transparent rounded-xl px-4 py-3 text-[13px] text-white pr-12 outline-none focus:bg-white/[0.08] transition-colors" />
                                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"><Eye size={16} /></button>
                                             </div>
-                                            <label className="flex items-center gap-3 text-xs text-slate-400 cursor-pointer mt-1">
-                                                <input type="checkbox" className="w-3.5 h-3.5 accent-emerald-500" checked={keepUnlocked} onChange={(e) => setKeepUnlocked(e.target.checked)} />
-                                                Keep Vault Unlocked (Not recommended on shared devices)
-                                            </label>
+                                            <p className="text-xs text-emerald-500/70 mt-1 flex items-center gap-2">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
+                                                Vault will stay unlocked automatically.
+                                            </p>
                                         </div>
                                     )}
 
                                     {view === 'vault_unlock' && (
                                         <div className="animate-fade-in flex flex-col gap-3 w-full">
                                             <div className="relative">
-                                                <input type={showPassword ? "text" : "password"} value={vaultPassword} onChange={(e) => setVaultPassword(e.target.value)} placeholder="Enter Vault Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-white pr-12 outline-none focus:border-white/30 transition-colors" />
+                                                <input type={showPassword ? "text" : "password"} value={vaultPassword} onChange={(e) => setVaultPassword(e.target.value)} placeholder="Enter Vault Password" className="w-full bg-white/[0.05] border border-transparent rounded-xl px-4 py-3 text-[13px] text-white pr-12 outline-none focus:bg-white/[0.08] transition-colors" />
                                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"><Eye size={16} /></button>
                                             </div>
                                             <div className="flex items-center justify-between mt-1">
-                                                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                                                    <input type="checkbox" className="w-3.5 h-3.5 accent-emerald-500" checked={keepUnlocked} onChange={(e) => setKeepUnlocked(e.target.checked)} />
-                                                    Keep Unlocked
-                                                </label>
+                                                <span className="text-xs text-emerald-500/70 flex items-center gap-2">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
+                                                    Auto-Unlock Active
+                                                </span>
                                                 <span onClick={() => { setView('recover_vault'); setError(null); }} className="text-[11px] text-slate-400 hover:text-emerald-400 cursor-pointer transition-colors">Forgot Vault Password?</span>
                                             </div>
                                         </div>
@@ -477,7 +483,7 @@ const Login = () => {
                                     {view === 'recover_vault' && (
                                         <div className="animate-fade-in flex flex-col gap-3 w-full">
                                             <p className="text-slate-300 text-sm">Enter your 64-character Recovery Key to restore your data.</p>
-                                            <textarea value={recoveryKeyInput} onChange={(e) => setRecoveryKeyInput(e.target.value)} placeholder="B474-F8CA-25B8..." rows="3" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-emerald-400 font-mono resize-none outline-none focus:border-white/30 transition-colors" />
+                                            <textarea value={recoveryKeyInput} onChange={(e) => setRecoveryKeyInput(e.target.value)} placeholder="B474-F8CA-25B8..." rows="3" className="w-full bg-white/[0.05] border border-transparent rounded-xl px-4 py-3 text-[13px] text-emerald-400 font-mono resize-none outline-none focus:bg-white/[0.08] transition-colors" />
                                             <span onClick={() => setView('vault_unlock')} className="text-[11px] text-slate-400 hover:text-white cursor-pointer transition-colors">&larr; Back to Unlock</span>
                                         </div>
                                     )}
@@ -486,7 +492,7 @@ const Login = () => {
                                         <div className="animate-fade-in flex flex-col gap-3 w-full">
                                             <p className="text-emerald-400 text-sm font-medium">Vault Recovered! Set a NEW Vault Password.</p>
                                             <div className="relative">
-                                                <input type={showPassword ? "text" : "password"} value={vaultPassword} onChange={(e) => setVaultPassword(e.target.value)} placeholder="Create NEW Vault Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-white pr-12 outline-none focus:border-white/30 transition-colors" />
+                                                <input type={showPassword ? "text" : "password"} value={vaultPassword} onChange={(e) => setVaultPassword(e.target.value)} placeholder="Create NEW Vault Password" className="w-full bg-white/[0.05] border border-transparent rounded-xl px-4 py-3 text-[13px] text-white pr-12 outline-none focus:bg-white/[0.08] transition-colors" />
                                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"><Eye size={16} /></button>
                                             </div>
                                         </div>
@@ -500,7 +506,6 @@ const Login = () => {
                                          view === 'recover_vault' ? "Recover Vault" : "Confirm Reset"}
                                     </button>
 
-                                    {/* SIGN UP LINK */}
                                     {view === 'login' && (
                                         <div className="mt-3 md:mt-4 text-center text-xs text-slate-400 font-medium">
                                             Don't have an account? <span onClick={() => navigate('/signup')} className="text-slate-300 hover:text-white hover:underline cursor-pointer transition-colors">Sign up</span>
@@ -517,4 +522,4 @@ const Login = () => {
     );
 }
 
-export default Login
+export default Login;

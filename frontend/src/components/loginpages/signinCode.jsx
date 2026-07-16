@@ -57,7 +57,16 @@ const Signup = () => {
 
                 setSuccessMsg("Logged in with Google Successfully!");
                 setIsFlipping(true); 
-                setTimeout(() => navigate('/login'), 1200); 
+                
+                // 🔥 JADU YAHAN HAI: Login page ko state pass ki gayi hai
+                // Ab Login page ko pata chal jayega ki Signup se aaye ho aur seedha Vault dikhayega!
+                setTimeout(() => navigate('/login', { 
+                    state: { 
+                        fromSignup: true, 
+                        isNewUser: data.isNewUser, 
+                        cryptoKeys: data.cryptoKeys 
+                    } 
+                }), 1200); 
 
             } catch (err) {
                 setError("Network error. Try again."); setLoading(false);
@@ -66,7 +75,7 @@ const Signup = () => {
         onError: () => setError("Google Authentication Failed")
     });
 
-           const handleSignup = async (e) => {
+    const handleSignup = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null); setFieldErrors({});
 
@@ -107,7 +116,7 @@ const Signup = () => {
                     encryptedDEK_pwd,
                     encryptedDEK_rec,
                     userSalt,
-                    recoverySalt, // 🔥 Added to body
+                    recoverySalt, 
                     pbkdf2Iterations: PBKDF2_ITERATIONS,
                     kdf: KDF_TYPE 
                 })
@@ -117,6 +126,9 @@ const Signup = () => {
             if (!response.ok) {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
+
+            // 🔥 LOGIC FIX: Hamesha Session me save hoga (Keep Unlocked Default)
+            await setDek(dek, true);
 
             setRecoveryKey(recKey);
             setShowRecoveryModal(true);
@@ -131,7 +143,7 @@ const Signup = () => {
         setSuccessMsg("Account created Successfully!");
         setShowRecoveryModal(false);
         setIsFlipping(true);
-        setTimeout(() => navigate('/profile'), 1200); // 🔥 SEEDHA PROFILE ME ENTRY!
+         setTimeout(() =>navigate('/profile'), 1200); 
     };
 
     return (
@@ -151,7 +163,7 @@ const Signup = () => {
                 `}
             </style>
 
-            {/* RECOVERY KEY MODAL - SLEEK UI */}
+            {/* RECOVERY KEY MODAL */}
             {showRecoveryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
                     <div className="bg-[#0A0A0A] border border-indigo-500/30 p-8 rounded-2xl max-w-2xl w-full shadow-[0_0_80px_rgba(99,102,241,0.15)] text-center relative overflow-hidden">
@@ -197,11 +209,12 @@ const Signup = () => {
                 <ShaderBackground />
             </div>
 
-            <div className="h-[100dvh] w-full flex items-center justify-center p-0 md:p-4 lg:p-8 relative z-10 overflow-hidden">
-                <div className={`w-full max-w-[1100px] h-[100dvh] md:h-auto md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl md:rounded-3xl overflow-hidden relative transition-all duration-300 ${isFlipping ? 'animate-page-turn' : ''}`}
+            {/* 🔥 DESIGN FIX: min-h-[100dvh] & overflow-y-auto laga diya taaki cropping na ho */}
+            <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 lg:p-8 relative z-10 overflow-y-auto py-10">
+                <div className={`w-full max-w-[1100px] md:min-h-[700px] flex flex-col md:flex-row backdrop-blur-xl rounded-3xl overflow-hidden relative transition-all duration-300 my-auto shadow-2xl ${isFlipping ? 'animate-page-turn' : ''}`}
                     style={{ background: "rgba(20, 24, 54, 0.4)", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "1px solid rgba(255, 255, 255, 0.15)", borderLeft: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)` }}
                 >
-                    <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-[100dvh] md:h-auto z-0">
+                    <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-full md:h-auto z-0">
                         <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
                         <div className="relative z-10 flex flex-col h-[12dvh] md:h-auto md:flex-1 p-5 md:p-10 pb-0 md:pb-8 justify-center md:justify-between pointer-events-none">
@@ -215,7 +228,7 @@ const Signup = () => {
                         </div>
                     </div>
 
-                    <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none h-[88dvh] md:h-auto bg-transparent">
+                    <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none bg-transparent">
                         <div className="w-full max-w-[400px] mx-auto z-10 relative flex flex-col justify-center">
                             
                             <div className="hidden md:block text-center mb-5 transition-all">
@@ -260,19 +273,20 @@ const Signup = () => {
                                         </div>
                                     </div>
 
+                                    {/* 🔥 DESIGN FIX: White borders removed (bg-white/[0.05] border-transparent) */}
                                     <div className="flex flex-col relative pb-[14px] md:pb-[18px]">
-                                        <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Name" className="bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors" />
+                                        <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Name" className="bg-white/[0.05] border border-transparent rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:bg-white/[0.08] transition-colors" />
                                         {fieldErrors.name && <span className="absolute bottom-0 left-1 text-[10px] text-red-400">{fieldErrors.name}</span>}
                                     </div>
 
                                     <div className="flex flex-col relative pb-[14px] md:pb-[18px]">
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors" />
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" className="bg-white/[0.05] border border-transparent rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:bg-white/[0.08] transition-colors" />
                                         {fieldErrors.email && <span className="absolute bottom-0 left-1 text-[10px] text-red-400">{fieldErrors.email}</span>}
                                     </div>
 
                                     <div className="flex flex-col relative pb-[14px] md:pb-[18px]">
                                         <div className="relative">
-                                            <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Password" className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:border-white/30 transition-colors pr-12" />
+                                            <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Password" className="w-full bg-white/[0.05] border border-transparent rounded-xl px-4 py-2.5 md:py-3 text-[13px] text-white outline-none focus:bg-white/[0.08] transition-colors pr-12" />
                                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"><Eye size={16} /></button>
                                         </div>
                                         {fieldErrors.password && <span className="absolute bottom-0 left-1 text-[10px] text-red-400">{fieldErrors.password}</span>}
