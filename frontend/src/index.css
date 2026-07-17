@@ -13,6 +13,8 @@
   font-style: normal;
 }
 
+
+
 html, body {
   /* 1. Ye command Mac/Safari ko page bounce (slide) karne se strictly rok degi */
   overscroll-behavior-y: none; 

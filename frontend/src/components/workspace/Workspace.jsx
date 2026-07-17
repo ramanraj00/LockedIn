@@ -6,7 +6,7 @@ import { X, LogOut, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
 
 const COLORS = {
-    bg: '#000000',
+    bg: '#090A0C',
     card: '#0A0A0A',
     sidebar: '#15181C',
     border: 'rgba(255,255,255,0.15)',
