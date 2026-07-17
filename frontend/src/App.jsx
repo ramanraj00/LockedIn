@@ -12,8 +12,11 @@ import Dashboard from './components/loginpages/dashboard.jsx';
 import Profile from './components/Profile/Profile.jsx'; 
 import Workspace from './components/Workspace/Workspace.jsx'; 
 
-// 🔥 CALENDAR PAGE IMPORT (Apna actual path yahan adjust kar lena)
+// 🔥 CALENDAR PAGE IMPORT
 import Calendar from './components/Calendar/Calendar.jsx'; 
+
+// 🔥 STOPWATCH IMPORT (Tera naya premium component)
+import Stopwatch from './components/stopwatch/Stopwatch.jsx';
 
 function App() {
   return (
@@ -41,10 +44,15 @@ function App() {
         element={<ProtectedRoute><Workspace /></ProtectedRoute>} 
       />
 
-      {/* 👇 YEH NAYA CALENDAR ROUTE HAI */}
       <Route 
         path="/calendar" 
         element={<ProtectedRoute><Calendar /></ProtectedRoute>} 
+      />
+      
+      {/* 👇 YEH NAYA STOPWATCH ROUTE HAI */}
+      <Route 
+        path="/stopwatch" 
+        element={<ProtectedRoute><Stopwatch /></ProtectedRoute>} 
       />
       
     </Routes>
