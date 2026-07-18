@@ -15,8 +15,11 @@ import Workspace from './components/Workspace/Workspace.jsx';
 // 🔥 CALENDAR PAGE IMPORT
 import Calendar from './components/Calendar/Calendar.jsx'; 
 
-// 🔥 STOPWATCH IMPORT (Tera naya premium component)
+// 🔥 STOPWATCH IMPORT
 import Stopwatch from './components/stopwatch/Stopwatch.jsx';
+
+// 🔥 NAYA ANALYTICS PAGE IMPORT
+import Analytics from './components/Analytics/Analytics.jsx';
 
 function App() {
   return (
@@ -49,10 +52,15 @@ function App() {
         element={<ProtectedRoute><Calendar /></ProtectedRoute>} 
       />
       
-      {/* 👇 YEH NAYA STOPWATCH ROUTE HAI */}
       <Route 
         path="/stopwatch" 
         element={<ProtectedRoute><Stopwatch /></ProtectedRoute>} 
+      />
+
+      {/* 👇 YEH TERA NAYA ANALYTICS ROUTE HAI */}
+      <Route 
+        path="/analytics" 
+        element={<ProtectedRoute><Analytics /></ProtectedRoute>} 
       />
       
     </Routes>

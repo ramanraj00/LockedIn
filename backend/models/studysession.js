@@ -17,6 +17,11 @@ const sessionSchema = new Schema(
       required: true,
     },
 
+    taskName: {
+      type: String,
+      default: "Untitled Task",
+    },
+
     startTime: {
       type: Date,
       required: true,
@@ -37,7 +42,7 @@ const sessionSchema = new Schema(
       default: "running",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ================= INDEXES =================
@@ -69,9 +74,6 @@ sessionSchema.pre("save", function (next) {
   next();
 });
 
-const sessionmodel = mongoose.model(
-  "sessioncrediantials",
-  sessionSchema
-);
+const sessionmodel = mongoose.model("sessioncrediantials", sessionSchema);
 
 module.exports = sessionmodel;

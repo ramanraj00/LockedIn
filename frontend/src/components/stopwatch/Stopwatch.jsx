@@ -26,17 +26,31 @@ function createStore(initialState) {
     return store;
 }
 
-const timerStore = createStore({ isRunning: false, time: 0, taskName: "", strictMode: false });
+const timerStore = createStore({ isRunning: false, time: 0, taskName: "", strictMode: false, sessionId: null });
 const uiStore = createStore({ sidebarOpen: false, isDesktop: window.innerWidth >= 1024 });
+const statsStore = createStore({ totalDaytime: 0, totalSessions: 0 }); // API Stats
+const toastStore = createStore({ toasts: [] }); // UI Toasts
 
 const useTimer = (selector) => useSyncExternalStore((l) => timerStore.subscribe(l), () => selector(timerStore.getState()));
 const useUI = (selector) => useSyncExternalStore((l) => uiStore.subscribe(l), () => selector(uiStore.getState()));
+const useStats = (selector) => useSyncExternalStore((l) => statsStore.subscribe(l), () => selector(statsStore.getState()));
+const useToast = (selector) => useSyncExternalStore((l) => toastStore.subscribe(l), () => selector(toastStore.getState()));
+
+const showToast = (message) => {
+    const id = Date.now();
+    const currentToasts = toastStore.getState().toasts;
+    toastStore.setState({ toasts: [...currentToasts, { id, message }] });
+    setTimeout(() => {
+        const remainingToasts = toastStore.getState().toasts.filter(t => t.id !== id);
+        toastStore.setState({ toasts: remainingToasts });
+    }, 3000);
+};
 
 // --- CONSTANTS & STYLES ---
 const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
 
 const COLORS = {
-    bg: '#1A1D21', card: '#22262B', sidebar: '#15181C', textPrimary: '#D1D5DB', textSecondary: '#9CA3AF',
+    bg: '#0A0A0A', card: '#111111', sidebar: '#15181C', textPrimary: '#D1D5DB', textSecondary: '#9CA3AF',
     textMuted: '#6B7280', border: 'rgba(255,255,255,0.06)', borderHover: 'rgba(255,255,255,0.12)',
 };
 
@@ -55,7 +69,30 @@ const secondaryButtonStyle = {
     boxShadow: '0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.03)'
 };
 
-// --- STATIC UI COMPONENTS (ZERO STATE) ---
+const ToastOverlay = memo(() => {
+    const toasts = useToast(s => s.toasts);
+    return (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none">
+            <AnimatePresence>
+                {toasts.map(t => (
+                    <motion.div
+                        key={t.id}
+                        initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="bg-[#22262B] text-[#FAFAFA] px-6 py-3.5 rounded-2xl shadow-2xl border border-white/10 font-medium text-[14px] flex items-center gap-3 backdrop-blur-xl"
+                        style={{ boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)' }}
+                    >
+                        {t.message.includes("Saved") ? <Target size={16} className="text-[#34D399]" /> : <Play size={16} className="text-[#60A5FA]" />}
+                        {t.message}
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+        </div>
+    );
+});
+
 const CustomSidebarIcon = memo(() => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="6" y1="5" x2="6" y2="19" />
@@ -71,39 +108,43 @@ const Header = memo(() => (
     </div>
 ));
 
-const QuickStats = memo(() => (
-    <div className="lg:col-span-1 flex flex-row lg:flex-col gap-3 md:gap-6 flex-shrink-0">
-        <div className="w-full rounded-[20px] md:rounded-[32px] p-5 md:p-8 flex flex-col justify-start flex-1 min-h-[120px] md:min-h-[240px]" style={heavyCardStyle}>
-            <h3 className="text-[9px] md:text-[11px] font-bold tracking-[0.2em] text-white/30 uppercase mb-4 md:mb-8">Progress</h3>
-            
-            {/* 🔥 ALIGNMENT FIX: Mathematical perfection. Desktop pe ekdum left flush rahega bina kisi extra margin ke */}
-            <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start w-full">
-                <div className="mb-0 md:mb-6 flex flex-col items-center md:items-start">
-                    <div className="text-2xl md:text-[38px] font-bold text-[#E4E4E7] tracking-tight leading-none">0h 0m</div>
-                    <div className="text-[11px] md:text-[14px] text-zinc-500 mt-1 md:mt-2 font-medium">Focus Time</div>
-                </div>
-                <div className="hidden md:block w-full h-[1px] bg-white/5 mb-6"></div>
-                <div className="flex flex-col items-center md:items-start">
-                    <div className="text-2xl md:text-[38px] font-bold text-[#E4E4E7] tracking-tight leading-none">0</div>
-                    <div className="text-[11px] md:text-[14px] text-zinc-500 mt-1 md:mt-2 font-medium">Sessions</div>
+const QuickStats = memo(() => {
+    const totalDaytime = useStats(s => s.totalDaytime);
+    const totalSessions = useStats(s => s.totalSessions);
+
+    const hours = Math.floor(totalDaytime / 3600);
+    const minutes = Math.floor((totalDaytime % 3600) / 60);
+
+    return (
+        <div className="lg:col-span-1 flex flex-row lg:flex-col gap-3 md:gap-6 flex-shrink-0">
+            <div className="w-full rounded-[20px] md:rounded-[32px] p-5 md:p-8 flex flex-col justify-start flex-1 min-h-[120px] md:min-h-[240px]" style={heavyCardStyle}>
+                <h3 className="text-[9px] md:text-[11px] font-bold tracking-[0.2em] text-white/30 uppercase mb-4 md:mb-8">Today's Progress</h3>
+                
+                <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start w-full">
+                    <div className="mb-0 md:mb-6 flex flex-col items-center md:items-start">
+                        <div className="text-2xl md:text-[38px] font-bold text-[#E4E4E7] tracking-tight leading-none">{hours}h {minutes}m</div>
+                        <div className="text-[11px] md:text-[14px] text-zinc-500 mt-1 md:mt-2 font-medium">Focus Time</div>
+                    </div>
+                    <div className="hidden md:block w-full h-[1px] bg-white/5 mb-6"></div>
+                    <div className="flex flex-col items-center md:items-start">
+                        <div className="text-2xl md:text-[38px] font-bold text-[#E4E4E7] tracking-tight leading-none">{totalSessions}</div>
+                        <div className="text-[11px] md:text-[14px] text-zinc-500 mt-1 md:mt-2 font-medium">Sessions</div>
+                    </div>
                 </div>
             </div>
-            
-        </div>
-        <div className="hidden lg:flex w-full rounded-[32px] p-8 flex-col items-center justify-center text-center flex-1 min-h-[200px]" style={heavyCardStyle}>
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5" style={heavyInputStyle}>
-                <Target size={28} strokeWidth={1.5} className="text-white/40 w-8 h-8" />
+            <div className="hidden lg:flex w-full rounded-[32px] p-8 flex-col items-center justify-center text-center flex-1 min-h-[200px]" style={heavyCardStyle}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5" style={heavyInputStyle}>
+                    <Target size={28} strokeWidth={1.5} className="text-white/40 w-8 h-8" />
+                </div>
+                <h4 className="text-[#E4E4E7] font-semibold mb-2 text-[16px]">Stay Locked In</h4>
+                <p className="text-[14px] text-white/40 leading-relaxed font-medium px-2">
+                    Enter your task, start the timer, and focus deeply.
+                </p>
             </div>
-            <h4 className="text-[#E4E4E7] font-semibold mb-2 text-[16px]">Stay Locked In</h4>
-            <p className="text-[14px] text-white/40 leading-relaxed font-medium px-2">
-                Enter your task, start the timer, and focus deeply.
-            </p>
         </div>
-    </div>
-));
+    );
+});
 
-
-// --- 🔥 ATOMIC STATE COMPONENTS (RENDERS ONLY ON PROP CHANGE) 🔥 ---
 const TaskInput = memo(() => {
     const taskName = useTimer(s => s.taskName);
     const isRunning = useTimer(s => s.isRunning);
@@ -170,11 +211,64 @@ const TimerDigits = memo(() => (
     </div>
 ));
 
+// 🔥 FIXED API CALLS 🔥
+const fetchTodayStats = async () => {
+    try {
+        const res = await fetch("http://localhost:3000/api/session/stopwatch/today-stats", { credentials: "include" });
+        const data = await res.json();
+        if (data.success) {
+            statsStore.setState({ totalDaytime: data.totalDaytime, totalSessions: data.totalSessions });
+        }
+    } catch (err) {
+        console.error("Failed to fetch stats", err);
+    }
+};
 
-// --- 🔥 ALL ATOMIC BUTTONS FOR STRICT RE-RENDERS 🔥 ---
+const handleStartBackend = async (taskName) => {
+    try {
+        const res = await fetch("http://localhost:3000/api/session/stopwatch/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ taskName })
+        });
+        const data = await res.json();
+        if (data.success) {
+            timerStore.setState({ sessionId: data.sessionId });
+        }
+    } catch (err) {
+        console.error("Backend Start failed", err);
+    }
+};
+
+const handleStopBackend = async (sessionId, isFinalSave = false) => {
+    try {
+        await fetch("http://localhost:3000/api/session/stopwatch/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ sessionId, isFinalSave }) // 👈 isFinalSave zaroor bhejega
+        });
+        fetchTodayStats(); 
+    } catch (err) {
+        console.error("Backend Stop failed", err);
+    }
+};
+
 const StartPauseButton = memo(() => {
     const isRunning = useTimer(s => s.isRunning);
-    const handleStartPause = useCallback(() => timerStore.setState({ isRunning: !timerStore.getState().isRunning }), []);
+    const handleStartPause = useCallback(() => {
+        const state = timerStore.getState();
+        const newState = !state.isRunning;
+        timerStore.setState({ isRunning: newState });
+        if (newState) {
+            showToast("Timer Started");
+            handleStartBackend(state.taskName);
+        } else {
+            showToast("Timer Paused");
+            handleStopBackend(state.sessionId, false); // PAUSE Hai, final save nahi hai
+        }
+    }, []);
 
     return (
         <motion.button onClick={handleStartPause} whileTap={{ scale: 0.95 }}
@@ -195,8 +289,11 @@ const SaveButton = memo(() => {
     const hasTime = useTimer(s => s.time > 0);
     const handleSave = useCallback(() => {
         const state = timerStore.getState();
-        if(!state.taskName.trim() && state.time > 0) { alert("Please enter your task first!"); return; }
-        alert("Session Saved!");
+        if (state.time > 0) {
+            handleStopBackend(state.sessionId, true); // 🔥 YE HAMESHA CALL HOGA (Chahe paused ho ya running)
+            showToast("Session Saved Successfully!");
+            timerStore.setState({ isRunning: false, time: 0, taskName: "", sessionId: null }); 
+        }
     }, []);
 
     return (
@@ -210,7 +307,13 @@ const SaveButton = memo(() => {
 
 const ResetButton = memo(() => {
     const hasTime = useTimer(s => s.time > 0);
-    const handleReset = useCallback(() => timerStore.setState({ isRunning: false, time: 0 }), []);
+    const handleReset = useCallback(() => {
+        const state = timerStore.getState();
+        if (state.isRunning) {
+            handleStopBackend(state.sessionId, false);
+        }
+        timerStore.setState({ isRunning: false, time: 0, sessionId: null });
+    }, []);
 
     return (
         <motion.button onClick={handleReset} disabled={!hasTime} whileTap={{ scale: 0.95 }}
@@ -229,8 +332,6 @@ const ControlsBar = memo(() => (
     </div>
 ));
 
-
-// --- INVISIBLE LOGIC MODULES ---
 const TimerEngine = memo(() => {
     const isRunning = useTimer(s => s.isRunning);
     
@@ -266,6 +367,8 @@ const SystemEffects = memo(() => {
             const state = timerStore.getState();
             if (state.strictMode && document.visibilityState === 'hidden' && state.isRunning) {
                 timerStore.setState({ isRunning: false });
+                handleStopBackend(state.sessionId, false);
+                showToast("Timer Paused (Strict Mode)");
             }
         };
         document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -276,19 +379,32 @@ const SystemEffects = memo(() => {
         const handleKeyDown = (e) => {
             if (e.target.tagName.toLowerCase() === 'input') return;
             const state = timerStore.getState();
+            
             if (e.code === 'Space') { 
                 e.preventDefault(); 
-                timerStore.setState({ isRunning: !state.isRunning }); 
+                const newState = !state.isRunning;
+                timerStore.setState({ isRunning: newState }); 
+                if (newState) {
+                    showToast("Timer Started");
+                    handleStartBackend(state.taskName);
+                } else {
+                    showToast("Timer Paused");
+                    handleStopBackend(state.sessionId, false);
+                }
             } 
             else if (e.code === 'Escape') { 
                 e.preventDefault(); 
-                timerStore.setState({ isRunning: false, time: 0 }); 
+                if (state.isRunning) {
+                    handleStopBackend(state.sessionId, false);
+                }
+                timerStore.setState({ isRunning: false, time: 0, sessionId: null }); 
             } 
             else if (e.code === 'Enter') {
                 e.preventDefault();
                 if (state.time > 0) {
-                    if (!state.taskName.trim()) alert("Please enter your task first!");
-                    else alert("Session Saved via Shortcut!");
+                    handleStopBackend(state.sessionId, true);
+                    showToast("Session Saved Successfully!");
+                    timerStore.setState({ isRunning: false, time: 0, taskName: "", sessionId: null }); 
                 }
             }
         };
@@ -298,8 +414,6 @@ const SystemEffects = memo(() => {
     return null;
 });
 
-
-// 🔥 THE MAIN CARD (ABSOLUTELY STATE-FREE & FROZEN FOREVER) 🔥
 const FocusCard = memo(() => {
     return (
         <div className="lg:col-span-2 rounded-[24px] md:rounded-[32px] p-5 sm:p-6 md:p-12 flex flex-col relative w-full min-h-[360px] md:h-full md:min-h-0" style={heavyCardStyle}>
@@ -317,8 +431,6 @@ const FocusCard = memo(() => {
     );
 });
 
-
-// --- ATOMIC SIDEBAR & UI LAYOUT ---
 const HamburgerButton = memo(() => (
     <button onMouseEnter={() => uiStore.setState({ sidebarOpen: true })} onClick={() => uiStore.setState({ sidebarOpen: true })} 
         className="group fixed z-40 flex items-center justify-center cursor-pointer transition-all duration-200"
@@ -335,7 +447,6 @@ const SidebarOverlay = memo(() => {
     );
 });
 
-// 🔥 MEMOIZED INDIVIDUAL BUTTONS IN SIDEBAR
 const SidebarItem = memo(({ item, isSelected, navigate }) => (
     <button 
         onClick={() => navigate(`/${item.toLowerCase()}`)} 
@@ -405,10 +516,13 @@ const MainContainer = memo(({ children }) => {
     );
 });
 
-// --- MAIN PARENT (ZERO STATE) ---
 const Stopwatch = () => {
     const navigate = useNavigate();
     
+    useEffect(() => {
+        fetchTodayStats();
+    }, []);
+
     const handleLogout = useCallback(async () => {
         try {
             await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
@@ -418,17 +532,14 @@ const Stopwatch = () => {
 
     return (
         <div className="h-screen w-full relative font-sans text-white selection:bg-white/20 flex overflow-hidden" style={{ backgroundColor: '#090A0C' }}>
-            
+            <ToastOverlay /> 
             <WindowResizeListener />
             <HamburgerButton />
             <SidebarOverlay />
             <SidebarPanel navigate={navigate} handleLogout={handleLogout} />
-
             <MainContainer>
                 <div className="w-full max-w-5xl mx-auto flex flex-col justify-start md:justify-center h-full max-h-full">
                     <Header />
-                    
-                    {/* 🔥 DESKTOP STRETCH FIX: Hata diya yaha se 'flex-1' taaki card natural height le aur screen me center ho jaye */}
                     <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-4 md:pb-0">
                         <FocusCard />
                         <QuickStats />

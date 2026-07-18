@@ -488,5 +488,153 @@ router.delete("/day/:id", async function (req, res) {
     }
 });
 
+// ==========================================
+// 🔥 ZERO-WASTE SECURE STOPWATCH ROUTES 🔥
+// ==========================================
+
+// 1. START STOPWATCH (Creates a temporary server-side clock)
+router.post("/stopwatch/start", async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get or Create Today's Workspace
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let daySession = await dailysessionmodel.findOne({ userId, date: today });
+    if (!daySession) {
+      daySession = await dailysessionmodel.create({ title: "My Workspace", date: today, userId });
+    }
+
+    // Security & CleanUp: Auto-close any left-over running clocks
+    const runningSessions = await timermodel.find({ userId, status: "running" });
+    for (let r of runningSessions) {
+        const d = Math.floor((new Date() - r.startTime) / 1000);
+        await dailysessionmodel.updateOne(
+            { _id: r.daySessionId }, 
+            { $inc: { totalDaytime: d, totalSessions: 1 } }
+        );
+        // DELETE CHUNK IMMEDIATELY TO SAVE STORAGE
+        await timermodel.deleteOne({ _id: r._id });
+    }
+
+    // Create a temporary clock chunk (We don't even need taskName anymore)
+    const session = await timermodel.create({
+      daySessionId: daySession._id,
+      userId,
+      startTime: new Date(), 
+      status: "running"
+    });
+
+    res.status(201).json({ success: true, sessionId: session._id });
+  } catch (err) {
+    console.log("🔥 STOPWATCH START ERROR:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// 🔥 ZERO-WASTE SECURE STOPWATCH ROUTES 🔥
+// ==========================================
+
+// 1. START STOPWATCH
+router.post("/stopwatch/start", async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get or Create Today's Workspace
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let daySession = await dailysessionmodel.findOne({ userId, date: today });
+    if (!daySession) {
+      daySession = await dailysessionmodel.create({ title: "My Workspace", date: today, userId });
+    }
+
+    // Security & CleanUp: Auto-close any left-over running clocks
+    const runningSessions = await timermodel.find({ userId, status: "running" });
+    for (let r of runningSessions) {
+        const d = Math.floor((new Date() - r.startTime) / 1000);
+        await dailysessionmodel.updateOne(
+            { _id: r.daySessionId }, 
+            { $inc: { totalDaytime: d } } // Just add time, no session count here
+        );
+        await timermodel.deleteOne({ _id: r._id });
+    }
+
+    const session = await timermodel.create({
+      daySessionId: daySession._id,
+      userId,
+      startTime: new Date(), 
+      status: "running"
+    });
+
+    res.status(201).json({ success: true, sessionId: session._id });
+  } catch (err) {
+    console.log("🔥 STOPWATCH START ERROR:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 2. STOP / PAUSE STOPWATCH (Now with isFinalSave logic!)
+router.post("/stopwatch/stop", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { sessionId, isFinalSave } = req.body;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daySession = await dailysessionmodel.findOne({ userId, date: today });
+    if (!daySession) return res.status(200).json({ success: true });
+
+    let duration = 0;
+
+    // Agar chal raha hai toh time nikal lo
+    if (sessionId) {
+        const session = await timermodel.findOne({ _id: sessionId, userId, status: "running" });
+        if (session) {
+            duration = Math.floor((new Date() - session.startTime) / 1000);
+            await timermodel.deleteOne({ _id: session._id });
+        }
+    }
+
+    const updateData = { $inc: { totalDaytime: duration } };
+    
+    // 🔥 MAIN MAGIC: Sirf jab user "Save" dabayega tabhi Session badhega 🔥
+    if (isFinalSave) {
+        updateData.$inc.totalSessions = 1;
+    }
+
+    if (duration > 0 || isFinalSave) {
+        await dailysessionmodel.updateOne({ _id: daySession._id }, updateData);
+    }
+
+    res.status(200).json({ success: true, duration });
+  } catch (err) {
+    console.log("🔥 STOPWATCH STOP ERROR:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 3. GET TODAY'S PROGRESS STATS
+router.get("/stopwatch/today-stats", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const daySession = await dailysessionmodel.findOne({ userId, date: today });
+    if (!daySession) return res.status(200).json({ success: true, totalDaytime: 0, totalSessions: 0 });
+
+    res.status(200).json({ 
+        success: true, 
+        totalDaytime: daySession.totalDaytime || 0, 
+        totalSessions: daySession.totalSessions || 0 
+    });
+  } catch (err) {
+    console.log("🔥 STOPWATCH STATS ERROR:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;
