@@ -381,19 +381,65 @@ const ControlsBar = memo(() => (
     </div>
 ));
 
+// 🔥 ULTIMATE BACKGROUND WORKER ENGINE (Zero Lag, Zero Jump) 🔥
 const TimerEngine = memo(() => {
     const isRunning = useTimer(s => s.isRunning);
     
     useEffect(() => {
-        let interval;
-        if (isRunning) {
-            interval = setInterval(() => {
-                const current = timerStore.getState().time;
-                timerStore.setState({ time: current + 1 });
-            }, 1000);
-        }
-        return () => clearInterval(interval);
+        if (!isRunning) return;
+
+        const startTimestamp = Date.now();
+        const startAccumulatedTime = timerStore.getState().time;
+        
+        const tick = () => {
+            const elapsedSeconds = Math.floor((Date.now() - startTimestamp) / 1000);
+            // timerStore ki khasiyat ye hai ki agar "time" same hua toh wo UI re-render nahi karega!
+            // Isiliye hum safely tick ko zyada speed me chala sakte hain.
+            timerStore.setState({ time: startAccumulatedTime + elapsedSeconds });
+        };
+
+        // 🌟 NAYA MAGIC: Inline Web Worker
+        // Main thread ko browser sleep kar deta hai, par Web Worker active rehta hai background me!
+        const workerCode = `
+            let interval;
+            self.onmessage = function(e) {
+                if (e.data === 'start') {
+                    // Hum interval 250ms (0.25 sec) pe chala rahe hain.
+                    // Isse calculation ekdam pin-point accurate hogi aur koi second jump nahi karega.
+                    interval = setInterval(() => {
+                        self.postMessage('tick');
+                    }, 250);
+                } else if (e.data === 'stop') {
+                    clearInterval(interval);
+                }
+            };
+        `;
+        
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+        const worker = new Worker(blobUrl);
+
+        // Worker har 250ms me hume signal dega
+        worker.onmessage = () => {
+            tick();
+        };
+
+        worker.postMessage('start'); // Worker start karo
+
+        // Fallback: Agar OS extreme power-saving mode me chala jaye toh wapas tab pe aate hi time sync ho
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') tick();
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            worker.postMessage('stop');
+            worker.terminate(); // Memory free karo
+            URL.revokeObjectURL(blobUrl);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, [isRunning]);
+    
     return null; 
 });
 
