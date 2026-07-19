@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // DITHER-KIT IMPORTS
 import { BarChart } from "../dither-kit/bar-chart";
@@ -8,11 +9,10 @@ import { YAxis } from "../dither-kit/y-axis";
 import { Tooltip } from "../dither-kit/tooltip";
 import { DitherAvatar } from "../dither-kit/avatar"; 
 import { DitherButton } from "../dither-kit/button"; 
-// 👇 Naya Gradient Import
 import { DitherGradient } from "../dither-kit/gradient";
 
 // LUCIDE ICONS
-import { Clock, Target, Timer, Flame, Trophy, CalendarDays, Activity } from 'lucide-react';
+import { Flame, Trophy, CalendarDays } from 'lucide-react';
 
 const formatTime = (seconds) => {
     if (!seconds) return "0h 0m";
@@ -23,32 +23,71 @@ const formatTime = (seconds) => {
 };
 
 // ----------------------------------------------------------------------
-// STAT CARD COMPONENT (WITH DITHER GRADIENT BACKGROUND)
+// ANIMATION VARIANTS (FOR LIFE & BOUNCE)
+// ----------------------------------------------------------------------
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    show: { 
+        opacity: 1, 
+        y: 0, 
+        scale: 1,
+        transition: { type: "spring", stiffness: 300, damping: 24 } 
+    }
+};
+
+// ----------------------------------------------------------------------
+// STAT CARD COMPONENT (FIXED TRANSFORM ORIGIN GLITCH)
 // ----------------------------------------------------------------------
 const StatCard = ({ title, value, trendStr, isPositive = true }) => {
     return (
-        <div className="bg-[#111111] border border-white/5 rounded-2xl relative overflow-hidden flex flex-col h-[180px] group transition-colors hover:bg-[#151515] hover:border-white/10">
+        <motion.div 
+            variants={itemVariants}
+            // 🛑 FIX: Explicitly forcing transform origin to center for ALL grid items
+            style={{ 
+                transformPerspective: 1200, 
+                transformOrigin: "center center" 
+            }} 
+            whileHover={{ 
+                rotateX: 12,
+                scale: 1.02,         
+                y: -2,               
+                boxShadow: "0 20px 40px -10px rgba(0,0,0,0.8), 0 10px 20px -5px rgba(59,130,246,0.25), 0 0 0 1px rgba(59,130,246,0.2)" 
+            }}
+            transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.5 }}
+            className="bg-[#0A0A0A] border border-white/5 rounded-2xl relative overflow-hidden flex flex-col h-[180px] group transition-colors duration-500 hover:bg-[#0D0D0D] hover:border-transparent"
+        >
             
-            {/* The Magic: DitherGradient filling the background of the card */}
-            {/* Note: I'm using direction="top" so the blue dither comes from the bottom up! */}
-            <DitherGradient from="blue" direction="top" className="opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+            <DitherGradient from="blue" direction="top" className="opacity-50 group-hover:opacity-90 transition-opacity duration-700 ease-out" />
 
-            {/* Content Section (z-10 keeps it above the gradient) */}
             <div className="p-6 relative z-10 flex flex-col justify-end h-full">
-                <h3 className="text-sm font-medium text-zinc-400">{title}</h3>
+                <h3 className="text-[11px] font-bold tracking-[0.2em] text-zinc-500 group-hover:text-zinc-300 transition-colors duration-500 uppercase drop-shadow-md">
+                    {title}
+                </h3>
                 <div className="flex items-baseline gap-3 mt-2">
-                    <div className="text-4xl font-bold tracking-tight text-white">{value}</div>
+                    <div className="text-[38px] font-bold tracking-tight text-[#E4E4E7] group-hover:text-white transition-colors duration-500 leading-none drop-shadow-lg">
+                        {value}
+                    </div>
                     {trendStr && (
-                        <div className={`text-sm font-semibold flex items-center ${isPositive ? 'text-[#34d399]' : 'text-red-400'}`}>
+                        <div className={`text-sm font-bold flex items-center ${isPositive ? 'text-[#34d399]' : 'text-[#ef4444]'} drop-shadow-md`}>
                             {isPositive ? '▲' : '▼'} {trendStr}
                         </div>
                     )}
                 </div>
             </div>
             
-        </div>
+        </motion.div>
     );
 };
+    
+
 
 // ----------------------------------------------------------------------
 // MAIN ANALYTICS COMPONENT
@@ -86,8 +125,12 @@ const Analytics = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen w-full flex items-center justify-center bg-[#09090b]">
-                <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
+            <div className="min-h-screen w-full flex items-center justify-center bg-[#050505]">
+                <motion.div 
+                    animate={{ rotate: 360 }} 
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="w-8 h-8 rounded-full border-2 border-white/10 border-t-blue-500"
+                />
             </div>
         );
     }
@@ -96,31 +139,64 @@ const Analytics = () => {
         hours: { label: "Focus Hours", color: "blue" }
     };
 
+    // Extract first name for the greeting
+    const firstName = profile.name ? profile.name.split(' ')[0] : 'Hustler';
+
     return (
-        <div className="min-h-screen w-full bg-[#09090b] text-zinc-100 font-sans selection:bg-blue-500/30 overflow-x-hidden pb-32">
+        <div className="min-h-screen w-full bg-[#050505] text-zinc-100 font-sans selection:bg-blue-500/30 overflow-x-hidden pb-32">
             
-            {/* 🚀 HEADER */}
+            {/* 🚀 HEADER WITH ANIMATED GREETING */}
             <header className="w-full pt-16 pb-12 px-6 md:px-12 max-w-[1200px] mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">Analytics</h1>
-                    <p className="text-zinc-400 mt-2 text-lg">Your productivity and focus data, visualized.</p>
-                </div>
-                <div className="flex items-center gap-4">
+                <motion.div 
+                    initial={{ opacity: 0, x: -30 }} 
+                    animate={{ opacity: 1, x: 0 }} 
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                    <h1 className="text-4xl md:text-[46px] font-bold tracking-tight text-white flex items-center">
+                        Hello, {firstName} 
+                        <motion.span 
+                            animate={{ rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}
+                            transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 4 }}
+                            className="inline-block ml-3 origin-bottom-right"
+                        >
+                            👋
+                        </motion.span>
+                    </h1>
+                    <p className="text-zinc-500 mt-2 text-[17px] font-medium">Here's your productivity data and focus breakdown.</p>
+                </motion.div>
+                
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="flex items-center gap-4"
+                >
                     <div className="text-right">
-                        <div className="text-sm font-medium text-white">{profile.name || "User"}</div>
-                        <div className="text-xs text-[#34d399] mt-0.5">Online</div>
+                        <div className="text-[15px] font-semibold text-white">{profile.name || "User"}</div>
+                        <div className="text-xs font-bold text-[#34d399] tracking-wider uppercase mt-0.5 flex items-center justify-end gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            Online
+                        </div>
                     </div>
-                    <div className="rounded-full bg-black/50 border border-white/10 p-1">
-                        <DitherAvatar name={profile.name || "user"} size={48} /> 
+                    <div className="rounded-full bg-black/50 border border-white/10 p-1 shadow-lg">
+                        <DitherAvatar name={profile.name || "user"} size={52} /> 
                     </div>
-                </div>
+                </motion.div>
             </header>
 
-            <main className="max-w-[1200px] mx-auto px-6 md:px-12 mt-4 flex flex-col gap-16">
+            <motion.main 
+                variants={containerVariants} 
+                initial="hidden" 
+                animate="show" 
+                className="max-w-[1200px] mx-auto px-6 md:px-12 mt-2 flex flex-col gap-12"
+            >
                 
                 {/* 🚀 THE DITHER GRADIENT CARDS GRID */}
                 <section>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         <StatCard 
                             title="Total Focus" 
                             value={formatTime(profile.totalFocusTimeAllTime)} 
@@ -148,67 +224,94 @@ const Analytics = () => {
                     </div>
                 </section>
 
-                {/* 🚀 MAIN DITHER CHART */}
-                <section className="w-full bg-[#111111] border border-white/5 rounded-2xl p-8 md:p-10 relative overflow-hidden">
-                    <div className="mb-10 flex justify-between items-end">
+                {/* 🚀 MAIN DITHER CHART (VERTICAL MODE) */}
+                <motion.section variants={itemVariants} className="w-full bg-[#0A0A0A] border border-white/5 rounded-[32px] p-8 md:p-10 relative overflow-hidden" style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.05), 0 20px 40px rgba(0,0,0,0.5)' }}>
+                    <div className="mb-12 flex justify-between items-end">
                         <div>
-                            <h2 className="text-2xl font-semibold text-white tracking-tight">Weekly Throughput</h2>
-                            <p className="text-zinc-400 mt-1">Hours logged in the trailing 7 days.</p>
+                            <h2 className="text-2xl font-bold text-[#E4E4E7] tracking-tight">Weekly Throughput</h2>
+                            <p className="text-zinc-500 mt-1 font-medium">Hours logged in the trailing 7 days.</p>
                         </div>
                     </div>
                     
-                    <div className="w-full h-[450px]">
-                        <BarChart data={weeklyData} config={chartConfig} bloom="aura">
-                            <XAxis dataKey="day" />
-                            <YAxis />
-                            <Tooltip labelKey="day" />
-                            <Bar dataKey="hours" variant="dotted" />
+                    <div className="w-full h-[380px] md:h-[450px]">
+                        <BarChart data={weeklyData} config={chartConfig} bloom="aura" margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                            <XAxis 
+                                dataKey="day" 
+                                tick={{ fill: '#FAFAFA', fontSize: 13, fontWeight: 500 }}
+                                axisLine={false}
+                                tickLine={false}
+                            />
+                            <YAxis 
+                                type="number" 
+                                tickFormatter={(value) => `${value}h`} 
+                                tick={{ fill: '#A1A1AA', fontSize: 12, fontWeight: 500 }}
+                                axisLine={false}
+                                tickLine={false}
+                                width={40}
+                            />
+                            <Tooltip 
+                                labelKey="day" 
+                                formatter={(value) => [`${value} hours`, 'Focus Time']}
+                            />
+                            {/* Wapas Vertical Radius [6, 6, 0, 0] */}
+                            <Bar 
+                                dataKey="hours" 
+                                variant="dotted" 
+                                barSize={42} 
+                                radius={[6, 6, 0, 0]} 
+                            />
                         </BarChart>
                     </div>
-                </section>
+                </motion.section>
 
                 {/* 🚀 STREAKS & HEATMAP SECTION */}
                 <section className="w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
                     
                     {/* Streaks (Left Side) */}
                     <div className="lg:col-span-1 flex flex-row lg:flex-col gap-6">
-                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex-1 flex flex-col gap-3">
-                            <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                                <Flame size={18} className="text-orange-500" />
-                                <span className="text-sm font-medium">Current Streak</span>
+                        <motion.div variants={itemVariants} className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-8 flex-1 flex flex-col gap-3 shadow-xl hover:border-white/10 transition-colors">
+                            <div className="flex items-center gap-2 text-zinc-500 mb-1">
+                                <Flame size={18} className="text-[#f97316]" />
+                                <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Current Streak</span>
                             </div>
-                            <div className="text-4xl font-bold text-white">{profile.currentStreak || 0} <span className="text-lg text-zinc-500 font-normal">days</span></div>
-                        </div>
+                            <div className="text-[42px] font-black text-[#E4E4E7] leading-none">{profile.currentStreak || 0} <span className="text-lg text-zinc-600 font-medium tracking-normal">days</span></div>
+                        </motion.div>
 
-                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-8 flex-1 flex flex-col gap-3">
-                            <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                                <Trophy size={18} className="text-yellow-500" />
-                                <span className="text-sm font-medium">Longest Streak</span>
+                        <motion.div variants={itemVariants} className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-8 flex-1 flex flex-col gap-3 shadow-xl hover:border-white/10 transition-colors">
+                            <div className="flex items-center gap-2 text-zinc-500 mb-1">
+                                <Trophy size={18} className="text-[#eab308]" />
+                                <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Longest Streak</span>
                             </div>
-                            <div className="text-4xl font-bold text-white">{profile.longestStreak || 0} <span className="text-lg text-zinc-500 font-normal">days</span></div>
-                        </div>
+                            <div className="text-[42px] font-black text-[#E4E4E7] leading-none">{profile.longestStreak || 0} <span className="text-lg text-zinc-600 font-medium tracking-normal">days</span></div>
+                        </motion.div>
                         
-                        <div className="hidden lg:block w-full">
-                            <DitherButton color="blue" bloom="low" onClick={() => window.location.reload()} className="w-full py-4 text-sm font-medium tracking-wide">
+                        <motion.div variants={itemVariants} className="hidden lg:block w-full">
+                            <DitherButton color="blue" bloom="low" onClick={() => window.location.reload()} className="w-full py-4 text-sm font-semibold tracking-wide rounded-2xl">
                                 Sync Database
                             </DitherButton>
-                        </div>
+                        </motion.div>
                     </div>
 
                     {/* Heatmap (Right Side) */}
-                    <div className="lg:col-span-3 bg-[#111111] border border-white/5 rounded-2xl p-8 md:p-10">
-                        <div className="flex items-center gap-3 mb-8 text-zinc-400">
+                    <motion.div variants={itemVariants} className="lg:col-span-3 bg-[#0A0A0A] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-xl">
+                        <div className="flex items-center gap-3 mb-8 text-zinc-500">
                             <CalendarDays size={18} />
-                            <span className="text-sm font-medium">1-Year Activity Matrix</span>
+                            <span className="text-[11px] font-bold tracking-[0.15em] uppercase">1-Year Activity Matrix</span>
                         </div>
                         
                         <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
                             <div className="flex gap-[6px] min-w-max">
                                 {Array.from({ length: Math.ceil(heatmapData.length / 7) }).map((_, colIndex) => (
-                                    <div key={colIndex} className="flex flex-col gap-[6px]">
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.5 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: colIndex * 0.02, duration: 0.3 }}
+                                        key={colIndex} 
+                                        className="flex flex-col gap-[6px]"
+                                    >
                                         {heatmapData.slice(colIndex * 7, (colIndex + 1) * 7).map((day, rowIndex) => {
                                             const intensityColors = {
-                                                0: '#18181b', // visible dark grey
+                                                0: '#151515', 
                                                 1: '#064e3b', 
                                                 2: '#047857', 
                                                 3: '#10b981', 
@@ -219,24 +322,24 @@ const Analytics = () => {
                                             return (
                                                 <div 
                                                     key={`${colIndex}-${rowIndex}`} 
-                                                    className="w-[20px] h-[20px] md:w-[24px] md:h-[24px] rounded-[3px] relative group cursor-pointer border border-white/5 transition-transform hover:scale-110"
+                                                    className="w-[20px] h-[20px] md:w-[24px] md:h-[24px] rounded-[4px] relative group cursor-pointer border border-white/5 transition-all hover:scale-125 hover:z-10 hover:border-white/30 hover:shadow-[0_0_15px_rgba(52,211,153,0.4)]"
                                                     style={{ backgroundColor: bgColor }}
                                                 >
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#111] border border-white/10 text-white text-xs py-1.5 px-3 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-2xl transition-opacity">
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-[#111] border border-white/10 text-white text-xs py-2 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-2xl transition-all translate-y-2 group-hover:translate-y-0">
                                                         <span className="text-zinc-400 mr-2">{day.date}</span>
-                                                        <span className="font-medium">{day.hours}h</span>
+                                                        <span className="font-bold text-[#34d399]">{day.hours}h</span>
                                                     </div>
                                                 </div>
                                             );
                                         })}
-                                    </div>
+                                    </motion.div>
                                 ))}
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </section>
 
-            </main>
+            </motion.main>
         </div>
     );
 };
