@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { X, LogOut, Play, Pause, RotateCcw, Save, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { DitherButton } from "../dither-kit/button";
+
 // 🔥 THE ULTIMATE ZERO-RENDER STORE ENGINE (ATOMIC STATE) 🔥
 function createStore(initialState) {
     const store = {
@@ -28,8 +30,8 @@ function createStore(initialState) {
 
 const timerStore = createStore({ isRunning: false, time: 0, taskName: "", strictMode: false, sessionId: null });
 const uiStore = createStore({ sidebarOpen: false, isDesktop: window.innerWidth >= 1024 });
-const statsStore = createStore({ totalDaytime: 0, totalSessions: 0 }); // API Stats
-const toastStore = createStore({ toasts: [] }); // UI Toasts
+const statsStore = createStore({ totalDaytime: 0, totalSessions: 0 }); 
+const toastStore = createStore({ toasts: [] }); 
 
 const useTimer = (selector) => useSyncExternalStore((l) => timerStore.subscribe(l), () => selector(timerStore.getState()));
 const useUI = (selector) => useSyncExternalStore((l) => uiStore.subscribe(l), () => selector(uiStore.getState()));
@@ -46,27 +48,46 @@ const showToast = (message) => {
     }, 3000);
 };
 
-// --- CONSTANTS & STYLES ---
+// --- CONSTANTS & STYLES (ULTRA-PREMIUM FLOATING THEME) ---
 const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
 
 const COLORS = {
-    bg: '#0A0A0A', card: '#111111', sidebar: '#15181C', textPrimary: '#D1D5DB', textSecondary: '#9CA3AF',
-    textMuted: '#6B7280', border: 'rgba(255,255,255,0.06)', borderHover: 'rgba(255,255,255,0.12)',
+    bg: '#050505',          
+    card: '#000000',        
+    sidebar: '#15181C',     // 🔥 Workspace Matching Sidebar Color 🔥
+    textPrimary: '#E0E0E0', 
+    textSecondary: '#A3A3A3',
+    textMuted: '#737373', 
+    border: 'rgba(255, 255, 255, 0.12)', 
+    borderHover: 'rgba(255, 255, 255, 0.18)',
 };
 
+// 💎 PREMIUM CARD STYLING 💎
 const heavyCardStyle = {
-    background: '#0A0A0A', 
-    boxShadow: '0 32px 64px -12px rgba(0,0,0,1), inset 0 1px 1px rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.04)'
+    background: 'linear-gradient(180deg, #111111 0%, #000000 100%)', 
+    border: `1px solid ${COLORS.border}`, 
+    boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.08), 0 32px 64px rgba(0,0,0,1), 0 0 40px rgba(255,255,255,0.02)'
 };
 
 const heavyInputStyle = {
-    background: '#050505',
-    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.04)'
+    background: '#070707', 
+    border: '1px solid rgba(255,255,255,0.03)',
+    boxShadow: 'inset 0 2px 12px rgba(0,0,0,1), 0 1px 0px rgba(255,255,255,0.04)'
 };
 
 const secondaryButtonStyle = {
-    background: '#15181C', 
-    boxShadow: '0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.03)'
+    background: 'linear-gradient(180deg, #18181B 0%, #050505 100%)', 
+    border: `1px solid ${COLORS.border}`,
+    boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.1), 0 8px 16px rgba(0,0,0,0.8)'
+};
+
+const capsuleStyle = {
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.5)',
+    padding: '6px 14px',
+    borderRadius: '999px',
+    display: 'inline-block'
 };
 
 const ToastOverlay = memo(() => {
@@ -81,7 +102,7 @@ const ToastOverlay = memo(() => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -20, scale: 0.9 }}
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        className="bg-[#22262B] text-[#FAFAFA] px-6 py-3.5 rounded-2xl shadow-2xl border border-white/10 font-medium text-[14px] flex items-center gap-3 backdrop-blur-xl"
+                        className="bg-[#22262B] text-[#E0E0E0] px-6 py-3.5 rounded-2xl shadow-2xl border border-white/10 font-medium text-[14px] flex items-center gap-3 backdrop-blur-xl"
                         style={{ boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)' }}
                     >
                         {t.message.includes("Saved") ? <Target size={16} className="text-[#34D399]" /> : <Play size={16} className="text-[#60A5FA]" />}
@@ -93,6 +114,7 @@ const ToastOverlay = memo(() => {
     );
 });
 
+// 🔥 RESTORED EXACT WORKSPACE SIDEBAR ICON 🔥
 const CustomSidebarIcon = memo(() => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="6" y1="5" x2="6" y2="19" />
@@ -101,10 +123,18 @@ const CustomSidebarIcon = memo(() => (
     </svg>
 ));
 
+// 🔥 EXACT FROSTED GLASS HAMBURGER BUTTON FROM WORKSPACE 🔥
+const HamburgerButton = memo(() => (
+    <button onMouseEnter={() => uiStore.setState({ sidebarOpen: true })} onClick={() => uiStore.setState({ sidebarOpen: true })} className="sidebar-trigger"
+        style={{ position: 'fixed', top: 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}>
+        <CustomSidebarIcon />
+    </button>
+));
+
 const Header = memo(() => (
     <div className="w-full mb-4 md:mb-8 mt-12 md:mt-2 flex-shrink-0">
-        <h1 className="text-2xl md:text-[34px] font-bold tracking-tight text-[#FAFAFA]">Focus Session</h1>
-        <p className="hidden sm:block text-[14px] md:text-[15.5px] text-zinc-400 mt-2 font-medium">Track and save your deep work intervals.</p>
+        <h1 className="text-2xl md:text-[34px] font-bold tracking-tight text-[#E0E0E0]">Focus Session</h1>
+        <p className="hidden sm:block text-[15px] md:text-[17px] text-[#A3A3A3] mt-2 font-medium">Track and save your deep work intervals.</p>
     </div>
 ));
 
@@ -118,28 +148,43 @@ const QuickStats = memo(() => {
     return (
         <div className="lg:col-span-1 flex flex-row lg:flex-col gap-3 md:gap-6 flex-shrink-0">
             <div className="w-full rounded-[20px] md:rounded-[32px] p-5 md:p-8 flex flex-col justify-start flex-1 min-h-[120px] md:min-h-[240px]" style={heavyCardStyle}>
-                <h3 className="text-[9px] md:text-[11px] font-bold tracking-[0.2em] text-white/30 uppercase mb-4 md:mb-8">Today's Progress</h3>
                 
-                <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start w-full">
+                <div className="flex items-center mb-4 md:mb-8">
+                    <h3 className="text-[10px] md:text-[12px] font-bold tracking-[0.15em] text-[#E0E0E0] uppercase" style={capsuleStyle}>
+                        Today's Progress
+                    </h3>
+                </div>
+                
+                <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start w-full mt-auto md:mt-0">
                     <div className="mb-0 md:mb-6 flex flex-col items-center md:items-start">
-                        <div className="text-2xl md:text-[38px] font-bold text-[#E4E4E7] tracking-tight leading-none">{hours}h {minutes}m</div>
-                        <div className="text-[11px] md:text-[14px] text-zinc-500 mt-1 md:mt-2 font-medium">Focus Time</div>
+                        <div className="text-2xl md:text-[38px] font-bold text-[#E0E0E0] tracking-tight leading-none">{hours}h {minutes}m</div>
+                        <div className="text-[12px] md:text-[14px] text-[#A3A3A3] mt-2 font-medium">Focus Time</div>
                     </div>
-                    <div className="hidden md:block w-full h-[1px] bg-white/5 mb-6"></div>
+                    <div className="hidden md:block w-full h-[1px] bg-white/10 mb-6" style={{boxShadow: '0 1px 0 rgba(0,0,0,0.5)'}}></div>
                     <div className="flex flex-col items-center md:items-start">
-                        <div className="text-2xl md:text-[38px] font-bold text-[#E4E4E7] tracking-tight leading-none">{totalSessions}</div>
-                        <div className="text-[11px] md:text-[14px] text-zinc-500 mt-1 md:mt-2 font-medium">Sessions</div>
+                        <div className="text-2xl md:text-[38px] font-bold text-[#E0E0E0] tracking-tight leading-none">{totalSessions}</div>
+                        <div className="text-[12px] md:text-[14px] text-[#A3A3A3] mt-2 font-medium">Sessions</div>
                     </div>
                 </div>
             </div>
-            <div className="hidden lg:flex w-full rounded-[32px] p-8 flex-col items-center justify-center text-center flex-1 min-h-[200px]" style={heavyCardStyle}>
-                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5" style={heavyInputStyle}>
-                    <Target size={28} strokeWidth={1.5} className="text-white/40 w-8 h-8" />
+            
+            <div className="hidden lg:flex w-full rounded-[32px] p-8 flex-col relative text-center flex-1 min-h-[200px]" style={heavyCardStyle}>
+                
+                <div className="absolute top-6 left-6">
+                    <h3 className="text-[10px] md:text-[12px] font-bold tracking-[0.15em] text-[#E0E0E0] uppercase" style={capsuleStyle}>
+                        Quick Guide
+                    </h3>
                 </div>
-                <h4 className="text-[#E4E4E7] font-semibold mb-2 text-[16px]">Stay Locked In</h4>
-                <p className="text-[14px] text-white/40 leading-relaxed font-medium px-2">
-                    Enter your task, start the timer, and focus deeply.
-                </p>
+
+                <div className="flex-1 flex flex-col items-center justify-center mt-6 w-full">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5" style={heavyInputStyle}>
+                        <Target size={28} strokeWidth={1.5} className="text-[#A3A3A3] w-8 h-8" />
+                    </div>
+                    <h4 className="text-[#E0E0E0] font-semibold mb-2 text-[16px]">Stay Locked In</h4>
+                    <p className="text-[14px] md:text-[15px] text-[#A3A3A3] leading-relaxed font-medium px-2">
+                        Enter your task, start the timer, and focus deeply.
+                    </p>
+                </div>
             </div>
         </div>
     );
@@ -151,13 +196,13 @@ const TaskInput = memo(() => {
     
     return (
         <div className="w-full mb-3 md:mb-6 flex-shrink-0">
-            <label className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase mb-2 block ml-2">Current Task</label>
+            <label className="text-[10px] md:text-[11px] font-bold tracking-[0.2em] text-[#A3A3A3] uppercase mb-2 block ml-2">Current Task</label>
             <div className="w-full flex items-center gap-3 md:gap-4 rounded-[14px] md:rounded-2xl px-4 py-3 md:px-6 md:py-5 transition-all" style={heavyInputStyle}>
-                <Target size={16} className={`flex-shrink-0 md:w-5 md:h-5 ${isRunning ? 'text-white/80' : 'text-white/30'}`} />
+                <Target size={18} className={`flex-shrink-0 md:w-5 md:h-5 ${isRunning ? 'text-[#E0E0E0]' : 'text-[#A3A3A3]'}`} />
                 <input 
                     type="text" value={taskName} onChange={(e) => timerStore.setState({ taskName: e.target.value })}
                     placeholder="What are you focusing on?" 
-                    className="bg-transparent border-none outline-none text-white placeholder:text-white/20 w-full text-[14px] md:text-[17px] font-medium"
+                    className="bg-transparent border-none outline-none text-[#E0E0E0] placeholder:text-[#737373] w-full text-[14px] md:text-[16px] font-medium"
                 />
             </div>
         </div>
@@ -169,9 +214,9 @@ const StrictModeToggle = memo(() => {
     return (
         <div className="flex items-center justify-end w-full pr-2 mb-2 md:mb-6 flex-shrink-0">
             <div className="flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => timerStore.setState({ strictMode: !strictMode })}>
-                <span className={`text-[9px] md:text-[10px] font-bold tracking-[0.1em] uppercase transition-colors ${strictMode ? 'text-white' : 'text-white/30 group-hover:text-white/50'}`}>Strict Mode</span>
-                <div className={`w-8 h-4 md:w-9 md:h-5 rounded-full p-1 transition-colors duration-300 bg-black border flex items-center ${strictMode ? 'border-white/30' : 'border-white/10'}`}>
-                    <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-transform duration-300 ${strictMode ? 'bg-white translate-x-3 md:translate-x-4' : 'bg-white/30 translate-x-0'}`} />
+                <span className={`text-[10px] md:text-[11px] font-bold tracking-[0.1em] uppercase transition-colors ${strictMode ? 'text-[#E0E0E0]' : 'text-[#A3A3A3] group-hover:text-[#E0E0E0]'}`}>Strict Mode</span>
+                <div className={`w-8 h-4 md:w-9 md:h-5 rounded-full p-1 transition-colors duration-300 border flex items-center border-white/10 ${strictMode ? 'bg-white/10' : 'bg-[#1A1A1A]'}`} style={{boxShadow: 'inset 0 1px 3px rgba(0,0,0,1), 0 1px 0 rgba(255,255,255,0.05)'}}>
+                    <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-transform duration-300 ${strictMode ? 'bg-[#E0E0E0] translate-x-3 md:translate-x-4' : 'bg-[#A3A3A3] translate-x-0'}`} style={{boxShadow: '0 2px 4px rgba(0,0,0,0.5)'}} />
                 </div>
             </div>
         </div>
@@ -201,17 +246,16 @@ const DigitSubscriber = memo(({ selector }) => {
 });
 
 const TimerDigits = memo(() => (
-    <div className="text-[64px] sm:text-[90px] md:text-[130px] lg:text-[160px] font-black tabular-nums leading-none flex items-center justify-center select-none text-zinc-300 w-full"
+    <div className="text-[64px] sm:text-[90px] md:text-[130px] lg:text-[160px] font-black tabular-nums leading-none flex items-center justify-center select-none text-[#888888] w-full"
         style={{ fontFamily: "'Inter', 'SF Pro Display', -apple-system, system-ui, sans-serif", letterSpacing: '-0.04em' }}>
         <DigitSubscriber selector={s => Math.floor(s.time / 600)} />
         <DigitSubscriber selector={s => Math.floor((s.time / 60) % 10)} />
-        <span className="text-zinc-300/40 font-bold mx-1 sm:mx-2 md:mx-4" style={{ transform: 'translateY(-6%)' }}>:</span>
+        <span className="text-[#555555] font-bold mx-1 sm:mx-2 md:mx-4" style={{ transform: 'translateY(-6%)' }}>:</span>
         <DigitSubscriber selector={s => Math.floor((s.time % 60) / 10)} />
         <DigitSubscriber selector={s => s.time % 10} />
     </div>
 ));
 
-// 🔥 FIXED API CALLS 🔥
 const fetchTodayStats = async () => {
     try {
         const res = await fetch("http://localhost:3000/api/session/stopwatch/today-stats", { credentials: "include" });
@@ -247,7 +291,7 @@ const handleStopBackend = async (sessionId, isFinalSave = false) => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ sessionId, isFinalSave }) // 👈 isFinalSave zaroor bhejega
+            body: JSON.stringify({ sessionId, isFinalSave }) 
         });
         fetchTodayStats(); 
     } catch (err) {
@@ -266,22 +310,27 @@ const StartPauseButton = memo(() => {
             handleStartBackend(state.taskName);
         } else {
             showToast("Timer Paused");
-            handleStopBackend(state.sessionId, false); // PAUSE Hai, final save nahi hai
+            handleStopBackend(state.sessionId, false);
         }
     }, []);
 
     return (
-        <motion.button onClick={handleStartPause} whileTap={{ scale: 0.95 }}
-            className="flex items-center justify-center gap-2 flex-1 sm:w-56 py-3.5 md:py-5 rounded-[14px] md:rounded-2xl font-semibold text-[14px] md:text-[15px] transition-colors duration-200"
-            style={{ color: isRunning ? '#FFFFFF' : '#111111', background: isRunning ? '#15181C' : '#F4F4F5', boxShadow: isRunning ? '0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)' : '0 12px 24px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,1)' }}
-        >
-            <AnimatePresence mode="wait">
-                <motion.div key={isRunning ? 'pause' : 'play'} initial={{ opacity: 0, scale: 0.5, rotate: -45 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} exit={{ opacity: 0, scale: 0.5, rotate: 45 }} transition={{ duration: 0.15 }}>
-                    {isRunning ? <Pause size={16} fill="currentColor" className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" /> : <Play size={16} fill="currentColor" className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" />}
-                </motion.div>
-            </AnimatePresence>
-            {isRunning ? 'Pause' : 'Start'}
-        </motion.button>
+        <motion.div whileTap={{ scale: 0.95 }} className="flex-1 sm:w-56">
+            <DitherButton 
+                color="blue" 
+                variant="hatched" 
+                bloom="aura" 
+                onClick={handleStartPause}
+                className="w-full flex items-center justify-center gap-2 py-3.5 md:py-5 font-semibold text-[14px] md:text-[15px] text-white"
+            >
+                <AnimatePresence mode="wait">
+                    <motion.div key={isRunning ? 'pause' : 'play'} initial={{ opacity: 0, scale: 0.5, rotate: -45 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} exit={{ opacity: 0, scale: 0.5, rotate: 45 }} transition={{ duration: 0.15 }}>
+                        {isRunning ? <Pause size={20} fill="currentColor" className="w-[20px] h-[20px] md:w-[24px] md:h-[24px]" /> : <Play size={20} fill="currentColor" className="w-[20px] h-[20px] md:w-[24px] md:h-[24px]" />}
+                    </motion.div>
+                </AnimatePresence>
+                {isRunning ? 'Pause' : 'Start'}
+            </DitherButton>
+        </motion.div>
     );
 });
 
@@ -290,7 +339,7 @@ const SaveButton = memo(() => {
     const handleSave = useCallback(() => {
         const state = timerStore.getState();
         if (state.time > 0) {
-            handleStopBackend(state.sessionId, true); // 🔥 YE HAMESHA CALL HOGA (Chahe paused ho ya running)
+            handleStopBackend(state.sessionId, true); 
             showToast("Session Saved Successfully!");
             timerStore.setState({ isRunning: false, time: 0, taskName: "", sessionId: null }); 
         }
@@ -298,7 +347,7 @@ const SaveButton = memo(() => {
 
     return (
         <motion.button onClick={handleSave} disabled={!hasTime} whileTap={{ scale: 0.95 }}
-            className="flex items-center justify-center gap-2 px-4 sm:px-0 sm:w-36 py-3.5 md:py-5 rounded-[14px] md:rounded-2xl font-medium text-[14px] md:text-[15px] text-white/70 hover:text-white transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none" style={secondaryButtonStyle}
+            className="flex items-center justify-center gap-2 px-4 sm:px-0 sm:w-36 py-3.5 md:py-5 rounded-[14px] md:rounded-2xl font-medium text-[14px] md:text-[15px] text-[#A3A3A3] hover:text-[#E0E0E0] transition-colors duration-200" style={secondaryButtonStyle}
         >
             <Save size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden sm:inline">Save</span>
         </motion.button>
@@ -317,7 +366,7 @@ const ResetButton = memo(() => {
 
     return (
         <motion.button onClick={handleReset} disabled={!hasTime} whileTap={{ scale: 0.95 }}
-            className="flex items-center justify-center w-[46px] h-[46px] sm:w-[64px] sm:h-auto py-0 sm:py-5 rounded-[14px] md:rounded-2xl text-white/50 hover:text-white transition-colors duration-200 disabled:opacity-30 disabled:pointer-events-none" style={secondaryButtonStyle}
+            className="flex items-center justify-center w-[46px] h-[46px] sm:w-[64px] sm:h-auto py-0 sm:py-5 rounded-[14px] md:rounded-2xl text-[#A3A3A3] hover:text-[#E0E0E0] transition-colors duration-200" style={secondaryButtonStyle}
         >
             <RotateCcw size={16} className="md:w-[18px] md:h-[18px]" />
         </motion.button>
@@ -431,15 +480,6 @@ const FocusCard = memo(() => {
     );
 });
 
-const HamburgerButton = memo(() => (
-    <button onMouseEnter={() => uiStore.setState({ sidebarOpen: true })} onClick={() => uiStore.setState({ sidebarOpen: true })} 
-        className="group fixed z-40 flex items-center justify-center cursor-pointer transition-all duration-200"
-        style={{ top: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, backdropFilter: 'blur(8px)', color: COLORS.textSecondary }}
-    >
-        <div className="group-hover:text-white transition-colors duration-300"><CustomSidebarIcon /></div>
-    </button>
-));
-
 const SidebarOverlay = memo(() => {
     const sidebarOpen = useUI(s => s.sidebarOpen);
     return (
@@ -447,29 +487,7 @@ const SidebarOverlay = memo(() => {
     );
 });
 
-const SidebarItem = memo(({ item, isSelected, navigate }) => (
-    <button 
-        onClick={() => navigate(`/${item.toLowerCase()}`)} 
-        style={{ width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, border: isSelected ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent', color: isSelected ? COLORS.textPrimary : COLORS.textMuted, cursor: 'pointer', transition: 'all 0.2s ease' }}
-        onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.color = COLORS.textPrimary; } }}
-        onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = COLORS.textMuted; } }}
-    >
-        {item}
-    </button>
-));
-
-const CloseSidebarButton = memo(() => (
-    <button onClick={() => uiStore.setState({ sidebarOpen: false })} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}>
-        <X size={20} />
-    </button>
-));
-
-const LogoutButton = memo(({ handleLogout }) => (
-    <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}>
-        <LogOut size={18} /> Logout
-    </button>
-));
-
+// 🔥 EXACT ORIGINAL WORKSPACE SIDEBAR PANEL 🔥
 const SidebarPanel = memo(({ navigate, handleLogout }) => {
     const sidebarOpen = useUI(s => s.sidebarOpen);
     return (
@@ -477,17 +495,25 @@ const SidebarPanel = memo(({ navigate, handleLogout }) => {
             onMouseLeave={() => uiStore.setState({ sidebarOpen: false })}
             style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: 280, backgroundColor: COLORS.sidebar, borderRight: `1px solid ${COLORS.border}`, zIndex: 50, padding: 24, display: 'flex', flexDirection: 'column', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}
         >
-            <div className="flex items-center justify-between mt-2 mb-8">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 32 }}>
                 <span style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700, letterSpacing: '0.15em', fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
-                <CloseSidebarButton />
+                <button onClick={() => uiStore.setState({ sidebarOpen: false })} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}><X size={20} /></button>
             </div>
-            <div className="flex flex-col gap-2 flex-1">
-                {SIDEBAR_ITEMS.map((item) => (
-                    <SidebarItem key={item} item={item} isSelected={item === 'Stopwatch'} navigate={navigate} />
-                ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                {SIDEBAR_ITEMS.map((item) => {
+                    const isActive = item === 'Stopwatch';
+                    return (
+                        <button key={item} onClick={() => navigate(`/${item.toLowerCase()}`)}
+                            style={{ width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, border: isActive ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', backgroundColor: isActive ? 'rgba(255,255,255,0.04)' : 'transparent', color: isActive ? COLORS.textPrimary : COLORS.textMuted, cursor: 'pointer' }}>
+                            {item}
+                        </button>
+                    );
+                })}
             </div>
-            <div className="pt-6 mt-auto" style={{ borderTop: `1px solid ${COLORS.border}` }}>
-                <LogoutButton handleLogout={handleLogout} />
+            <div style={{ paddingTop: 24, borderTop: `1px solid ${COLORS.border}`, marginTop: 'auto' }}>
+                <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    <LogOut size={18} /> Logout
+                </button>
             </div>
         </div>
     );
@@ -531,22 +557,30 @@ const Stopwatch = () => {
     }, [navigate]);
 
     return (
-        <div className="h-screen w-full relative font-sans text-white selection:bg-white/20 flex overflow-hidden" style={{ backgroundColor: '#090A0C' }}>
-            <ToastOverlay /> 
-            <WindowResizeListener />
-            <HamburgerButton />
-            <SidebarOverlay />
-            <SidebarPanel navigate={navigate} handleLogout={handleLogout} />
-            <MainContainer>
-                <div className="w-full max-w-5xl mx-auto flex flex-col justify-start md:justify-center h-full max-h-full">
-                    <Header />
-                    <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-4 md:pb-0">
-                        <FocusCard />
-                        <QuickStats />
+        <>
+            <style>{`
+                .sidebar-trigger:hover { transform: scale(1.05); }
+                ::-webkit-scrollbar { width: 6px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+            `}</style>
+            <div className="h-screen w-full relative font-sans text-white selection:bg-white/20 flex overflow-hidden" style={{ backgroundColor: COLORS.bg }}>
+                <ToastOverlay /> 
+                <WindowResizeListener />
+                <HamburgerButton />
+                <SidebarOverlay />
+                <SidebarPanel navigate={navigate} handleLogout={handleLogout} />
+                <MainContainer>
+                    <div className="w-full max-w-5xl mx-auto flex flex-col justify-start md:justify-center h-full max-h-full">
+                        <Header />
+                        <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-4 md:pb-0">
+                            <FocusCard />
+                            <QuickStats />
+                        </div>
                     </div>
-                </div>
-            </MainContainer>
-        </div>
+                </MainContainer>
+            </div>
+        </>
     );
 };
 
