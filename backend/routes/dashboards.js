@@ -3,9 +3,10 @@ const router = express.Router();
 
 const User = require("../models/users");
 const dailysessionmodel = require("../models/daysession");
+const taskmodel = require("../models/tasks"); // 🔥 NEW: Task model import
 
 //------------------------------
-// 1. GET PROFILE STATS (WITH ALL NEW ANALYTICS)
+// 1. GET PROFILE STATS (WITH WORKSPACE TASK ACTIVITY)
 //------------------------------
 router.get("/dashboard/profile", async (req, res) => {
   try {
@@ -16,18 +17,27 @@ router.get("/dashboard/profile", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // 🔥 Find all daySessionIds that have at least 1 task
+    const daySessionsWithTasks = await taskmodel.distinct("daySessionId", { userId });
+
+    // 🔥 Active day = time spent > 0 OR at least 1 task created
     const studyDays = await dailysessionmodel
-      .find({ userId, totalDaytime: { $gt: 0 } })
+      .find({ 
+        userId, 
+        $or: [
+          { totalDaytime: { $gt: 0 } },
+          { _id: { $in: daySessionsWithTasks } }
+        ]
+      })
       .sort({ date: 1 });
 
     // Core Stats
     let longestStreak = 0;
     let currentStreak = 0;
-    let totalFocusTimeAllTime = 0; 
-    let totalSessionsAllTime = 0;  
+    let totalFocusTimeAllTime = 0;
+    let totalSessionsAllTime = 0;
     
-    // Arrays & Tracking for smart stats
-    const dayStats = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }; // 0 = Sunday
+    const dayStats = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
     
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setHours(0, 0, 0, 0);
@@ -40,20 +50,16 @@ router.get("/dashboard/profile", async (req, res) => {
       for (let i = 0; i < studyDays.length; i++) {
         const session = studyDays[i];
 
-        // 1. Accumulate Totals
         totalFocusTimeAllTime += session.totalDaytime || 0;
         totalSessionsAllTime += session.totalSessions || 0;
 
-        // 2. Track which day of the week is most productive
         const dayOfWeek = new Date(session.date).getDay();
         dayStats[dayOfWeek] += session.totalDaytime || 0;
 
-        // 3. Track Consistency (Active days in last 30 days)
         if (new Date(session.date) >= thirtyDaysAgo) {
           activeDaysInLast30++;
         }
 
-        // 4. Calculate Longest Streak
         if (i > 0) {
           const prev = new Date(studyDays[i - 1].date);
           const curr = new Date(session.date);
@@ -69,7 +75,7 @@ router.get("/dashboard/profile", async (req, res) => {
       }
       longestStreak = Math.max(longestStreak, streak);
 
-      // 5. Calculate Current Streak
+      // Current Streak (backward from latest)
       currentStreak = 1;
       for (let i = studyDays.length - 1; i > 0; i--) {
         const curr = new Date(studyDays[i].date);
@@ -94,7 +100,6 @@ router.get("/dashboard/profile", async (req, res) => {
       }
     }
 
-    // 6. Calculate Final Derived Stats
     const averageSessionLength = totalSessionsAllTime > 0 
         ? Math.floor(totalFocusTimeAllTime / totalSessionsAllTime) 
         : 0;
@@ -128,7 +133,7 @@ router.get("/dashboard/profile", async (req, res) => {
 });
 
 //------------------------------
-// 2. GET WEEKLY CHART (FIXED WITH 7-DAY PADDING)
+// 2. GET WEEKLY CHART
 //------------------------------
 router.get("/dashboard/weekly-chart", async (req, res) => {
   try {
@@ -165,7 +170,7 @@ router.get("/dashboard/weekly-chart", async (req, res) => {
 });
 
 //------------------------------
-// 3. GET HEATMAP
+// 3. GET HEATMAP (WITH TASK ACTIVITY)
 //------------------------------
 router.get("/dashboard/heatmap", async (req, res) => {
   try {
@@ -179,10 +184,20 @@ router.get("/dashboard/heatmap", async (req, res) => {
       .select("date totalDaytime")
       .sort({ date: 1 });
 
+    // 🔥 Find which daySessions have tasks (for task-only active days)
+    const sessionIds = sessions.map(s => s._id);
+    const daySessionsWithTasks = await taskmodel.distinct("daySessionId", { 
+      userId, 
+      daySessionId: { $in: sessionIds } 
+    });
+    const taskSet = new Set(daySessionsWithTasks.map(id => id.toString()));
+
     const sessionMap = new Map();
     sessions.forEach((session) => {
       const dateKey = session.date.toISOString().split("T")[0];
-      sessionMap.set(dateKey, { hours: Number((session.totalDaytime / 3600).toFixed(1)) });
+      const hours = Number((session.totalDaytime / 3600).toFixed(1));
+      const hasTask = taskSet.has(session._id.toString());
+      sessionMap.set(dateKey, { hours, hasTask });
     });
 
     const heatmapData = [];
@@ -192,12 +207,15 @@ router.get("/dashboard/heatmap", async (req, res) => {
       const dateKey = currentDate.toISOString().split("T")[0];
       const sessionData = sessionMap.get(dateKey);
       const hours = sessionData?.hours || 0;
+      const hasTask = sessionData?.hasTask || false;
 
       let intensity = 0;
       if (hours > 0 && hours <= 2) intensity = 1;
       else if (hours > 2 && hours <= 4) intensity = 2;
       else if (hours > 4 && hours <= 6) intensity = 3;
       else if (hours > 6) intensity = 4;
+      // 🔥 Task-only day (0 time but created tasks) = minimal activity
+      else if (hasTask) intensity = 1;
 
       heatmapData.push({ date: dateKey, hours, intensity });
     }

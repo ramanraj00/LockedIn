@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, LogOut } from 'lucide-react';
 
 // 🌟 THE LIBRARY (DITHER-KIT)
@@ -10,6 +10,9 @@ import { XAxis } from "../dither-kit/x-axis";
 import { YAxis } from "../dither-kit/y-axis";
 import { Tooltip } from "../dither-kit/tooltip";
 import { DitherGradient } from "../dither-kit/gradient";
+import { PieChart } from "../dither-kit/pie-chart";
+import { Pie } from "../dither-kit/pie";
+import { Legend } from "../dither-kit/legend";
 
 // --- SIDEBAR CONSTANTS ---
 const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
@@ -31,7 +34,14 @@ const CustomSidebarIcon = () => (
     </svg>
 );
 
-// --- UTILITIES ---
+const PanelIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="4" />
+        <path d="M15 3v18" />
+        <path d="M10 15l-3-3 3-3" />
+    </svg>
+);
+
 const formatTime = (seconds) => {
     if (!seconds) return "0s";
     const h = Math.floor(seconds / 3600);
@@ -61,23 +71,13 @@ const StatusBadge = ({ active = true, text }) => (
     </div>
 );
 
-// 🔥 FIXED: StatCard with Bulletproof State Fallback so it never gets stuck!
 const StatCard = ({ title, value, index }) => {
     const [isWaving, setIsWaving] = useState(false);
 
     useEffect(() => {
-        // Name animation finishes at ~1.7s
         const waveDelay = 1700 + (index * 150); 
-        
-        // Trigger the wave bump
-        const timer1 = setTimeout(() => {
-            setIsWaving(true);
-        }, waveDelay);
-
-        // Lock it back to its resting state exactly when the wave finishes (600ms)
-        const timer2 = setTimeout(() => {
-            setIsWaving(false);
-        }, waveDelay + 600);
+        const timer1 = setTimeout(() => setIsWaving(true), waveDelay);
+        const timer2 = setTimeout(() => setIsWaving(false), waveDelay + 600);
 
         return () => {
             clearTimeout(timer1);
@@ -87,25 +87,21 @@ const StatCard = ({ title, value, index }) => {
 
     return (
         <motion.div 
-            initial={{ opacity: 1, y: 0, scale: 1, rotateX: 0, boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }} // Always visible!
+            initial={{ opacity: 1, y: 0, scale: 1, rotateX: 0, boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}
             animate={isWaving ? {
                 rotateX: [0, 15, 0],
                 scale: [1, 1.03, 1],
-                y: [0, -6, 0], // Keyframe wave movement
+                y: [0, -6, 0],
                 boxShadow: [
                     "0 4px 20px rgba(0,0,0,0.4)",
                     "0 25px 40px -10px rgba(0,0,0,0.8), 0 0 0 1px rgba(59,130,246,0.3)",
                     "0 4px 20px rgba(0,0,0,0.4)"
                 ]
             } : {
-                // The concrete fallback state! Keeps hover from getting stuck.
                 y: 0, scale: 1, rotateX: 0, boxShadow: "0 4px 20px rgba(0,0,0,0.4)"
             }}
             transition={isWaving ? { duration: 0.6, ease: "easeInOut", times: [0, 0.5, 1] } : { type: "spring", stiffness: 300, damping: 24 }}
-            style={{ 
-                transformPerspective: 1200, 
-                transformOrigin: "center center"
-            }}
+            style={{ transformPerspective: 1200, transformOrigin: "center center" }}
             whileHover={{ 
                 rotateX: 15,         
                 scale: 1.03,         
@@ -146,10 +142,7 @@ const BarChartSkeleton = () => {
             <div className="flex-1 h-full flex items-end justify-between px-2 md:px-6 pb-1 pt-10">
                 {heights.map((h, i) => (
                     <div key={i} className="flex flex-col items-center gap-3 w-[48px]">
-                        <div 
-                            className="w-full bg-[#18181B] border border-white/5 rounded-t-[6px] animate-pulse relative overflow-hidden" 
-                            style={{ height: h, animationDelay: `${i * 150}ms` }}
-                        >
+                        <div className="w-full bg-[#18181B] border border-white/5 rounded-t-[6px] animate-pulse relative overflow-hidden" style={{ height: h, animationDelay: `${i * 150}ms` }}>
                             <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-transparent opacity-30" />
                         </div>
                         <div className="w-8 h-2 bg-[#27272A] rounded-sm animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
@@ -164,48 +157,25 @@ const Footer = () => {
     return (
         <footer className="relative w-full mt-24 pt-12 overflow-hidden flex flex-col items-center border-t border-white/10">
             <DitherGradient from="blue" direction="down" />
-            
             <div className="relative z-10 w-full px-6 md:px-12 flex flex-col sm:flex-row justify-between items-center gap-6 mb-8 md:mb-12">
                 <p className="text-white text-sm font-bold tracking-wide text-center sm:text-left drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     © {new Date().getFullYear()} LockedIn. All rights reserved.
                 </p>
-
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center gap-4">
+                    <a href="https://x.com/r1zzdev?s=20" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-300 shadow-xl">
+                        <svg className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                    </a>
                     <a href="https://github.com/ramanraj00/LockedIn" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-300 shadow-xl">
                         <svg className="w-5 h-5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 24 24">
                             <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
                         </svg>
                     </a>
-                    <a href="https://x.com/ramanteen15?s=20" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-300 shadow-xl">
-                        <svg className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                        </svg>
-                    </a>
                 </div>
             </div>
-
-            <div 
-                className="relative z-10 w-full flex justify-center items-end select-none pointer-events-none mt-auto overflow-hidden"
-                style={{
-                    WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0.5) 85%, rgba(0,0,0,0) 100%)",
-                    maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0.5) 85%, rgba(0,0,0,0) 100%)"
-                }}
-            >
-                <h1 
-                    className="font-eurostile text-transparent bg-clip-text w-full text-center uppercase"
-                    style={{ 
-                        backgroundImage: "linear-gradient(180deg, #94A3B8 0%, #475569 55%, #0F172A 95%)",
-                        fontSize: "clamp(60px, 18.5vw, 400px)", 
-                        fontWeight: 900,          
-                        letterSpacing: "-0.04em", 
-                        lineHeight: "0.75", 
-                        marginBottom: "-3.5%", 
-                        WebkitFontSmoothing: "antialiased",
-                        filter: "drop-shadow(0px -4px 20px rgba(0,0,0,0.3))" 
-                    }}
-                >
-                    LOCKEDIN
-                </h1>
+            <div className="relative z-10 w-full flex justify-center items-end select-none pointer-events-none mt-auto overflow-hidden" style={{ WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0.5) 85%, rgba(0,0,0,0) 100%)", maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0.5) 85%, rgba(0,0,0,0) 100%)" }}>
+                <h1 className="font-eurostile text-transparent bg-clip-text w-full text-center uppercase" style={{ backgroundImage: "linear-gradient(180deg, #94A3B8 0%, #475569 55%, #0F172A 95%)", fontSize: "clamp(60px, 18.5vw, 400px)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: "0.75", marginBottom: "-3.5%", WebkitFontSmoothing: "antialiased", filter: "drop-shadow(0px -4px 20px rgba(0,0,0,0.3))" }}>LOCKEDIN</h1>
             </div>
         </footer>
     );
@@ -220,9 +190,12 @@ const Analytics = () => {
     const [heatmapData, setHeatmapData] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // 🔥 TIMELINE STATE
     const [chartAnimReady, setChartAnimReady] = useState(false);
     
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [taskStats, setTaskStats] = useState({ total: 0, completed: 0, pending: 0 });
+    const [boxStats, setBoxStats] = useState({ total: 0, completed: 0, pending: 0 });
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const sidebarRef = useRef(null);
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
@@ -246,14 +219,45 @@ const Analytics = () => {
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
-                const [profileRes, weeklyRes, heatmapRes] = await Promise.all([
+                const [profileRes, weeklyRes, heatmapRes, daysRes] = await Promise.all([
                     fetch("http://localhost:3000/api/dashboard/dashboard/profile", { credentials: "include" }),
                     fetch("http://localhost:3000/api/dashboard/dashboard/weekly-chart", { credentials: "include" }),
-                    fetch("http://localhost:3000/api/dashboard/dashboard/heatmap", { credentials: "include" })
+                    fetch("http://localhost:3000/api/dashboard/dashboard/heatmap", { credentials: "include" }),
+                    fetch("http://localhost:3000/api/session/day/all", { credentials: "include" })
                 ]);
+                
                 setProfile(await profileRes.json());
                 setWeeklyData((await weeklyRes.json()).weeklyData || []);
                 setHeatmapData((await heatmapRes.json()).heatmapData || []);
+                
+                const dayData = await daysRes.json();
+                const days = dayData.daySessions || [];
+                
+                let tTotal = 0, tComp = 0, tPend = 0;
+                let bTotal = 0, bComp = 0, bPend = 0;
+
+                await Promise.all(days.map(async (day) => {
+                    try {
+                        const taskRes = await fetch(`http://localhost:3000/api/task/gettask/${day._id}`, { credentials: "include" });
+                        if (taskRes.ok) {
+                            const tasks = await taskRes.json();
+                            if (tasks.length > 0) {
+                                bTotal++;
+                                let dayCompletedTasks = 0;
+                                tasks.forEach(t => { 
+                                    if (t.status) { tComp++; dayCompletedTasks++; } 
+                                    else tPend++; 
+                                });
+                                tTotal += tasks.length;
+                                if (dayCompletedTasks === tasks.length) bComp++;
+                                else bPend++;
+                            }
+                        }
+                    } catch(e) {}
+                }));
+                
+                setTaskStats({ total: tTotal, completed: tComp, pending: tPend });
+                setBoxStats({ total: bTotal, completed: bComp, pending: bPend });
                 setLoading(false);
             } catch (err) {
                 setLoading(false);
@@ -262,7 +266,6 @@ const Analytics = () => {
         fetchAnalytics();
     }, []);
 
-    // Exact Orchestration Timing
     useEffect(() => {
         if (!loading) {
             const timer = setTimeout(() => {
@@ -311,6 +314,7 @@ const Analytics = () => {
                 .sidebar-trigger:hover { transform: scale(1.05); }
             `}</style>
 
+            {/* LEFT SIDEBAR TRIGGER */}
             <button 
                 onMouseEnter={() => setSidebarOpen(true)}
                 onClick={() => setSidebarOpen(true)}
@@ -318,6 +322,17 @@ const Analytics = () => {
                 style={{ position: 'fixed', top: 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}
             >
                 <CustomSidebarIcon />
+            </button>
+
+            {/* RIGHT WIDGET TRIGGER */}
+            <button 
+                onClick={() => setDrawerOpen(!drawerOpen)}
+                style={{ position: 'fixed', top: 24, right: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}
+                className={`group shadow-sm border ${drawerOpen ? 'bg-white/10 border-white/20 text-white' : 'bg-white/[0.03] border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20'}`}
+            >
+                <div className="group-hover:scale-105 transition-transform duration-300">
+                    <PanelIcon />
+                </div>
             </button>
 
             <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', zIndex: 40, transition: 'opacity 0.4s ease', opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}></div>
@@ -357,12 +372,13 @@ const Analytics = () => {
                 </div>
             </div>
 
-            <div className="w-full max-w-[1800px] mx-auto pl-6 md:pl-[100px] pr-6 md:pr-10 pt-24 md:pt-10 flex flex-col gap-8 relative z-10">
+            {/* 🔥 FIX 1: pt-24 md:pt-8 (was pt-28 md:pt-16) */}
+            <div className="w-full max-w-[1800px] mx-auto pl-6 md:pl-[100px] pr-6 md:pr-10 pt-24 md:pt-8 flex flex-col gap-8 relative z-10">
                 
-                <header className="w-full flex flex-col gap-6 pb-2 relative z-10">
+                {/* 🔥 FIX 4: gap-2 pb-0 (was gap-4 pb-2) */}
+                <header className="w-full flex flex-col gap-2 pb-0 relative z-10">
                     <div className="w-full flex flex-row items-end justify-between">
-                        <div className="flex flex-col gap-1.5">
-                            <span className="text-[13px] font-medium text-zinc-500 tracking-wide uppercase">Analytics</span>
+                        <div className="flex flex-col">
                             <h1 className="text-4xl md:text-[52px] font-bold tracking-tight m-0 p-0">
                                 <motion.span
                                     initial={{ clipPath: "inset(0 100% 0 0)" }} 
@@ -374,9 +390,6 @@ const Analytics = () => {
                                     hello {firstName.toLowerCase()}
                                 </motion.span>
                             </h1>
-                        </div>
-                        <div className="hidden sm:block">
-                            <StatusBadge text="LIVE SYNC" />
                         </div>
                     </div>
 
@@ -392,15 +405,16 @@ const Analytics = () => {
                     />
                 </header>
 
+                {/* 🔥 FIX 2: gap-6 md:gap-6 (was gap-8 md:gap-12) */}
                 <motion.main 
                     variants={containerVariants} 
                     initial="hidden" 
                     animate="show" 
-                    className="w-full flex flex-col gap-8 md:gap-12"
+                    className="w-full flex flex-col gap-6 md:gap-6"
                 >
                     <section className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         <StatCard index={0} title="Total time" value={formatTime(profile.totalFocusTimeAllTime)} />
-                        <StatCard index={1} title="Total sessions" value={profile.totalSessionsAllTime || 0} />
+                      <StatCard index={1} title="Longest streak" value={`${profile.longestStreak || 0} days`} />
                         <StatCard index={2} title="Current streak" value={`${profile.currentStreak || 0} days`} />
                         <StatCard index={3} title="Average time" value={formatTime(profile.averageSessionLength)} />
                     </section>
@@ -409,7 +423,7 @@ const Analytics = () => {
                         variants={itemVariants}
                         className="w-full rounded-2xl border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm relative group transition-colors duration-500 hover:bg-[#0D0D0D]"
                     >
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                             <div className="flex flex-col gap-1">
                                 <h2 className="text-[16px] font-bold text-zinc-100 tracking-tight">Time tracked</h2>
                                 <p className="text-[13px] font-medium text-zinc-500">Weekly focus time</p>
@@ -419,7 +433,8 @@ const Analytics = () => {
                             </div>
                         </div>
                         
-                        <div className="w-full h-[360px] md:h-[460px] p-6 pb-4">
+                        {/* 🔥 FIX 3: h-[280px] md:h-[360px] p-4 pb-2 (was h-[360px] md:h-[460px] p-6 pb-4) */}
+                        <div className="w-full h-[280px] md:h-[360px] p-4 pb-2">
                             {!chartAnimReady ? (
                                 <BarChartSkeleton />
                             ) : (
@@ -483,7 +498,7 @@ const Analytics = () => {
 
                     <motion.section 
                         variants={itemVariants}
-                        className="w-full rounded-2xl border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm transition-colors duration-500 hover:bg-[#0D0D0D] mt-2 md:mt-8"
+                        className="w-full rounded-2xl border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm transition-colors duration-500 hover:bg-[#0D0D0D] mt-2 md:mt-4"
                     >
                         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
                             <div className="flex flex-col gap-1">
@@ -496,7 +511,6 @@ const Analytics = () => {
                         
                         <div className="w-full overflow-hidden pb-4">
                             <div className="w-full px-6 pt-8 pb-4">
-                                
                                 {(() => {
                                     const totalPadding = isMobile ? 48 : 140; 
                                     const sectionInnerWidth = Math.min(windowWidth, 1800) - totalPadding;
@@ -700,7 +714,6 @@ const Analytics = () => {
                                         </div>
                                     );
                                 })()}
-                                
                             </div>
                         </div>
                     </motion.section>
@@ -708,6 +721,85 @@ const Analytics = () => {
             </div>
 
             <Footer />
+
+            {/* FLOATING WIDGET CARD */}
+            <AnimatePresence>
+                {drawerOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 30, scale: 0.95 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: 30, scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="fixed top-20 sm:top-24 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-[400px] md:w-[420px] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl flex flex-col"
+                    >
+                        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#000000]/50 rounded-t-2xl">
+                            <div className="flex flex-col">
+                                <h2 className="text-[16px] font-bold text-white tracking-tight">Task Performance</h2>
+                                <p className="text-[12px] text-zinc-500 font-medium mt-0.5">Workspace task completion breakdown</p>
+                            </div>
+                            <button 
+                                onClick={() => setDrawerOpen(false)} 
+                                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                        
+                        <div className="p-5 sm:p-6 flex flex-col gap-5 sm:gap-6">
+                            <div className="w-full bg-[#050505] border border-white/5 rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center relative shadow-inner overflow-hidden">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] bg-blue-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+                                {taskStats.total === 0 ? (
+                                    <div className="text-zinc-500 text-sm py-10 z-10 relative font-medium">No workspace tasks found.</div>
+                                ) : (
+                                    <div className="w-full h-[320px] relative z-10 flex flex-col justify-center mt-2">
+                                        <PieChart 
+                                            data={[
+                                                { browser: "completed", visitors: taskStats.completed, fill: "blue" },
+                                                { browser: "pending", visitors: taskStats.pending, fill: "purple" }
+                                            ]} 
+                                            config={{
+                                                visitors: { label: "Tasks" },
+                                                completed: { label: "Completed", color: "blue", fill: "blue" },
+                                                pending: { label: "Pending", color: "purple", fill: "purple" }
+                                            }}
+                                            dataKey="visitors" 
+                                            nameKey="browser" 
+                                            innerRadius={0.6} 
+                                            bloom="aura"
+                                        >
+                                            <Legend isClickable align="center" />
+                                            <Tooltip />
+                                            <Pie variant="gradient" />
+                                        </PieChart>
+                                        
+                                        <div className="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
+                                            <span className="text-[44px] sm:text-[48px] font-bold text-white tracking-tighter leading-none">{taskStats.total}</span>
+                                            <span className="text-[11px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Tasks</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                <div className="bg-[#050505] border border-white/5 rounded-xl p-5 flex flex-col relative overflow-hidden group hover:border-white/15 transition-colors">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="text-[12px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Total Days</span>
+                                    <span className="text-[28px] font-bold text-white tracking-tight leading-none">{boxStats.total}</span>
+                                </div>
+                                <div className="bg-[#050505] border border-white/5 rounded-xl p-5 flex flex-col relative overflow-hidden group hover:border-white/15 transition-colors">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="text-[12px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Completed</span>
+                                    <div className="flex items-baseline gap-2 mt-0.5">
+                                        <span className="text-[28px] font-bold text-[#3B82F6] leading-none">{boxStats.completed}</span>
+                                        <span className="text-[13px] font-medium text-zinc-500">/ {boxStats.total}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

@@ -173,6 +173,24 @@
           "hash": "sha256:eea1493d54a86d164b40d69c95956238777331ded7a556f099230dab161ab5a7"
         }
       ]
+    },
+    "pie-chart": {
+      "version": "0.1.0",
+      "hash": "sha256:2c08ce4e2ebe3b522541b38f3e37d2b124ab7692c6501225a3558dbf3ea964ca",
+      "files": [
+        {
+          "path": "components/dither-kit/pie-canvas.tsx",
+          "hash": "sha256:bcf6f1d8024448b55a3a198afad0ee5db002b2748c5282bb27679422c6a6c2bf"
+        },
+        {
+          "path": "components/dither-kit/pie-chart.tsx",
+          "hash": "sha256:2dae2f8e6193e0bca31164ba7d7b829cc5295533cdb207783d6bdb4e346d2c13"
+        },
+        {
+          "path": "components/dither-kit/pie.tsx",
+          "hash": "sha256:1e44525a3119913b042b660be50c9c2c0e34a265ee8ed0aa32c65ce4ce9fd655"
+        }
+      ]
     }
   }
 }
