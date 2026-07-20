@@ -1,28 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock, LogOut } from 'lucide-react';
-
-const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
+import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock } from 'lucide-react';
+import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
 
 const COLORS = {
     bg: '#1A1D21',
     card: '#22262B',
-    sidebar: '#15181C',
     textPrimary: '#D1D5DB',
     textSecondary: '#9CA3AF',
     textMuted: '#6B7280',
     border: 'rgba(255,255,255,0.06)',
     borderHover: 'rgba(255,255,255,0.12)',
 };
-
-// 🔥 Custom SVG for 4th Image Icon
-const CustomSidebarIcon = () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="6" y1="5" x2="6" y2="19" />
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <path d="M18 5v14l3-2.5V7.5z" />
-    </svg>
-);
 
 const ALL_BADGES = [
     { id: 'feather',   name: 'Feather',   description: 'Beginner',          requirement: 'Complete 24 hours on the app',        requiredDays: 1,   imageUrl: '/badges/firstlevel.png'  },
@@ -75,8 +64,6 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [activeDays, setActiveDays] = useState(0);
     
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const sidebarRef = useRef(null);
     const [showShareToast, setShowShareToast] = useState(false);
 
     const [isEditingAbout, setIsEditingAbout] = useState(false);
@@ -129,14 +116,6 @@ const Profile = () => {
         fetchProfile();
     }, [userId, isPublicView, navigate]);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) setSidebarOpen(false);
-        };
-        if (sidebarOpen) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [sidebarOpen]);
-
     const handleSaveAbout = async () => {
         setIsSaving(true);
         try {
@@ -188,13 +167,6 @@ const Profile = () => {
         setTimeout(() => setShowShareToast(false), 2500);
     };
 
-    const handleLogout = async () => {
-        try {
-            await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
-            navigate("/login");
-        } catch (error) { navigate("/login"); }
-    };
-
     const renderAvatar = () => {
         const isGoogleUser = user.authProvider === 'google' || !!user.googleId;
         const hasRealImage = user.imageUrl && user.imageUrl.trim() !== '' && !user.imageUrl.includes('default.png') && !user.imageUrl.includes('default_avatar');
@@ -220,18 +192,17 @@ const Profile = () => {
                 }} />
         );
     };
-
-    if (loading) {
+       if (loading) {
         return (
-            <div style={{ height: '100vh', width: '100%', backgroundColor: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-                    <div style={{ width: 48, height: 48, border: `4px solid ${COLORS.border}`, borderTopColor: COLORS.textSecondary, borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                    <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: '0.2em', color: COLORS.textMuted }}>LOADING HUB...</span>
-                </div>
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]">
+                {/* 🔥 Yahan Sidebar add kar diya! Jitter khatam. */}
+                <Sidebar activePage="Profile" /> 
+                <div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" />
             </div>
         );
     }
+
+
 
     return (
         <>
@@ -276,8 +247,6 @@ const Profile = () => {
     .link-item { position: relative; display: inline-block; }
     .link-delete-btn { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background-color: #EF4444; color: #fff; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; opacity: 0; transform: scale(0.8); transition: all 0.2s; box-shadow: 0 2px 8px rgba(239,68,68,0.4); z-index: 10; }
     .link-item:hover .link-delete-btn { opacity: 1; transform: scale(1); }
-    
-    .sidebar-trigger:hover { transform: scale(1.05); }
 `}</style>
 
             <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, position: 'relative', overflowX: 'hidden', fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
@@ -288,55 +257,8 @@ const Profile = () => {
                     </div>
                 )}
 
-                {!isPublicView && (
-                    <button 
-                        onMouseEnter={() => setSidebarOpen(true)}
-                        onClick={() => setSidebarOpen(true)}
-                        className="sidebar-trigger"
-                        style={{ position: 'fixed', top: 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}
-                    >
-                        <CustomSidebarIcon />
-                    </button>
-                )}
-
-                {/* Subtle overlay that lets you click through but dims background */}
-                {!isPublicView && (
-                    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', zIndex: 40, transition: 'opacity 0.4s ease', opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}></div>
-                )}
-
-                {/* 🔥 SIDEBAR with smooth cubic-bezier sliding and MouseLeave to close */}
-                {!isPublicView && (
-                    <div 
-                        ref={sidebarRef} 
-                        onMouseLeave={() => setSidebarOpen(false)}
-                        style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: 280, backgroundColor: COLORS.sidebar, borderRight: `1px solid ${COLORS.border}`, zIndex: 50, padding: 24, display: 'flex', flexDirection: 'column', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 32 }}>
-                            <span style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700, letterSpacing: '0.15em', fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
-                            <button onClick={() => setSidebarOpen(false)} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}>
-                                <X size={20} />
-                            </button>
-                        </div>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                            {SIDEBAR_ITEMS.map((item) => (
-                                <button 
-                                    key={item} 
-                                    /* 🔥 FIX: Added onClick navigation here! */
-                                    onClick={() => navigate(`/${item.toLowerCase()}`)} 
-                                    style={{ width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, border: item === 'Profile' ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', backgroundColor: item === 'Profile' ? 'rgba(255,255,255,0.04)' : 'transparent', color: item === 'Profile' ? COLORS.textPrimary : COLORS.textMuted, cursor: 'pointer' }}>
-                                    {item}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div style={{ paddingTop: 24, borderTop: `1px solid ${COLORS.border}`, marginTop: 'auto' }}>
-                            <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}>
-                                <LogOut size={18} /> Logout
-                            </button>
-                        </div>
-                    </div>
-                )}
+                {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA */}
+                {!isPublicView && <Sidebar activePage="Profile" />}
 
                 <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', maxWidth: 1200, margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback, memo, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, LogOut, Play, Pause, RotateCcw, Save, Target } from 'lucide-react';
+import { Play, Pause, RotateCcw, Save, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { DitherButton } from "../dither-kit/button";
+import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
 
 // 🔥 THE ULTIMATE ZERO-RENDER STORE ENGINE (ATOMIC STATE) 🔥
 function createStore(initialState) {
@@ -29,12 +30,10 @@ function createStore(initialState) {
 }
 
 const timerStore = createStore({ isRunning: false, time: 0, taskName: "", strictMode: false, sessionId: null });
-const uiStore = createStore({ sidebarOpen: false, isDesktop: window.innerWidth >= 1024 });
 const statsStore = createStore({ totalDaytime: 0, totalSessions: 0 }); 
 const toastStore = createStore({ toasts: [] }); 
 
 const useTimer = (selector) => useSyncExternalStore((l) => timerStore.subscribe(l), () => selector(timerStore.getState()));
-const useUI = (selector) => useSyncExternalStore((l) => uiStore.subscribe(l), () => selector(uiStore.getState()));
 const useStats = (selector) => useSyncExternalStore((l) => statsStore.subscribe(l), () => selector(statsStore.getState()));
 const useToast = (selector) => useSyncExternalStore((l) => toastStore.subscribe(l), () => selector(toastStore.getState()));
 
@@ -48,13 +47,9 @@ const showToast = (message) => {
     }, 3000);
 };
 
-// --- CONSTANTS & STYLES (ULTRA-PREMIUM FLOATING THEME) ---
-const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
-
 const COLORS = {
     bg: '#050505',          
     card: '#000000',        
-    sidebar: '#15181C',     // 🔥 Workspace Matching Sidebar Color 🔥
     textPrimary: '#E0E0E0', 
     textSecondary: '#A3A3A3',
     textMuted: '#737373', 
@@ -113,23 +108,6 @@ const ToastOverlay = memo(() => {
         </div>
     );
 });
-
-// 🔥 RESTORED EXACT WORKSPACE SIDEBAR ICON 🔥
-const CustomSidebarIcon = memo(() => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="6" y1="5" x2="6" y2="19" />
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <path d="M18 5v14l3-2.5V7.5z" />
-    </svg>
-));
-
-// 🔥 EXACT FROSTED GLASS HAMBURGER BUTTON FROM WORKSPACE 🔥
-const HamburgerButton = memo(() => (
-    <button onMouseEnter={() => uiStore.setState({ sidebarOpen: true })} onClick={() => uiStore.setState({ sidebarOpen: true })} className="sidebar-trigger"
-        style={{ position: 'fixed', top: 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}>
-        <CustomSidebarIcon />
-    </button>
-));
 
 const Header = memo(() => (
     <div className="w-full mb-4 md:mb-8 mt-12 md:mt-2 flex-shrink-0">
@@ -393,19 +371,13 @@ const TimerEngine = memo(() => {
         
         const tick = () => {
             const elapsedSeconds = Math.floor((Date.now() - startTimestamp) / 1000);
-            // timerStore ki khasiyat ye hai ki agar "time" same hua toh wo UI re-render nahi karega!
-            // Isiliye hum safely tick ko zyada speed me chala sakte hain.
             timerStore.setState({ time: startAccumulatedTime + elapsedSeconds });
         };
 
-        // 🌟 NAYA MAGIC: Inline Web Worker
-        // Main thread ko browser sleep kar deta hai, par Web Worker active rehta hai background me!
         const workerCode = `
             let interval;
             self.onmessage = function(e) {
                 if (e.data === 'start') {
-                    // Hum interval 250ms (0.25 sec) pe chala rahe hain.
-                    // Isse calculation ekdam pin-point accurate hogi aur koi second jump nahi karega.
                     interval = setInterval(() => {
                         self.postMessage('tick');
                     }, 250);
@@ -419,14 +391,12 @@ const TimerEngine = memo(() => {
         const blobUrl = URL.createObjectURL(blob);
         const worker = new Worker(blobUrl);
 
-        // Worker har 250ms me hume signal dega
         worker.onmessage = () => {
             tick();
         };
 
-        worker.postMessage('start'); // Worker start karo
+        worker.postMessage('start'); 
 
-        // Fallback: Agar OS extreme power-saving mode me chala jaye toh wapas tab pe aate hi time sync ho
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') tick();
         };
@@ -434,7 +404,7 @@ const TimerEngine = memo(() => {
 
         return () => {
             worker.postMessage('stop');
-            worker.terminate(); // Memory free karo
+            worker.terminate(); 
             URL.revokeObjectURL(blobUrl);
             document.removeEventListener('visibilitychange', handleVisibility);
         };
@@ -526,63 +496,9 @@ const FocusCard = memo(() => {
     );
 });
 
-const SidebarOverlay = memo(() => {
-    const sidebarOpen = useUI(s => s.sidebarOpen);
-    return (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 40, transition: 'opacity 0.4s ease', opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}></div>
-    );
-});
-
-// 🔥 EXACT ORIGINAL WORKSPACE SIDEBAR PANEL 🔥
-const SidebarPanel = memo(({ navigate, handleLogout }) => {
-    const sidebarOpen = useUI(s => s.sidebarOpen);
-    return (
-        <div 
-            onMouseLeave={() => uiStore.setState({ sidebarOpen: false })}
-            style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: 280, backgroundColor: COLORS.sidebar, borderRight: `1px solid ${COLORS.border}`, zIndex: 50, padding: 24, display: 'flex', flexDirection: 'column', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}
-        >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 32 }}>
-                <span style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700, letterSpacing: '0.15em', fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
-                <button onClick={() => uiStore.setState({ sidebarOpen: false })} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}><X size={20} /></button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                {SIDEBAR_ITEMS.map((item) => {
-                    const isActive = item === 'Stopwatch';
-                    return (
-                        <button key={item} onClick={() => navigate(`/${item.toLowerCase()}`)}
-                            style={{ width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, border: isActive ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', backgroundColor: isActive ? 'rgba(255,255,255,0.04)' : 'transparent', color: isActive ? COLORS.textPrimary : COLORS.textMuted, cursor: 'pointer' }}>
-                            {item}
-                        </button>
-                    );
-                })}
-            </div>
-            <div style={{ paddingTop: 24, borderTop: `1px solid ${COLORS.border}`, marginTop: 'auto' }}>
-                <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}>
-                    <LogOut size={18} /> Logout
-                </button>
-            </div>
-        </div>
-    );
-});
-
-const WindowResizeListener = memo(() => {
-    useEffect(() => {
-        const handleResize = () => uiStore.setState({ isDesktop: window.innerWidth >= 1024 });
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-    return null;
-});
-
 const MainContainer = memo(({ children }) => {
-    const sidebarOpen = useUI(s => s.sidebarOpen);
-    const isDesktop = useUI(s => s.isDesktop);
-    
     return (
-        <main 
-            className="w-full h-[100dvh] overflow-y-auto md:overflow-hidden flex flex-col justify-start md:justify-center items-center px-4 sm:px-6 md:px-8 py-4 md:py-8 pt-16 transition-all duration-300 relative z-10" 
-            style={{ paddingLeft: (sidebarOpen && isDesktop) ? '300px' : undefined }}
-        >
+        <main className="w-full h-[100dvh] overflow-y-auto md:overflow-hidden flex flex-col justify-start md:justify-center items-center px-4 sm:px-6 md:px-8 py-4 md:py-8 pt-16 transition-all duration-300 relative z-10">
             {children}
         </main>
     );
@@ -595,27 +511,19 @@ const Stopwatch = () => {
         fetchTodayStats();
     }, []);
 
-    const handleLogout = useCallback(async () => {
-        try {
-            await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
-            navigate("/login");
-        } catch (error) { navigate("/login"); }
-    }, [navigate]);
-
     return (
         <>
             <style>{`
-                .sidebar-trigger:hover { transform: scale(1.05); }
                 ::-webkit-scrollbar { width: 6px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
             `}</style>
             <div className="h-screen w-full relative font-sans text-white selection:bg-white/20 flex overflow-hidden" style={{ backgroundColor: COLORS.bg }}>
                 <ToastOverlay /> 
-                <WindowResizeListener />
-                <HamburgerButton />
-                <SidebarOverlay />
-                <SidebarPanel navigate={navigate} handleLogout={handleLogout} />
+                
+                {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA 🔥 */}
+                <Sidebar activePage="Stopwatch" />
+                
                 <MainContainer>
                     <div className="w-full max-w-5xl mx-auto flex flex-col justify-start md:justify-center h-full max-h-full">
                         <Header />

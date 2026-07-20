@@ -1,27 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Gift, AlertCircle, Plus, Clock, LogOut, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Gift, AlertCircle, Plus, Clock } from 'lucide-react';
 import { CalendarContext } from '../../context/CalendarNotificationProvider'; 
-
-const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
-const COLORS = {
-    bg: '#090A0C',
-    card: '#0A0A0A',
-    sidebar: '#15181C',
-    border: 'rgba(255,255,255,0.15)',
-    borderHover: 'rgba(255,255,255,0.12)',
-    textPrimary: '#B0B0B4',   
-    textSecondary: '#9CA3AF',
-    textMuted: '#A1A1AA',
-};
-
-const CustomSidebarIcon = () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="6" y1="5" x2="6" y2="19" />
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <path d="M18 5v14l3-2.5V7.5z" />
-    </svg>
-);
+import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
 
 const CurrentTimeLine = () => {
     const [now, setNow] = useState(new Date());
@@ -63,24 +44,6 @@ const Calendar = () => {
     
     const timelineRef = useRef(null);
     const mobileStripRef = useRef(null); 
-
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const sidebarRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) setSidebarOpen(false);
-        };
-        if (sidebarOpen) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [sidebarOpen]);
-
-    const handleLogout = async () => {
-        try {
-            await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
-            navigate("/login");
-        } catch { navigate("/login"); }
-    };
 
     useEffect(() => { setTempEvents([]); }, [events]);
 
@@ -438,47 +401,10 @@ const Calendar = () => {
     return (
         <div className="h-screen w-full bg-[#1E1E1E] text-white flex flex-col font-sans overflow-hidden selection:bg-[#FF3B30]/30 relative">
             
-            <button 
-                onMouseEnter={() => setSidebarOpen(true)} 
-                onClick={() => setSidebarOpen(true)} 
-                className="sidebar-trigger"
-                style={{ 
-                    position: 'fixed', top: 16, left: 16, zIndex: 40, width: 44, height: 44, 
-                    borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', 
-                    border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', 
-                    justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', 
-                    backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' 
-                }}>
-                <CustomSidebarIcon />
-            </button>
+            {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA */}
+            <Sidebar activePage="Calendar" />
 
-            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', zIndex: 40, transition: 'opacity 0.4s ease', opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}></div>
-
-            <div ref={sidebarRef} onMouseLeave={() => setSidebarOpen(false)}
-                style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: 280, backgroundColor: COLORS.sidebar, borderRight: `1px solid ${COLORS.border}`, zIndex: 50, padding: 24, display: 'flex', flexDirection: 'column', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 32 }}>
-                    <span style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700, letterSpacing: '0.15em', fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
-                    <button onClick={() => setSidebarOpen(false)} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}><X size={20} /></button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    {SIDEBAR_ITEMS.map((item) => {
-                        const isActive = item === 'Calendar';
-                        return (
-                            <button key={item} onClick={() => navigate(`/${item.toLowerCase()}`)}
-                                style={{ width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, border: isActive ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', backgroundColor: isActive ? 'rgba(255,255,255,0.04)' : 'transparent', color: isActive ? COLORS.textPrimary : COLORS.textMuted, cursor: 'pointer' }}>
-                                {item}
-                            </button>
-                        );
-                    })}
-                </div>
-                <div style={{ paddingTop: 24, borderTop: `1px solid ${COLORS.border}`, marginTop: 'auto' }}>
-                    <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}>
-                        <LogOut size={18} /> Logout
-                    </button>
-                </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row items-center justify-between pl-[72px] md:pl-[84px] pr-4 md:pr-8 py-3 md:py-5 shrink-0 bg-[#1E1E1E] gap-4 md:gap-0">
+           <div className="flex flex-col md:flex-row items-center justify-between pl-[92px] md:pl-[100px] pr-4 md:pr-8 pt-[30px] pb-4 md:pb-5 shrink-0 bg-[#1E1E1E] gap-4 md:gap-0 z-10 relative min-h-[96px]">
                 <div className="flex items-center justify-between w-full md:w-auto">
                     <h1 className="text-[28px] md:text-[32px] font-bold tracking-tight text-white drop-shadow-sm leading-none flex items-center gap-1">
                         <ChevronLeft className="md:hidden text-[#FF3B30] -ml-2 cursor-pointer shrink-0" size={32} strokeWidth={2.5} onClick={() => changeMonth(-1)} />
@@ -514,7 +440,7 @@ const Calendar = () => {
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col bg-[#1E1E1E] min-h-0">
+            <div className="flex-1 flex flex-col bg-[#1E1E1E] min-h-0 relative z-10">
                 {view === 'month' && (() => {
                     const { grid, totalWeeks } = renderMonthGrid(currentDate.getFullYear(), currentDate.getMonth());
                     const selectedDateEvents = allEvents.filter(e => e.date === selectedDate);
@@ -710,8 +636,6 @@ const Calendar = () => {
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 
-                .sidebar-trigger:hover { transform: scale(1.05); }
-
                 .apple-color-picker {
                     -webkit-appearance: none;
                     padding: 0;

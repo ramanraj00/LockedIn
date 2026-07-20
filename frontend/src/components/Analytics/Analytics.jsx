@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, LogOut } from 'lucide-react';
+import { X } from 'lucide-react';
 
 // 🌟 THE LIBRARY (DITHER-KIT)
 import { BarChart } from "../dither-kit/bar-chart";
@@ -14,25 +14,8 @@ import { PieChart } from "../dither-kit/pie-chart";
 import { Pie } from "../dither-kit/pie";
 import { Legend } from "../dither-kit/legend";
 
-// --- SIDEBAR CONSTANTS ---
-const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
-
-const COLORS = {
-    sidebar: '#15181C',
-    textPrimary: '#D1D5DB',
-    textSecondary: '#9CA3AF',
-    textMuted: '#6B7280',
-    border: 'rgba(255,255,255,0.06)',
-    borderHover: 'rgba(255,255,255,0.12)',
-};
-
-const CustomSidebarIcon = () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="6" y1="5" x2="6" y2="19" />
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <path d="M18 5v14l3-2.5V7.5z" />
-    </svg>
-);
+// 🔥 NAYA SIDEBAR IMPORT
+import Sidebar from '../../components/Sidebar/Sidebar';
 
 const PanelIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -42,21 +25,15 @@ const PanelIcon = () => (
     </svg>
 );
 
-// 🔥 Naya formatTime function (Seconds removed, strictly rounded to minutes)
-const formatTime = (totalSeconds) => {
-    if (!totalSeconds) return "0m";
+const formatTime = (seconds) => {
+    if (!seconds) return "0s";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
     
-    // Seconds ko nearest minute par round off kar dete hain
-    const totalMinutes = Math.round(totalSeconds / 60);
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
-    
-    if (h > 0 && m > 0) return `${h}h ${m}m`;
-    if (h > 0) return `${h}h`;
-    
-    // Agar time 0m aa raha hai (e.g. 20 seconds), tab bhi kam se kam < 1m ya 1m dikha sakte hain
-    // Par commonly 1m hi show karte hain for very short times
-    return totalMinutes === 0 && totalSeconds > 0 ? "1m" : `${m}m`;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`; 
 };
 
 // --- ANIMATIONS ---
@@ -202,17 +179,7 @@ const Analytics = () => {
     const [taskStats, setTaskStats] = useState({ total: 0, completed: 0, pending: 0 });
     const [boxStats, setBoxStats] = useState({ total: 0, completed: 0, pending: 0 });
 
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const sidebarRef = useRef(null);
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) setSidebarOpen(false);
-        };
-        if (sidebarOpen) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [sidebarOpen]);
 
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -287,10 +254,10 @@ const Analytics = () => {
             navigate("/login");
         } catch (error) { navigate("/login"); }
     };
-
     if (loading) {
         return (
             <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]">
+                <Sidebar activePage="Analytics" /> {/* 🔥 Ye add kiya! */}
                 <div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" />
             </div>
         );
@@ -317,18 +284,9 @@ const Analytics = () => {
                     padding-bottom: 8px; 
                     letter-spacing: 2px; 
                 }
-                .sidebar-trigger:hover { transform: scale(1.05); }
             `}</style>
 
-            {/* LEFT SIDEBAR TRIGGER */}
-            <button 
-                onMouseEnter={() => setSidebarOpen(true)}
-                onClick={() => setSidebarOpen(true)}
-                className="sidebar-trigger"
-                style={{ position: 'fixed', top: 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}
-            >
-                <CustomSidebarIcon />
-            </button>
+            <Sidebar activePage="Analytics" />
 
             {/* RIGHT WIDGET TRIGGER */}
             <button 
@@ -340,43 +298,6 @@ const Analytics = () => {
                     <PanelIcon />
                 </div>
             </button>
-
-            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', zIndex: 40, transition: 'opacity 0.4s ease', opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}></div>
-
-            <div 
-                ref={sidebarRef} 
-                onMouseLeave={() => setSidebarOpen(false)}
-                style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: 280, backgroundColor: COLORS.sidebar, borderRight: `1px solid ${COLORS.border}`, zIndex: 50, padding: 24, display: 'flex', flexDirection: 'column', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 32 }}>
-                    <span style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700, letterSpacing: '0.15em', fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
-                    <button onClick={() => setSidebarOpen(false)} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}>
-                        <X size={20} />
-                    </button>
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    {SIDEBAR_ITEMS.map((item) => (
-                        <button 
-                            key={item} 
-                            onClick={() => navigate(`/${item.toLowerCase()}`)} 
-                            style={{ 
-                                width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, cursor: 'pointer',
-                                border: item === 'Analytics' ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', 
-                                backgroundColor: item === 'Analytics' ? 'rgba(255,255,255,0.04)' : 'transparent', 
-                                color: item === 'Analytics' ? COLORS.textPrimary : COLORS.textMuted 
-                            }}>
-                            {item}
-                        </button>
-                    ))}
-                </div>
-
-                <div style={{ paddingTop: 24, borderTop: `1px solid ${COLORS.border}`, marginTop: 'auto' }}>
-                    <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}>
-                        <LogOut size={18} /> Logout
-                    </button>
-                </div>
-            </div>
 
             {/* 🔥 FIX 1: pt-24 md:pt-8 (was pt-28 md:pt-16) */}
             <div className="w-full max-w-[1800px] mx-auto pl-6 md:pl-[100px] pr-6 md:pr-10 pt-24 md:pt-8 flex flex-col gap-8 relative z-10">

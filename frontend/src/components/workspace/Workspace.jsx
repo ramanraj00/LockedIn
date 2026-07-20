@@ -1,28 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrypto } from '../../context/CryptoContext'; 
-import { X, LogOut, ChevronDown, ChevronUp, ChevronRight, Plus, History, ArrowLeft } from 'lucide-react';
-
-const SIDEBAR_ITEMS = ['Profile', 'Workspace', 'Calendar', 'Stopwatch', 'Analytics', 'Leaderboard', 'Settings'];
+import { X, ChevronDown, ChevronUp, ChevronRight, Plus, History, ArrowLeft } from 'lucide-react';
+import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
 
 const COLORS = {
     bg: '#000000',
     card: '#0A0A0A',
-    sidebar: '#15181C',
     border: 'rgba(255,255,255,0.15)',
     borderHover: 'rgba(255,255,255,0.12)',
     textPrimary: '#B0B0B4',   
     textSecondary: '#9CA3AF',
     textMuted: '#A1A1AA',
 };
-
-const CustomSidebarIcon = () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="6" y1="5" x2="6" y2="19" />
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <path d="M18 5v14l3-2.5V7.5z" />
-    </svg>
-);
 
 const formatTime = (seconds) => {
     const safeSeconds = Math.max(0, seconds);
@@ -57,15 +47,12 @@ const Workspace = () => {
     const [localStartTimes, setLocalStartTimes] = useState({});
     const [now, setNow] = useState(Date.now());
     const [decryptedTexts, setDecryptedTexts] = useState({});
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const sidebarRef = useRef(null);
     const dropdownRef = useRef(null);
     const [confirmAction, setConfirmAction] = useState(null);
     const [deleteWarning, setDeleteWarning] = useState(null); 
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) setSidebarOpen(false);
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setHistoryDropdownOpen(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -359,10 +346,6 @@ const Workspace = () => {
         fetchTimers(dayId);
     };
 
-    const handleLogout = async () => {
-        try { await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" }); navigate("/login"); } catch { navigate("/login"); }
-    };
-
     const getCalculatedTime = (dayId) => {
         const sessions = timersByDay[dayId] || [];
         let totalSeconds = 0;
@@ -563,7 +546,6 @@ const Workspace = () => {
         <>
             <style>{`
                 * { box-sizing: border-box; }
-                .sidebar-trigger:hover { transform: scale(1.05); }
                 .header-btn { background: none; border: none; color: ${COLORS.textPrimary}; font-size: 14px; font-weight: 400; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; }
                 .header-btn:hover { opacity: 0.6; }
                 .timer-text-btn { font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 6px; border: 1px solid transparent; outline: none; }
@@ -584,23 +566,9 @@ const Workspace = () => {
             `}</style>
             
             <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
-                <button onMouseEnter={() => setSidebarOpen(true)} onClick={() => setSidebarOpen(true)} className="sidebar-trigger" style={{ position: 'fixed', top: 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textSecondary, cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}><CustomSidebarIcon /></button>
-                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', zIndex: 40, transition: 'opacity 0.4s ease', opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}></div>
-                <div ref={sidebarRef} onMouseLeave={() => setSidebarOpen(false)} style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: 280, backgroundColor: COLORS.sidebar, borderRight: `1px solid ${COLORS.border}`, zIndex: 50, padding: 24, display: 'flex', flexDirection: 'column', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 32 }}>
-                        <span style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700, letterSpacing: '0.15em', fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
-                        <button onClick={() => setSidebarOpen(false)} style={{ padding: 8, color: COLORS.textMuted, cursor: 'pointer', background: 'none', border: 'none', borderRadius: 8 }}><X size={20} /></button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                        {SIDEBAR_ITEMS.map((item) => {
-                            const isActive = item === 'Workspace';
-                            return <button key={item} onClick={() => navigate(`/${item.toLowerCase()}`)} style={{ width: '100%', textAlign: 'left', padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 500, border: isActive ? `1px solid ${COLORS.borderHover}` : '1px solid transparent', backgroundColor: isActive ? 'rgba(255,255,255,0.04)' : 'transparent', color: isActive ? COLORS.textPrimary : COLORS.textMuted, cursor: 'pointer' }}>{item}</button>
-                        })}
-                    </div>
-                    <div style={{ paddingTop: 24, borderTop: `1px solid ${COLORS.border}`, marginTop: 'auto' }}>
-                        <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', cursor: 'pointer', transition: 'all 0.2s' }}><LogOut size={18} /> Logout</button>
-                    </div>
-                </div>
+                
+                {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA */}
+                <Sidebar activePage="Workspace" />
 
                 <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
                     {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>{globalError}</div>}
