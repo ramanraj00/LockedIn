@@ -42,15 +42,21 @@ const PanelIcon = () => (
     </svg>
 );
 
-const formatTime = (seconds) => {
-    if (!seconds) return "0s";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
+// 🔥 Naya formatTime function (Seconds removed, strictly rounded to minutes)
+const formatTime = (totalSeconds) => {
+    if (!totalSeconds) return "0m";
     
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`; 
+    // Seconds ko nearest minute par round off kar dete hain
+    const totalMinutes = Math.round(totalSeconds / 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    
+    if (h > 0 && m > 0) return `${h}h ${m}m`;
+    if (h > 0) return `${h}h`;
+    
+    // Agar time 0m aa raha hai (e.g. 20 seconds), tab bhi kam se kam < 1m ya 1m dikha sakte hain
+    // Par commonly 1m hi show karte hain for very short times
+    return totalMinutes === 0 && totalSeconds > 0 ? "1m" : `${m}m`;
 };
 
 // --- ANIMATIONS ---

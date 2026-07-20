@@ -133,96 +133,129 @@ router.get("/dashboard/profile", async (req, res) => {
 });
 
 //------------------------------
-// 2. GET WEEKLY CHART
+// 2. GET WEEKLY CHART (FIXED PRECISION BUG)
 //------------------------------
 router.get("/dashboard/weekly-chart", async (req, res) => {
   try {
     const userId = req.user.id;
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setHours(0, 0, 0, 0);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
     const sessions = await dailysessionmodel
-      .find({ userId, date: { $gte: sevenDaysAgo } })
+      .find({
+        userId,
+        date: { $gte: sevenDaysAgo },
+      })
       .sort({ date: 1 });
 
     const sessionMap = new Map();
+
     sessions.forEach((session) => {
       const dateKey = session.date.toISOString().split("T")[0];
-      sessionMap.set(dateKey, Number((session.totalDaytime / 3600).toFixed(1)));
+      const hours = Number(session.totalDaytime) / 3600;
+      
+      const existingHours = sessionMap.get(dateKey) || 0;
+      sessionMap.set(dateKey, existingHours + hours);
     });
 
     const weeklyData = [];
-    for (let i = 0; i < 7; i++) {
+
+    for(let i = 0; i < 7; i++) {
         const currentDate = new Date(sevenDaysAgo);
         currentDate.setDate(currentDate.getDate() + i);
         const dateKey = currentDate.toISOString().split("T")[0];
-        const hours = sessionMap.get(dateKey) || 0;
-        const dayName = currentDate.toLocaleDateString("en-US", { weekday: "short" });
         
-        weeklyData.push({ day: dayName, hours });
+        const totalHoursForDay = sessionMap.get(dateKey) || 0;
+        
+        weeklyData.push({
+          day: currentDate.toLocaleDateString("en-US", { weekday: "short" }),
+          // 🔥 FIX: toFixed(1) ki jagah toFixed(4) use kiya taaki 0.0525 jaisa exact data pass ho!
+          hours: Number(totalHoursForDay.toFixed(4))
+        });
     }
 
-    return res.status(200).json({ weeklyData });
+    return res.status(200).json({
+      weeklyData,
+    });
   } catch (err) {
-    return res.status(500).json({ message: "Something went wrong", error: err.message });
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: err.message,
+    });
   }
 });
 
 //------------------------------
-// 3. GET HEATMAP (WITH TASK ACTIVITY)
+// 3. GET HEATMAP (FIXED PRECISION BUG)
 //------------------------------
 router.get("/dashboard/heatmap", async (req, res) => {
   try {
     const userId = req.user.id;
+
     const oneYearAgo = new Date();
     oneYearAgo.setHours(0, 0, 0, 0);
     oneYearAgo.setDate(oneYearAgo.getDate() - 364);
 
     const sessions = await dailysessionmodel
-      .find({ userId, date: { $gte: oneYearAgo } })
+      .find({
+        userId,
+        date: { $gte: oneYearAgo },
+      })
       .select("date totalDaytime")
       .sort({ date: 1 });
 
-    // 🔥 Find which daySessions have tasks (for task-only active days)
-    const sessionIds = sessions.map(s => s._id);
-    const daySessionsWithTasks = await taskmodel.distinct("daySessionId", { 
-      userId, 
-      daySessionId: { $in: sessionIds } 
-    });
-    const taskSet = new Set(daySessionsWithTasks.map(id => id.toString()));
-
     const sessionMap = new Map();
+
     sessions.forEach((session) => {
       const dateKey = session.date.toISOString().split("T")[0];
-      const hours = Number((session.totalDaytime / 3600).toFixed(1));
-      const hasTask = taskSet.has(session._id.toString());
-      sessionMap.set(dateKey, { hours, hasTask });
+      const hours = Number(session.totalDaytime) / 3600;
+      
+      const existingHours = sessionMap.get(dateKey) || 0;
+      sessionMap.set(dateKey, existingHours + hours);
     });
 
     const heatmapData = [];
+
     for (let i = 0; i < 365; i++) {
       const currentDate = new Date(oneYearAgo);
       currentDate.setDate(oneYearAgo.getDate() + i);
+
       const dateKey = currentDate.toISOString().split("T")[0];
-      const sessionData = sessionMap.get(dateKey);
-      const hours = sessionData?.hours || 0;
-      const hasTask = sessionData?.hasTask || false;
+      const totalHours = sessionMap.get(dateKey) || 0;
+      
+      // 🔥 FIX: yahan bhi toFixed(4) kar diya exact precision ke liye
+      const hours = Number(totalHours.toFixed(4));
 
       let intensity = 0;
-      if (hours > 0 && hours <= 2) intensity = 1;
-      else if (hours > 2 && hours <= 4) intensity = 2;
-      else if (hours > 4 && hours <= 6) intensity = 3;
-      else if (hours > 6) intensity = 4;
-      // 🔥 Task-only day (0 time but created tasks) = minimal activity
-      else if (hasTask) intensity = 1;
 
-      heatmapData.push({ date: dateKey, hours, intensity });
+      if (hours > 0 && hours <= 2) {
+        intensity = 1;
+      } else if (hours > 2 && hours <= 4) {
+        intensity = 2;
+      } else if (hours > 4 && hours <= 6) {
+        intensity = 3;
+      } else if (hours > 6) {
+        intensity = 4;
+      }
+
+      heatmapData.push({
+        date: dateKey,
+        hours,
+        intensity,
+      });
     }
 
-    return res.status(200).json({ totalDays: heatmapData.length, heatmapData });
+    return res.status(200).json({
+      totalDays: heatmapData.length,
+      heatmapData,
+    });
   } catch (err) {
-    return res.status(500).json({ message: "Something went wrong", error: err.message });
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: err.message,
+    });
   }
 });
 
