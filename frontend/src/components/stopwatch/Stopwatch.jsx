@@ -120,8 +120,11 @@ const QuickStats = memo(() => {
     const totalDaytime = useStats(s => s.totalDaytime);
     const totalSessions = useStats(s => s.totalSessions);
 
-    const hours = Math.floor(totalDaytime / 3600);
-    const minutes = Math.floor((totalDaytime % 3600) / 60);
+    // 🔥 FIX: Agar ek bhi session formally save nahi hua (0 sessions), toh timer ko completely ZERO (0) force kar do.
+    const validDaytime = totalSessions === 0 ? 0 : totalDaytime;
+
+    const hours = Math.floor(validDaytime / 3600);
+    const minutes = Math.floor((validDaytime % 3600) / 60);
 
     return (
         <div className="lg:col-span-1 flex flex-row lg:flex-col gap-3 md:gap-6 flex-shrink-0">
@@ -135,6 +138,7 @@ const QuickStats = memo(() => {
                 
                 <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start w-full mt-auto md:mt-0">
                     <div className="mb-0 md:mb-6 flex flex-col items-center md:items-start">
+                        {/* 🔥 Ab ye directly updated valid hours/minutes dikhayega */}
                         <div className="text-2xl md:text-[38px] font-bold text-[#E0E0E0] tracking-tight leading-none">{hours}h {minutes}m</div>
                         <div className="text-[12px] md:text-[14px] text-[#A3A3A3] mt-2 font-medium">Focus Time</div>
                     </div>
@@ -336,9 +340,15 @@ const ResetButton = memo(() => {
     const hasTime = useTimer(s => s.time > 0);
     const handleReset = useCallback(() => {
         const state = timerStore.getState();
-        if (state.isRunning) {
-            handleStopBackend(state.sessionId, false);
-        }
+        
+        // 🔥 Send isReset: true explicitly to backend
+        fetch("http://localhost:3000/api/session/stopwatch/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ sessionId: state.sessionId, isFinalSave: false, isReset: true })
+        });
+        
         timerStore.setState({ isRunning: false, time: 0, sessionId: null });
     }, []);
 
@@ -350,7 +360,6 @@ const ResetButton = memo(() => {
         </motion.button>
     );
 });
-
 const ControlsBar = memo(() => (
     <div className="flex flex-row items-center gap-2 md:gap-4 w-full justify-center mt-auto flex-shrink-0">
         <StartPauseButton />

@@ -267,41 +267,74 @@ router.post("/stopwatch/start", async (req, res) => {
   }
 });
 
-// 13. 🔥 FIX 3: STOPWATCH STOP (Stores duration in stopwatch backup field)
+// 13. 🔥 MASTER FIX: STOPWATCH STOP (Secure Chunking + Clean Reset)
 router.post("/stopwatch/stop", async (req, res) => {
   try {
     const userId = req.user.id;
-    const { sessionId, isFinalSave } = req.body;
+    const { sessionId, isFinalSave, isReset } = req.body;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const daySession = await dailysessionmodel.findOne({ userId, date: today });
     if (!daySession) return res.status(200).json({ success: true });
 
-    let duration = 0;
+    // 🔥 Agar user ne Reset daba diya, toh current aur pichle saare paused chunks delete maardo!
+    if (isReset) {
+        if (sessionId) await timermodel.deleteOne({ _id: sessionId });
+        await timermodel.deleteMany({ userId, status: "paused" });
+        return res.status(200).json({ success: true, message: "Timer reset successfully" });
+    }
+
+    let currentDuration = 0;
     if (sessionId) {
         const session = await timermodel.findOne({ _id: sessionId, userId, status: "running" });
         if (session) {
-            duration = Math.floor((new Date() - session.startTime) / 1000);
-            await timermodel.deleteOne({ _id: session._id });
+            currentDuration = Math.floor((new Date() - session.startTime) / 1000);
+            
+            if (!isFinalSave) {
+                // 🔥 PAUSE HUA HAI: Time ko temporarily chunk me save karo, main DB me mat dalo
+                session.duration = (session.duration || 0) + currentDuration;
+                session.status = "paused";
+                await session.save();
+                return res.status(200).json({ success: true, duration: currentDuration });
+            } else {
+                // Final save pe current chunk delete kar do
+                await timermodel.deleteOne({ _id: session._id });
+            }
         }
     }
 
-    const updateData = { $inc: { totalDaytime: duration, stopwatchTime: duration } }; // 🔥 ADD to both
+    // 🔥 FINAL SAVE: Saare purane paused chunks ko uthao, unka time jodo aur delete karo
+    let totalDurationToSave = currentDuration;
     
-    if (isFinalSave) updateData.$inc.totalSessions = 1;
+    if (isFinalSave) {
+        const pausedSessions = await timermodel.find({ userId, status: "paused" });
+        for (let p of pausedSessions) {
+            totalDurationToSave += (p.duration || 0);
+            await timermodel.deleteOne({ _id: p._id }); 
+        }
 
-    if (duration > 0 || isFinalSave) {
-        await dailysessionmodel.updateOne({ _id: daySession._id }, updateData);
+        if (totalDurationToSave > 0) {
+            await dailysessionmodel.updateOne(
+                { _id: daySession._id }, 
+                { 
+                    $inc: { 
+                        totalDaytime: totalDurationToSave, 
+                        stopwatchTime: totalDurationToSave,
+                        totalSessions: 1
+                    } 
+                }
+            );
+        }
     }
 
-    res.status(200).json({ success: true, duration });
+    res.status(200).json({ success: true, duration: totalDurationToSave });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// 14. GET TODAY'S STATS
+// 14. GET TODAY'S STATS (With Auto-Cleanup)
 router.get("/stopwatch/today-stats", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -310,6 +343,13 @@ router.get("/stopwatch/today-stats", async (req, res) => {
 
     const daySession = await dailysessionmodel.findOne({ userId, date: today });
     if (!daySession) return res.status(200).json({ success: true, totalDaytime: 0, totalSessions: 0 });
+
+    // 🔥 GARBAGE COLLECTOR: Agar ek bhi session save nahi hua, par time accumulated hai, toh usey ZERO karo
+    if (daySession.totalSessions === 0 && daySession.totalDaytime > 0) {
+        daySession.totalDaytime = 0;
+        daySession.stopwatchTime = 0;
+        await daySession.save();
+    }
 
     res.status(200).json({ 
         success: true, 
@@ -320,6 +360,8 @@ router.get("/stopwatch/today-stats", async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+
 
 router.patch("/session/:id/pause", async (req, res) => {
   try {
