@@ -37,7 +37,16 @@ const userSchema = new Schema({
     imageUrl: {
         type: String,
     },
-    
+
+        username: {
+        type: String,
+        unique: true,
+        sparse: true, // sparse isliye taaki purane users bina username ke error na dein
+        trim: true,
+        lowercase: true
+    },
+        followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'userCredential' }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'userCredential' }],
     // 🔥 PROFILE FIELDS 🔥
     about: {
         type: String,
@@ -67,10 +76,13 @@ const userSchema = new Schema({
         vaultVersion: { type: Number, default: 1 }
     }
 },
+
 {
     timestamps: true,
     strict: false // 🟢 Fallback safety enabled
 });
+
+
 
 const usermodel = mongoose.model("userCredential", userSchema);
 module.exports = usermodel;

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock } from 'lucide-react';
+import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock, Search, ChevronLeft, Bell, UserPlus, UserMinus, UserCheck } from 'lucide-react';
 import Sidebar from '../Sidebar/Sidebar';
 
 const COLORS = {
@@ -60,57 +60,132 @@ const Profile = () => {
     const isPublicView = !!userId;
     
     const [user, setUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null); // The logged-in user
     const [loading, setLoading] = useState(true);
+    const [isFetchingProfile, setIsFetchingProfile] = useState(false);
     const [error, setError] = useState(null);
     const [activeDays, setActiveDays] = useState(0);
     
     const [showShareToast, setShowShareToast] = useState(false);
-
     const [isEditingAbout, setIsEditingAbout] = useState(false);
     const [aboutText, setAboutText] = useState("");
     const [isSaving, setIsSaving] = useState(false);
-
+    
+    // Add Link states
     const [isAddingLink, setIsAddingLink] = useState(false);
     const [newLinkUrl, setNewLinkUrl] = useState("");
 
+    // SEARCH STATE
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const searchRef = useRef(null);
+
+    // FOLLOW STATE
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [followModalData, setFollowModalData] = useState({ isOpen: false, type: 'followers', users: [], isLoading: false });
+
+    // NOTIFICATION STATE
+    const [notifications, setNotifications] = useState([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const notifRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) setShowDropdown(false);
+            if (notifRef.current && !notifRef.current.contains(event.target)) setShowNotifications(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Search logic
+    useEffect(() => {
+        const fetchSearchResults = async () => {
+            if (!searchQuery.trim()) { setSearchResults([]); return; }
+            setIsSearching(true);
+            try {
+                const response = await fetch(`http://localhost:3000/api/auth/search?q=${searchQuery}`, { method: 'GET', credentials: 'include' });
+                const data = await response.json();
+                if (data.success) setSearchResults(data.users);
+            } catch (err) { console.error(err); } finally { setIsSearching(false); }
+        };
+        const timeoutId = setTimeout(fetchSearchResults, 300);
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
+
+    // Fetch Notifications
+    const fetchNotifications = async () => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/auth/notifications`, { method: 'GET', credentials: 'include' });
+            const data = await response.json();
+            if (data.success) {
+                setNotifications(data.notifications);
+                setUnreadCount(data.notifications.filter(n => !n.read).length);
+            }
+        } catch (err) { console.error("Error fetching notifications", err); }
+    };
+
+    // Mark Notifications Read
+    const handleNotificationsOpen = async () => {
+        setShowNotifications(!showNotifications);
+        if (!showNotifications && unreadCount > 0) {
+            setUnreadCount(0);
+            try {
+                await fetch(`http://localhost:3000/api/auth/notifications/read`, { method: 'PUT', credentials: 'include' });
+                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            } catch (err) { console.error("Error marking read", err); }
+        }
+    };
+
+    // Load Profile
     useEffect(() => {
         const fetchProfile = async () => {
+            if (!user) setLoading(true);
+            setIsFetchingProfile(true);
             try {
-                let url, options;
-                if (isPublicView) {
-                    url = `http://localhost:3000/api/auth/profile/${userId}`;
-                    options = { method: "GET" };
-                } else {
-                    url = "http://localhost:3000/api/auth/me";
-                    options = { method: "GET", credentials: "include" };
+                // Get Current Logged In User Data first
+                const meResponse = await fetch("http://localhost:3000/api/auth/me", { method: "GET", credentials: "include" });
+                const meData = await meResponse.json();
+                if (meResponse.ok) {
+                    setCurrentUser(meData.user);
+                    fetchNotifications();
                 }
-                const response = await fetch(url, options);
+
+                // Get Target Profile Data
+                let url = isPublicView ? `http://localhost:3000/api/auth/profile/${userId}` : "http://localhost:3000/api/auth/me";
+                const response = await fetch(url, { method: "GET", credentials: "include" });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || "Failed to load profile");
+                
                 setUser(data.user);
                 setAboutText(data.user.about || "");
+                setFollowersCount(data.user.followers?.length || 0);
+                setFollowingCount(data.user.following?.length || 0);
+
+                // Check if current user is following this profile
+                if (isPublicView && meData.user && meData.user.following) {
+                    setIsFollowing(meData.user.following.includes(data.user._id));
+                }
 
                 const targetId = isPublicView ? userId : data.user._id;
                 try {
-                    const heatmapRes = await fetch(`http://localhost:3000/api/heatmap/${targetId}`, {
-                        method: "GET", credentials: "include"
-                    });
+                    const heatmapRes = await fetch(`http://localhost:3000/api/heatmap/${targetId}`, { method: "GET", credentials: "include" });
                     const heatmapData = await heatmapRes.json();
-                    if (heatmapRes.ok && heatmapData.data) {
-                        setActiveDays(heatmapData.data.length || 0);
-                    }
-                } catch (heatErr) {
-                    setActiveDays(0);
-                }
+                    if (heatmapRes.ok && heatmapData.data) setActiveDays(heatmapData.data.length || 0);
+                } catch (heatErr) { setActiveDays(0); }
 
             } catch (err) {
-                if (!isPublicView) {
-                    navigate("/signup");
-                } else {
-                    setError(err.message);
-                }
+                if (!isPublicView) navigate("/signup");
+                else setError(err.message);
             } finally {
                 setLoading(false);
+                setIsFetchingProfile(false);
             }
         };
         fetchProfile();
@@ -120,14 +195,11 @@ const Profile = () => {
         setIsSaving(true);
         try {
             const response = await fetch("http://localhost:3000/api/auth/profile", {
-                method: "PUT", credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ about: aboutText })
+                method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ about: aboutText })
             });
             const data = await response.json();
             if (response.ok) { setUser(data.user); setIsEditingAbout(false); }
-        } catch (err) { console.error("Error saving about:", err); }
-        finally { setIsSaving(false); }
+        } catch (err) {} finally { setIsSaving(false); }
     };
 
     const handleSaveLink = async (e) => {
@@ -161,52 +233,63 @@ const Profile = () => {
     };
 
     const handleShareProfile = () => {
-        const shareUrl = `${window.location.origin}/profile/${user._id}`;
-        navigator.clipboard.writeText(shareUrl);
-        setShowShareToast(true);
-        setTimeout(() => setShowShareToast(false), 2500);
+        navigator.clipboard.writeText(`${window.location.origin}/profile/${user._id}`);
+        setShowShareToast(true); setTimeout(() => setShowShareToast(false), 2500);
     };
 
-    const renderAvatar = () => {
-        const isGoogleUser = user.authProvider === 'google' || !!user.googleId;
-        const hasRealImage = user.imageUrl && user.imageUrl.trim() !== '' && !user.imageUrl.includes('default.png') && !user.imageUrl.includes('default_avatar');
+    // 🔥 FOLLOW LOGIC
+    const handleToggleFollow = async () => {
+        if (!currentUser || !user) return;
+        setIsFollowLoading(true);
+        const wasFollowing = isFollowing;
+        
+        // Optimistic UI Update
+        setIsFollowing(!wasFollowing);
+        setFollowersCount(prev => wasFollowing ? prev - 1 : prev + 1);
 
-        if (hasRealImage) {
-            return (
-                <img src={user.imageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-            );
+        try {
+            const response = await fetch(`http://localhost:3000/api/auth/follow/${user._id}`, {
+                method: 'POST', credentials: 'include'
+            });
+            if (!response.ok) throw new Error("Failed to follow");
+        } catch (err) {
+            // Revert on error
+            setIsFollowing(wasFollowing);
+            setFollowersCount(prev => wasFollowing ? prev + 1 : prev - 1);
+            console.error("Error following user", err);
+        } finally {
+            setIsFollowLoading(false);
         }
-        if (isGoogleUser) {
-            return (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: getColorFromName(user.name), color: '#fff', fontSize: 72, fontWeight: 700, userSelect: 'none' }}>
-                    {user.name ? user.name.charAt(0).toUpperCase() : '?'}
-                </div>
-            );
-        }
-        return (
-            <img src={getRandomAvatar(user.name)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={(e) => {
-                    e.target.onerror = null; e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3B82F6,#6366F1);color:#fff;font-size:72px;font-weight:700">${(user.name || '?').charAt(0).toUpperCase()}</div>`;
-                }} />
-        );
     };
-       if (loading) {
-        return (
-            <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]">
-                {/* 🔥 Yahan Sidebar add kar diya! Jitter khatam. */}
-                <Sidebar activePage="Profile" /> 
-                <div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" />
-            </div>
-        );
-    }
 
+    // 🔥 OPEN FOLLOWERS/FOLLOWING MODAL
+    const openFollowModal = async (type) => {
+        setFollowModalData({ isOpen: true, type, users: [], isLoading: true });
+        try {
+            const response = await fetch(`http://localhost:3000/api/auth/follow-data/${user._id}`, { method: 'GET', credentials: 'include' });
+            const data = await response.json();
+            if (response.ok) {
+                setFollowModalData({ isOpen: true, type, users: data[type] || [], isLoading: false });
+            }
+        } catch (err) {
+            setFollowModalData(prev => ({ ...prev, isLoading: false }));
+        }
+    };
 
+    const renderAvatar = (userObj = user) => {
+        const isGoogleUser = userObj?.authProvider === 'google' || !!userObj?.googleId;
+        const hasRealImage = userObj?.imageUrl && userObj.imageUrl.trim() !== '' && !userObj.imageUrl.includes('default');
+        if (hasRealImage) return <img src={userObj.imageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+        if (isGoogleUser) return <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: getColorFromName(userObj?.name), color: '#fff', fontWeight: 700 }}>{userObj?.name?.charAt(0).toUpperCase()}</div>;
+        return <img src={getRandomAvatar(userObj?.name)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+    };
+
+    if (loading) return <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]"><Sidebar activePage="Profile" /><div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" /></div>;
 
     return (
         <>
             <style>{`
+    @keyframes fadeScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes diagonalShine {
         0% { transform: translateX(-100%) translateY(-100%) rotate(25deg); }
@@ -217,30 +300,41 @@ const Profile = () => {
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
 
-    /* 🔥 PURE CSS HOVER ANIMATIONS */
-    .badge-card {
-        position: relative; border-radius: 20px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; gap: 12px; padding: 20px; cursor: pointer;
-        transition: all 0.3s ease; overflow: hidden; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.15); border-left: 1px solid rgba(255, 255, 255, 0.15);
-    }
+    /* SEARCH & NOTIFICATION CSS */
+    .search-input { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 16px 10px 42px; color: #fff; width: 260px; font-size: 14px; outline: none; transition: all 0.2s; }
+    .search-input:focus { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); width: 280px; }
+    .search-result-item { padding: 12px 16px; display: flex; alignItems: center; gap: 12px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .search-result-item:hover { background: rgba(255,255,255,0.06); }
+    .search-result-item:last-child { border-bottom: none; }
+    
+    .follow-stat { cursor: pointer; transition: opacity 0.2s; }
+    .follow-stat:hover { opacity: 0.7; }
+    
+    .follow-btn { display: flex; alignItems: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; border: none; }
+    .follow-btn.unfollowed { background: #FFFFFF; color: #000000; }
+    .follow-btn.unfollowed:hover { background: #E5E7EB; transform: scale(1.02); }
+    .follow-btn.followed { background: rgba(255,255,255,0.1); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
+    .follow-btn.followed:hover { background: rgba(239,68,68,0.1); color: #EF4444; border-color: rgba(239,68,68,0.3); }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; animation: fadeScale 0.2s ease-out; }
+    .modal-content { background: #1A1D21; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .notif-bell { position: relative; padding: 10px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #D1D5DB; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .notif-bell:hover { background: rgba(255,255,255,0.08); }
+    .notif-badge { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; border: 2px solid #1A1D21; }
+
+    /* BADGE CSS */
+    .badge-card { position: relative; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease; overflow: hidden; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.15); border-left: 1px solid rgba(255, 255, 255, 0.15); }
     .badge-card.unlocked { background: rgba(20, 24, 54, 0.5); box-shadow: 8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2); }
     .badge-card.locked { background: rgba(20, 24, 54, 0.2); box-shadow: 8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2); }
-    
     .badge-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 8px 16px 40px rgba(0, 0, 0, 0.4), inset 1px 1px 2px rgba(255, 255, 255, 0.15), inset -1px -1px 4px rgba(0, 0, 0, 0.2); }
-    
     .badge-shine { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: 20px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
     .badge-card:hover .badge-shine { opacity: 1; }
-    
     .badge-shine-inner { position: absolute; top: 0; left: 0; width: 60%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), rgba(255,255,255,0.15), rgba(255,255,255,0.08), transparent); transform: translateX(-100%) translateY(-100%) rotate(25deg); }
     .badge-card:hover .badge-shine-inner { animation: diagonalShine 1.5s ease-out forwards; }
-    
     .badge-img { width: 88px; height: 88px; object-fit: contain; transition: transform 0.3s ease; filter: none; }
     .badge-card.unlocked:hover .badge-img { transform: scale(1.15); }
-    
     .badge-locked-overlay { position: absolute; inset: 0; border-radius: 20px; background-color: rgba(10, 12, 30, 0.75); backdrop-filter: blur(6px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 10; border: 1px solid rgba(255,255,255,0.08); opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; }
     .badge-card.locked:hover .badge-locked-overlay { opacity: 1; }
-    
     .badge-unlocked-tooltip { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%) translateY(10px); width: 230px; padding: 14px 16px; border-radius: 16px; background: rgba(20, 24, 54, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 30; display: flex; flex-direction: column; gap: 8px; opacity: 0; pointer-events: none; transition: all 0.2s ease-out; }
     .badge-card.unlocked:hover .badge-unlocked-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -249,7 +343,7 @@ const Profile = () => {
     .link-item:hover .link-delete-btn { opacity: 1; transform: scale(1); }
 `}</style>
 
-            <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, position: 'relative', overflowX: 'hidden', fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
+            <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, position: 'relative', overflowX: 'hidden', fontFamily: "'Inter', system-ui, sans-serif" }}>
                 
                 {showShareToast && (
                     <div style={{ position: 'fixed', top: 24, right: 24, backgroundColor: 'rgba(16,185,129,0.9)', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 14, fontWeight: 500, zIndex: 100, animation: 'toastIn 0.3s ease-out', backdropFilter: 'blur(8px)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
@@ -257,10 +351,38 @@ const Profile = () => {
                     </div>
                 )}
 
-                {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA */}
                 {!isPublicView && <Sidebar activePage="Profile" />}
 
-                <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', maxWidth: 1200, margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+                {/* MODAL POPUP FOR FOLLOWERS/FOLLOWING */}
+                {followModalData.isOpen && (
+                    <div className="modal-overlay" onClick={(e) => { if (e.target.className === 'modal-overlay') setFollowModalData({ isOpen: false, type: '', users: [], isLoading: false }) }}>
+                        <div className="modal-content">
+                            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <h3 style={{ fontSize: 18, fontWeight: 700, textTransform: 'capitalize' }}>{followModalData.type}</h3>
+                                <button onClick={() => setFollowModalData({ isOpen: false, type: '', users: [], isLoading: false })} style={{ background: 'none', border: 'none', color: COLORS.textMuted, cursor: 'pointer' }}><X size={20}/></button>
+                            </div>
+                            <div style={{ overflowY: 'auto', padding: '10px 0', maxHeight: '60vh' }}>
+                                {followModalData.isLoading ? (
+                                    <div style={{ padding: 40, textAlign: 'center', color: COLORS.textMuted }}>Loading...</div>
+                                ) : followModalData.users.length > 0 ? (
+                                    followModalData.users.map(u => (
+                                        <div key={u._id} className="search-result-item" onClick={() => { setFollowModalData({ isOpen: false, type: '', users: [], isLoading: false }); navigate(`/profile/${u._id}`); }}>
+                                            <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', fontSize: 16 }}>{renderAvatar(u)}</div>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>{u.name}</span>
+                                                {u.username && <span style={{ color: COLORS.textMuted, fontSize: 13 }}>@{u.username}</span>}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{ padding: 40, textAlign: 'center', color: COLORS.textMuted }}>No {followModalData.type} yet.</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', maxWidth: 1200, margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10, opacity: isFetchingProfile ? 0.3 : 1, transition: 'opacity 0.2s ease-in-out', pointerEvents: isFetchingProfile ? 'none' : 'auto' }}>
 
                     {error && (
                         <div style={{ marginBottom: 24, padding: 16, borderRadius: 12, backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#F87171', fontSize: 14, fontWeight: 500 }}>{error}</div>
@@ -268,39 +390,48 @@ const Profile = () => {
 
                     {user && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
-                            
                             <div style={{ display: 'flex', flexDirection: 'row', gap: 64, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                                 
+                                {/* LEFT COLUMN: AVATAR, LINKS, FOLLOW STATS */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', flexShrink: 0, width: 220 }}>
-                                    <div style={{ width: 180, height: 180, borderRadius: '50%', overflow: 'hidden', border: `2px solid ${COLORS.border}`, padding: 4, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', backgroundColor: COLORS.card }}>
-                                            {renderAvatar()}
-                                        </div>
+                                    <div style={{ width: 180, height: 180, borderRadius: '50%', border: `2px solid ${COLORS.borderHover}`, backgroundColor: COLORS.card, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', fontSize: '72px' }}>
+                                        {renderAvatar()}
                                     </div>
                                     
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
-                                        {user.links && user.links.length > 0 && (
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
-                                                {user.links.map((link, idx) => (
-                                                    <div key={idx} className="link-item">
-                                                        <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textMuted, textDecoration: 'none' }}>
-                                                            <LinkIcon size={18} />
-                                                        </a>
-                                                        {!isPublicView && (
-                                                            <button onClick={() => handleDeleteLink(idx)} className="link-delete-btn" title="Delete Link">
-                                                                <X size={12} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
+                                        
+                                        {/* FOLLOW STATS */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '12px 0', borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}`, width: '100%', justifyContent: 'center' }}>
+                                            <div className="follow-stat" onClick={() => openFollowModal('followers')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>{followersCount}</span>
+                                                <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 500 }}>Followers</span>
                                             </div>
+                                            <div style={{ width: 1, height: 24, backgroundColor: COLORS.borderHover }}></div>
+                                            <div className="follow-stat" onClick={() => openFollowModal('following')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>{followingCount}</span>
+                                                <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 500 }}>Following</span>
+                                            </div>
+                                        </div>
+
+                                        {/* FOLLOW BUTTON (Only Public View) */}
+                                        {isPublicView && currentUser && currentUser._id !== user._id && (
+                                            <button 
+                                                className={`follow-btn ${isFollowing ? 'followed' : 'unfollowed'}`}
+                                                onClick={handleToggleFollow}
+                                                disabled={isFollowLoading}
+                                                onMouseOver={(e) => { if(isFollowing) e.currentTarget.innerText = "Unfollow" }}
+                                                onMouseOut={(e) => { if(isFollowing) e.currentTarget.innerText = "Following" }}
+                                            >
+                                                {isFollowLoading ? "..." : isFollowing ? "Following" : "Follow"}
+                                            </button>
                                         )}
+
+                                        {/* ADD LINK BUTTON AND EXISTING LINKS */}
                                         <div style={{ minHeight: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                                             {!isPublicView && (
                                                 isAddingLink ? (
                                                     <form onSubmit={handleSaveLink} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
                                                         <input autoFocus type="url" placeholder="https://..." value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.borderHover}`, color: COLORS.textPrimary, borderRadius: 8, padding: '8px 12px', fontSize: 12, outline: 'none' }} />
-                                                        {/* 🔥 FIXED: White Premium Buttons */}
                                                         <button type="submit" disabled={isSaving} style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.04)', color: '#E5E7EB', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }}><Check size={16} /></button>
                                                         <button type="button" onClick={() => setIsAddingLink(false)} style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.04)', color: '#E5E7EB', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }}><X size={16} /></button>
                                                     </form>
@@ -311,21 +442,96 @@ const Profile = () => {
                                                 )
                                             )}
                                         </div>
+
+                                        {user.links && user.links.length > 0 && (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
+                                                {user.links.map((link, idx) => (
+                                                    <div key={idx} className="link-item" style={{ position: 'relative' }}>
+                                                        <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.textMuted, textDecoration: 'none' }}><LinkIcon size={18} /></a>
+                                                        {!isPublicView && (
+                                                            <button onClick={() => handleDeleteLink(idx)} className="link-delete-btn" title="Delete Link">
+                                                                <X size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* 🔥 SHIFTING COMPLETELY FIXED */}
+                                {/* RIGHT COLUMN */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 700, flex: 1, paddingTop: 16, minWidth: 280 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                                        <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 700, letterSpacing: '-0.02em', color: '#E5E7EB', lineHeight: 1.1 }}>{user.name}</h1>
-                                        <button onClick={handleShareProfile} style={{ padding: 10, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${COLORS.border}`, color: COLORS.textMuted, cursor: 'pointer', flexShrink: 0 }} title="Share Profile">
-                                            <Share2 size={20} />
-                                        </button>
+                                    
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 20 }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 700, letterSpacing: '-0.02em', color: '#E5E7EB', lineHeight: 1.1 }}>{user.name}</h1>
+                                            {user.username && <span style={{ color: COLORS.textMuted, fontSize: 16, fontWeight: 500, marginTop: 6 }}>@{user.username}</span>}
+                                        </div>
+
+                                        {/* SEARCH, NOTIFICATIONS, BACK */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
+                                            
+                                            {/* 🔥 NOTIFICATION BELL */}
+                                            {!isPublicView && (
+                                                <div ref={notifRef} style={{ position: 'relative' }}>
+                                                    <button className="notif-bell" onClick={handleNotificationsOpen}>
+                                                        <Bell size={20} />
+                                                        {unreadCount > 0 && <span className="notif-badge"></span>}
+                                                    </button>
+                                                    
+                                                    {showNotifications && (
+                                                        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 300, backgroundColor: COLORS.card, border: `1px solid ${COLORS.borderHover}`, borderRadius: 12, overflow: 'hidden', zIndex: 50, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+                                                            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${COLORS.borderHover}`, fontWeight: 600 }}>Notifications</div>
+                                                            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                                                                {notifications.length > 0 ? notifications.map(n => (
+                                                                    <div key={n._id} className="search-result-item" onClick={() => { setShowNotifications(false); navigate(`/profile/${n.sender._id}`); }}>
+                                                                        <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', fontSize: 12, backgroundColor: '#333' }}>
+                                                                            {renderAvatar(n.sender)}
+                                                                        </div>
+                                                                        <div style={{ fontSize: 14 }}>
+                                                                            <span style={{ fontWeight: 600, color: '#fff' }}>{n.sender.name}</span> started following you.
+                                                                        </div>
+                                                                    </div>
+                                                                )) : <div style={{ padding: 20, textAlign: 'center', color: COLORS.textMuted, fontSize: 13 }}>No notifications</div>}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <div ref={searchRef} style={{ position: 'relative' }}>
+                                                <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: COLORS.textMuted, pointerEvents: 'none' }}><Search size={16} /></div>
+                                                <input type="text" className="search-input" placeholder="Search users..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
+                                                
+                                                {showDropdown && searchQuery.trim() !== "" && (
+                                                    <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '100%', minWidth: 260, backgroundColor: COLORS.card, border: `1px solid ${COLORS.borderHover}`, borderRadius: 12, overflow: 'hidden', zIndex: 50, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+                                                        {isSearching ? ( <div style={{ padding: 16, textAlign: 'center', color: COLORS.textMuted, fontSize: 13 }}>Searching...</div>
+                                                        ) : searchResults.length > 0 ? (
+                                                            searchResults.map(result => (
+                                                                <div key={result._id} className="search-result-item" onClick={() => { navigate(`/profile/${result._id}`); setShowDropdown(false); setSearchQuery(""); }}>
+                                                                    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#333', flexShrink: 0, fontSize: '12px' }}>{renderAvatar(result)}</div>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{result.name}</span>
+                                                                        {result.username && <span style={{ color: COLORS.textMuted, fontSize: 12 }}>@{result.username}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        ) : ( <div style={{ padding: 16, textAlign: 'center', color: COLORS.textMuted, fontSize: 13 }}>No users found</div> )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {isPublicView && (
+                                                <button onClick={() => navigate('/profile')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#E5E7EB', fontSize: 16, fontWeight: 800, cursor: 'pointer', transition: 'opacity 0.2s', padding: 0 }} onMouseOver={(e) => e.currentTarget.style.opacity = '0.7'} onMouseOut={(e) => e.currentTarget.style.opacity = '1'}>
+                                                    <ChevronLeft size={20} strokeWidth={3} />
+                                                    Back
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 700 }}>
-                                        
-                                        {/* HEADER HEIGHT FIXED TO 26px */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 700, marginTop: 12 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 26 }}>
                                             <h3 style={{ color: COLORS.textMuted, fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>About</h3>
                                             {!isPublicView && !isEditingAbout && (
@@ -338,7 +544,6 @@ const Profile = () => {
                                         {isEditingAbout ? (
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                                 <textarea value={aboutText} onChange={(e) => setAboutText(e.target.value)} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${COLORS.borderHover}`, borderRadius: 12, padding: 16, color: COLORS.textSecondary, fontSize: 15, outline: 'none', minHeight: 120, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} placeholder="Tell everyone what you're working on..." />
-                                                {/* BUTTONS CONTAINER EXACT HEIGHT 35px */}
                                                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', height: 35 }}>
                                                     <button onClick={() => { setIsEditingAbout(false); setAboutText(user.about || ""); }} style={{ height: '100%', padding: '0 16px', borderRadius: 8, fontSize: 14, fontWeight: 500, color: COLORS.textMuted, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
                                                     <button onClick={handleSaveAbout} disabled={isSaving} style={{ height: '100%', padding: '0 20px', borderRadius: 8, fontSize: 14, fontWeight: 500, backgroundColor: '#D1D5DB', color: '#111', border: 'none', cursor: 'pointer' }}>
@@ -347,7 +552,6 @@ const Profile = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            /* VIEW BOX EXACT HEIGHT 167px */
                                             <p style={{ color: COLORS.textSecondary, fontSize: 16, lineHeight: 1.7, fontWeight: 400, backgroundColor: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.03)', padding: 20, borderRadius: 16, minHeight: 167, boxSizing: 'border-box' }}>
                                                 {user.about || "This user hasn't written a bio yet. They are too busy staying LockedIn."}
                                             </p>
@@ -356,6 +560,7 @@ const Profile = () => {
                                 </div>
                             </div>
 
+                            {/* 🔥 RESTORED ACHIEVEMENT BADGES SECTION 🔥 */}
                             <div style={{ height: 1, width: '100%', background: `linear-gradient(to right, ${COLORS.border}, transparent)` }}></div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

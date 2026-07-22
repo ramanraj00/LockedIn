@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendResetEmail = require("../Services/emailServices");
 const { OAuth2Client } = require('google-auth-library');
+const Notification = require('../models/notification');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -16,7 +17,7 @@ exports.signup = async (req, res) => {
     const { 
         name, password, imageUrl, 
         encryptedDEK_pwd, encryptedDEK_rec, userSalt, 
-        recoverySalt, // 🔥 YE WORD MISSING THA, ISKO ADD KARO
+        recoverySalt, 
         pbkdf2Iterations, kdf 
     } = req.body;
     const email = req.body.email.toLowerCase();
@@ -28,21 +29,24 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-       const user = await usermodel.create({
+    // 🔥 YAHAN PE EMAIL SE UNIQUE USERNAME NIKALA 🔥
+    const username = await generateUniqueUsername(email);
+
+    const user = await usermodel.create({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
+      username, // 🔥 AUR YAHAN PE DB ME SAVE KARAYA 🔥
       imageUrl,
       // Save crypto fields
       encryptedDEK_pwd,
       encryptedDEK_rec,
       userSalt,
-      recoverySalt, // 🔥 YAHAN BHI ADD KARO TAAKI DB ME SAVE HO
+      recoverySalt, 
       pbkdf2Iterations,
       kdf
     });
 
-    // Agar frontend Signup ke time crypto keys bhejta hai (Optional, naye UX me ye setupKeys handle karta hai)
     if (encryptedDEK_pwd) {
         user.crypto = {
             encryptedDEK_pwd,
@@ -229,17 +233,21 @@ exports.googleAuth = async (req, res) => {
 
     let user = await usermodel.findOne({ email: userEmail });
     let isNewUser = false;
-    
-    if (!user) {
-      isNewUser = true;
+        if (!user) {
+      // 1. Pehle username nikal
+      const username = await generateUniqueUsername(userEmail);
+      
+      // 2. Fir database me save kar
       user = await usermodel.create({
         name: payload.name,
         email: userEmail,
         googleId: payload.sub,
         imageUrl: payload.picture,
         authProvider: "google",
+        username: username, // <-- Yahan add ho gaya
       });
     }
+    
 
     const jwtToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, {
       expiresIn: "7d",
@@ -417,5 +425,139 @@ exports.resetVaultKeys = async (req, res) => {
     } catch (err) {
         console.error("Reset Vault Keys Error:", err);
         res.status(500).json({ message: "Failed to reset workspace keys" });
+    }
+};
+
+exports.getPublicProfile = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // Agar id ki length galat hui toh crash se bachne ke liye check
+        if (!userId || userId.length !== 24) {
+            return res.status(400).json({ success: false, message: "Invalid user ID format" });
+        }
+
+        // Yahan maine 'usermodel' correct kar diya hai!
+        const user = await usermodel.findById(userId).select('-password'); 
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error("Error fetching public profile:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+const generateUniqueUsername = async (email) => {
+    // Email ke '@' se pehle wala hissa lega aur symbols hatayega
+    let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    let username = baseUsername;
+    let isUnique = false;
+    let counter = 1;
+    
+    // Check karega ki kya ye username pehle se kisi ke paas hai
+    while (!isUnique) {
+        const existingUser = await usermodel.findOne({ username });
+        if (existingUser) {
+            username = `${baseUsername}${counter}`;
+            counter++;
+        } else {
+            isUnique = true;
+        }
+    }
+    return username;
+};
+
+
+exports.searchUsers = async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) return res.status(200).json({ success: true, users: [] });
+        
+        const regex = new RegExp(query, 'i'); // Case insensitive search
+        // Name ya Username me kuch bhi match hoga toh return karega (Max 5 users)
+        const users = await usermodel.find({
+            $or: [{ username: regex }, { name: regex }]
+        }).select('name username imageUrl avatar _id').limit(5);
+        
+        res.status(200).json({ success: true, users });
+    } catch (error) {
+        console.error("Search error:", error);
+        res.status(500).json({ success: false, message: "Error searching users" });
+    }
+};
+
+// 🔥 FOLLOW SYSTEM API
+exports.toggleFollow = async (req, res) => {
+    try {
+        const currentUserId = req.userId || (req.user && req.user.id) || req.user;
+        const targetUserId = req.params.id;
+
+        if (currentUserId === targetUserId) return res.status(400).json({ success: false, message: "You cannot follow yourself" });
+
+        const currentUser = await usermodel.findById(currentUserId);
+        const targetUser = await usermodel.findById(targetUserId);
+        if (!targetUser) return res.status(404).json({ success: false, message: "User not found" });
+
+        const isFollowing = currentUser.following.includes(targetUserId);
+
+        if (isFollowing) {
+            currentUser.following.pull(targetUserId);
+            targetUser.followers.pull(currentUserId);
+            await currentUser.save();
+            await targetUser.save();
+            return res.status(200).json({ success: true, isFollowing: false });
+        } else {
+            currentUser.following.push(targetUserId);
+            targetUser.followers.push(currentUserId);
+            await currentUser.save();
+            await targetUser.save();
+
+            // Create notification for target user
+            await Notification.create({ recipient: targetUserId, sender: currentUserId, type: 'follow' });
+            return res.status(200).json({ success: true, isFollowing: true });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+
+// 🔥 FETCH FOLLOWERS FOR POPUP MODAL
+exports.getFollowData = async (req, res) => {
+    try {
+        const user = await usermodel.findById(req.params.id)
+            .populate('followers', 'name username imageUrl')
+            .populate('following', 'name username imageUrl');
+        if (!user) return res.status(404).json({ success: false });
+        res.status(200).json({ success: true, followers: user.followers, following: user.following });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+};
+
+// 🔥 GET NOTIFICATIONS
+exports.getNotifications = async (req, res) => {
+    try {
+        const userId = req.userId || (req.user && req.user.id) || req.user;
+        const notifications = await Notification.find({ recipient: userId })
+            .populate('sender', 'name username imageUrl')
+            .sort({ createdAt: -1 }).limit(20);
+        res.status(200).json({ success: true, notifications });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+};
+
+// 🔥 MARK NOTIFICATIONS AS READ
+exports.markNotificationsRead = async (req, res) => {
+    try {
+        const userId = req.userId || (req.user && req.user.id) || req.user;
+        await Notification.updateMany({ recipient: userId, read: false }, { read: true });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
     }
 };

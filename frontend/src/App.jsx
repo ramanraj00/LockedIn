@@ -69,6 +69,9 @@ function App() {
       <Route path="/leaderboard"
        element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
 
+       <Route path="/profile/:userId"
+        element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
     </Routes>
   );
 }
