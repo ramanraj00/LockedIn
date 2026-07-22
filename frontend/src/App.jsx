@@ -20,6 +20,9 @@ import Stopwatch from './components/stopwatch/Stopwatch.jsx';
 
 // 🔥 NAYA ANALYTICS PAGE IMPORT
 import Analytics from './components/Analytics/Analytics.jsx';
+// Leaderboard
+import Leaderboard from './pages/Leaderboard';
+
 
 function App() {
   return (
@@ -63,6 +66,9 @@ function App() {
         element={<ProtectedRoute><Analytics /></ProtectedRoute>} 
       />
       
+      <Route path="/leaderboard"
+       element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+
     </Routes>
   );
 }

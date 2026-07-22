@@ -16,11 +16,8 @@ const userValidSchema = z
     authProvider: z.enum(["local", "google"]).default("local"),
     password: z
       .string()
-      .min(8, { message: "Password must be at least 8 characters" })
-      .regex(/[A-Z]/, { message: "Must contain at least one uppercase letter" })
-      .regex(/[a-z]/, { message: "Must contain at least one lowercase letter" })
-      .regex(/[0-9]/, { message: "Must contain at least one number" })
-      .regex(/[!@#$%^&*]/, "Must include special character")
+      // 🔥 Yahan se saare strict regex hata diye hain kyunki ye ab HASH receive karega (jo 64 chars ka hota hai)
+      .min(60, { message: "Invalid password hash length" }) 
       .max(100)
       .optional(),
     imageUrl: z.string().optional(),
@@ -29,7 +26,7 @@ const userValidSchema = z
     encryptedDEK_pwd: z.any().optional(),
     encryptedDEK_rec: z.any().optional(),
     userSalt: z.string().optional(),
-    recoverySalt: z.string().optional(), // 🚀 BOOM! YE GAYAB THA!
+    recoverySalt: z.string().optional(),
     pbkdf2Iterations: z.number().optional(),
     kdf: z.string().optional(),
   })

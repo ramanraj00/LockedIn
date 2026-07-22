@@ -6,8 +6,21 @@ import ShaderBackground from '../shaderbackground/ShaderBackground';
 import { deriveKEK, decryptDEK, encryptDEK, generateWorkspaceDEK, generateUserSalt, generateRecoveryKey } from '../../utils/e2eMasterKey';
 import { useCrypto } from '../../context/CryptoContext';
 
+
+
+
 // Helper for readability
 const generateRecoverySalt = () => generateUserSalt();
+
+// 🔥 YAHAN YE NAYA FUNCTION ADD KAR
+const getAuthHash = async (password) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 
 const Login = () => {
     const navigate = useNavigate();
@@ -53,7 +66,7 @@ const Login = () => {
         if (error) setError(null);
     };
 
-    // 🟢 1. NORMAL EMAIL LOGIN (Authentication + AUTO UNLOCK!)
+       // 🟢 1. NORMAL EMAIL LOGIN (Authentication + AUTO UNLOCK!)
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(null); setSuccessMsg(null);
@@ -61,13 +74,20 @@ const Login = () => {
 
         setLoading(true);
         try {
+            // 🔥 NAYI LINE: Raw password ka hash banao
+            const authPasswordHash = await getAuthHash(formData.password);
+
             const response = await fetch("http://localhost:3000/api/auth/signin", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: authPasswordHash // 🔥 RAW PASSWORD KI JAGAH YAHAN HASH BHEJO
+                })
             });
             const data = await response.json();
+            
             if (!response.ok) {
                 setError(data.message || "Invalid credentials"); setLoading(false); return;
             }

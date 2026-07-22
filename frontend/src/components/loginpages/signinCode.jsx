@@ -104,17 +104,20 @@ const Signup = () => {
             const recoveryKEK = await deriveKEK(recKey, recoverySalt, PBKDF2_ITERATIONS);
             const encryptedDEK_rec = await encryptDEK(dek, recoveryKEK);
 
-            const response = await fetch("http://localhost:3000/api/auth/signup", {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: formData.name, 
-                    email: formData.email, 
-                    password: formData.password, 
-                    imageUrl: window.location.origin + formData.imageUrl,
-                    encryptedDEK_pwd,
-                    encryptedDEK_rec,
+            // Fetch call se theek pehle password ka hash banao
+const authPasswordHash = await getAuthHash(formData.password);
+
+const response = await fetch("http://localhost:3000/api/auth/signup", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        name: formData.name, 
+        email: formData.email, 
+        password: authPasswordHash, // 🔥 AB ASLI PASSWORD KI JAGAH HASH JAYEGA!
+        imageUrl: window.location.origin + formData.imageUrl,
+        encryptedDEK_pwd,
+        encryptedDEK_rec,
                     userSalt,
                     recoverySalt, 
                     pbkdf2Iterations: PBKDF2_ITERATIONS,
@@ -146,6 +149,14 @@ const Signup = () => {
          setTimeout(() =>navigate('/profile'), 1200); 
     };
 
+    // Password ko secure hash me convert karne ka jadu
+const getAuthHash = async (password) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
     return (
         <>
             <style>
