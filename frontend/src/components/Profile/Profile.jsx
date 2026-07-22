@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock } from 'lucide-react';
-import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
+import Sidebar from '../Sidebar/Sidebar';
 
 const COLORS = {
     bg: '#1A1D21',
