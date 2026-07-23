@@ -175,10 +175,27 @@ const Profile = () => {
 
                 const targetId = isPublicView ? userId : data.user._id;
                 try {
-                    const heatmapRes = await fetch(`http://localhost:3000/api/heatmap/${targetId}`, { method: "GET", credentials: "include" });
-                    const heatmapData = await heatmapRes.json();
-                    if (heatmapRes.ok && heatmapData.data) setActiveDays(heatmapData.data.length || 0);
-                } catch (heatErr) { setActiveDays(0); }
+                    // 🔥 ACTUAL API URL FROM ANALYTICS COMPONENT
+                    let heatmapUrl = "http://localhost:3000/api/dashboard/dashboard/heatmap";
+                    if (isPublicView) {
+                        // Passing userId as query param in case backend supports fetching for others
+                        heatmapUrl = `http://localhost:3000/api/dashboard/dashboard/heatmap?userId=${targetId}`;
+                    }
+
+                    const heatmapRes = await fetch(heatmapUrl, { method: "GET", credentials: "include" });
+                    const heatData = await heatmapRes.json();
+                    
+                    if (heatmapRes.ok && heatData.heatmapData) {
+                        // Exactly matching the Analytics logic: d.intensity > 0 || d.hours > 0
+                        const activeCount = heatData.heatmapData.filter(d => (d.intensity > 0 || d.hours > 0)).length;
+                        setActiveDays(activeCount);
+                    } else {
+                        setActiveDays(0);
+                    }
+                } catch (heatErr) { 
+                    console.error("Heatmap Error:", heatErr);
+                    setActiveDays(0); 
+                }
 
             } catch (err) {
                 if (!isPublicView) navigate("/signup");
@@ -313,8 +330,8 @@ const Profile = () => {
     .follow-btn { display: flex; alignItems: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; border: none; }
     .follow-btn.unfollowed { background: #FFFFFF; color: #000000; }
     .follow-btn.unfollowed:hover { background: #E5E7EB; transform: scale(1.02); }
-    .follow-btn.followed { background: rgba(255,255,255,0.1); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
-    .follow-btn.followed:hover { background: rgba(239,68,68,0.1); color: #EF4444; border-color: rgba(239,68,68,0.3); }
+    .follow-btn.followed { background: rgba(255,255,255,0.08); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); }
+    .follow-btn.followed:hover { background: rgba(255,255,255,0.15); color: #D1D5DB; border-color: rgba(255,255,255,0.3); }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; animation: fadeScale 0.2s ease-out; }
     .modal-content { background: #1A1D21; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }

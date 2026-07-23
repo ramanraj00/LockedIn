@@ -8,7 +8,7 @@ import ResetPassword from './components/loginpages/ResetPassword.jsx';
 import ForgotPassword from './components/loginpages/ForgotPassword.jsx'; 
 
 import ProtectedRoute from './components/loginpages/ProtectedRoute.jsx'; 
-import Dashboard from './components/loginpages/dashboard.jsx'; 
+import Dashboard from './components/loginpages/Logout.jsx'; 
 import Profile from './components/Profile/Profile.jsx'; 
 import Workspace from './components/Workspace/Workspace.jsx'; 
 

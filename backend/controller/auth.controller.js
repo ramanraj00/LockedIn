@@ -318,7 +318,17 @@ exports.updateLinks = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
+  // 1. Force overwrite with empty string and 0 expiry
+  res.cookie("token", "", { 
+      httpOnly: true, 
+      expires: new Date(0), 
+      sameSite: "lax", 
+      secure: false 
+  });
+  
+  // 2. Clear cookie fallback
   res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: false });
+  
   return res.status(200).json({ message: "Logout Successful" });
 };
 

@@ -82,11 +82,20 @@ const Sidebar = ({ activePage }) => {
         };
     }, [isOpen]);
 
-    const handleLogout = async () => {
+       const handleLogout = async () => {
         try {
-            await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
-            navigate("/login");
-        } catch (error) { navigate("/login"); }
+            const res = await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
+            if (res.ok) {
+                // 🔥 MAIN FIX: KACHRA SAAF
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.replace("/login");
+            }
+        } catch (error) { 
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.replace("/login"); 
+        }
     };
 
     const hasRealImage = profile?.imageUrl && profile.imageUrl.trim() !== '' && !profile.imageUrl.includes('default.png') && !profile.imageUrl.includes('default_avatar');
