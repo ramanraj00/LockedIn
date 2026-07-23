@@ -48,12 +48,21 @@ const formatXP = (seconds) => {
     return `${s}s`; 
 };
 
+// 🔥 FIX: Dicebear Removed! Replaced with your App's exact Native Avatar Hash Logic
 const getAvatarUrl = (avatar, name) => {
-    if (!avatar) return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'User')}`;
-    if (avatar.startsWith('http://localhost:5173')) {
+    if (avatar && avatar.startsWith('http://localhost:5173')) {
         return avatar.replace('http://localhost:5173', '');
     }
-    return avatar;
+    if (avatar) return avatar;
+    
+    // Exactly matches how Sidebar/Profile generates avatars (e.g. /avatars/avatar3.png)
+    const avatarCount = 4;
+    let hash = 0;
+    for (let i = 0; i < (name || 'U').length; i++) {
+        hash = (name || 'U').charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = (Math.abs(hash) % avatarCount) + 1;
+    return `/avatars/avatar${index}.png`;
 };
 
 const Leaderboard = () => {
@@ -70,48 +79,83 @@ const Leaderboard = () => {
     }, []);
 
     const [currentUserStats, setCurrentUserStats] = useState({
-        name: 'User', avatar: null, rank: '-', streak: 0, focusTime: 0, percentile: 0
+        name: '', avatar: null, rank: '-', streak: 0, focusTime: 0, percentile: 0
     });
 
     useEffect(() => {
-        const fetchLeaderboardData = async () => {
+        const fetchData = async () => {
             setIsLoading(true);
             try {
+                // 1. Fetch Leaderboard Data
                 const res = await fetch('http://localhost:3000/api/leaderboard', { credentials: 'include' });
-                if (res.ok) {
-                    const data = await res.json();
-                    setUsers(data);
-                    
-                    let loggedInName = 'Sinchan';
-                    let loggedInAvatar = null;
-                    try {
-                        const localUser = localStorage.getItem('user') || localStorage.getItem('profile');
-                        if (localUser) {
-                            const parsed = JSON.parse(localUser);
-                            if (parsed.name) loggedInName = parsed.name;
-                            if (parsed.imageUrl || parsed.avatar) loggedInAvatar = parsed.imageUrl || parsed.avatar;
+                const leaderboardData = res.ok ? await res.json() : [];
+                setUsers(leaderboardData);
+                
+                // 2. 🔥 FIX: Fetch actual logged-in user from your API (Same as Sidebar/Profile)
+                let loggedInName = '';
+                let loggedInAvatar = null;
+                let loggedInId = null;
+                let loggedInStreak = 0;
+                let loggedInXp = 0;
+                
+                try {
+                    const authRes = await fetch("http://localhost:3000/api/auth/me", { credentials: "include" });
+                    if (authRes.ok) {
+                        const authData = await authRes.json();
+                        if (authData && authData.user) {
+                            const u = authData.user;
+                            loggedInName = u.name || u.username || '';
+                            loggedInAvatar = u.avatar || u.imageUrl || u.picture || null;
+                            loggedInId = u._id || u.id || null;
+                            loggedInStreak = Number(u.streak || 0);
+                            loggedInXp = Number(u.xp || u.focusTime || 0);
                         }
-                    } catch (e) { console.error("Could not parse local user:", e); }
-
-                    const myIndex = data.findIndex(u => u.name.toLowerCase() === loggedInName.toLowerCase());
-                    if (myIndex !== -1) {
-                        const me = data[myIndex];
-                        const totalUsers = data.length;
-                        const beatCount = totalUsers - (myIndex + 1);
-                        const percentile = totalUsers > 1 ? Math.floor((beatCount / totalUsers) * 100) : 99;
-                        setCurrentUserStats({
-                            name: me.name, avatar: me.avatar || loggedInAvatar,
-                            rank: myIndex + 1, streak: me.streak || 0,
-                            focusTime: me.xp || 0, percentile: Math.max(1, percentile)
-                        });
-                    } else {
-                        setCurrentUserStats({ name: loggedInName, avatar: loggedInAvatar, rank: '-', streak: 0, focusTime: 0, percentile: 0 });
                     }
+                } catch (authErr) {
+                    console.error("Error fetching current user from auth API:", authErr);
                 }
-            } catch (error) { console.error("Error fetching leaderboard data:", error); }
-            finally { setIsLoading(false); }
+
+                // 3. Match user in Leaderboard
+                let myIndex = -1;
+                if (loggedInId) {
+                    myIndex = leaderboardData.findIndex(u => u.id === loggedInId || u._id === loggedInId);
+                }
+                if (myIndex === -1 && loggedInName) {
+                    myIndex = leaderboardData.findIndex(u => u.name?.toLowerCase() === loggedInName.toLowerCase());
+                }
+
+                if (myIndex !== -1) {
+                    const me = leaderboardData[myIndex];
+                    const totalUsers = leaderboardData.length;
+                    const beatCount = totalUsers - (myIndex + 1);
+                    const percentile = totalUsers > 1 ? Math.floor((beatCount / totalUsers) * 100) : 99;
+                    
+                    setCurrentUserStats({
+                        name: me.name || loggedInName, 
+                        avatar: me.avatar || loggedInAvatar,
+                        rank: myIndex + 1, 
+                        streak: me.streak || loggedInStreak,
+                        focusTime: me.xp || loggedInXp, 
+                        percentile: Math.max(1, percentile)
+                    });
+                } else {
+                    // Not in top leaderboard, but we have their real stats from /auth/me!
+                    setCurrentUserStats({ 
+                        name: loggedInName, 
+                        avatar: loggedInAvatar, 
+                        rank: '-', 
+                        streak: loggedInStreak, 
+                        focusTime: loggedInXp, 
+                        percentile: 0 
+                    });
+                }
+            } catch (error) { 
+                console.error("Error fetching data:", error); 
+            } finally { 
+                setIsLoading(false); 
+            }
         };
-        fetchLeaderboardData();
+        fetchData();
     }, []);
 
     // ========== STACKED CARDS ANIMATION UI ==========
@@ -127,7 +171,7 @@ const Leaderboard = () => {
         return (
             <div className="top3-stack-container">
                 
-                {/* 🔥 NEW: LED SMOKE FLOATING PATTERN (Tightly fits behind cards horizontally) 🔥 */}
+                {/* 🔥 LED SMOKE FLOATING PATTERN 🔥 */}
                 <div className="smoke-fade-wrapper">
                     <div className="led-smoke-pattern" />
                     <div className="led-smoke-dots" />
@@ -135,7 +179,7 @@ const Leaderboard = () => {
 
                 {top3.map((user) => (
                     <div 
-                        key={user.id} 
+                        key={user.id || user._id} 
                         className="top3-wrapper" 
                         data-rank={user.rank}
                         onClick={() => navigate(`/profile/${user.id || user._id}`)}
@@ -352,14 +396,12 @@ const Leaderboard = () => {
 
                 .smoke-fade-wrapper {
                     position: absolute;
-                    width: 550px; /* Perfectly sized to wrap behind fanned-out cards */
+                    width: 550px; 
                     height: 220px;
                     z-index: 0;
                     pointer-events: none;
-                    /* This radial gradient fades the edges of the pattern into the darkness */
                     -webkit-mask-image: radial-gradient(ellipse at center, black 15%, transparent 68%);
                     mask-image: radial-gradient(ellipse at center, black 15%, transparent 68%);
-                    /* Floating animation */
                     animation: floatSmoke 4s ease-in-out infinite alternate;
                 }
 
@@ -371,7 +413,6 @@ const Leaderboard = () => {
                 .led-smoke-pattern {
                     position: absolute;
                     inset: 0;
-                    /* Beautiful Neon Liquid Colors (Pink, Yellow, Cyan, Purple) */
                     background: 
                         radial-gradient(circle at 15% 50%, #FF0055 0%, transparent 60%),
                         radial-gradient(circle at 85% 50%, #00F0FF 0%, transparent 60%),
@@ -390,22 +431,15 @@ const Leaderboard = () => {
                 .led-smoke-dots {
                     position: absolute;
                     inset: 0;
-                    /* Ye mask gaps me #0F0F0F (tera background color) fill karta hai */
-                    /* Jisse dots ka shape ban jata hai exactly teri image jaisa */
                     background-image: radial-gradient(circle, transparent 35%, #0F0F0F 45%);
-                    background-size: 8px 8px; /* Tighter matrix */
+                    background-size: 8px 8px; 
                     z-index: 1;
                 }
-
-                /* =========================================================
-                   🔥 YOUR EXACT ORIGINAL STACKED CARDS CSS 🔥 
-                   (Zero Layout Changes)
-                   ========================================================= */
                 
                 .top3-stack-container {
                     position: relative;
                     width: 100%;
-                    height: 240px; /* Original Height maintained */
+                    height: 240px; 
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -414,8 +448,8 @@ const Leaderboard = () => {
                 }
                 .top3-wrapper {
                     position: absolute;
-                    width: 170px;  /* Original Width */
-                    height: 220px; /* Original Height */
+                    width: 170px;  
+                    height: 220px; 
                     transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
                     will-change: transform;
                 }
@@ -427,7 +461,7 @@ const Leaderboard = () => {
                     border-radius: 16px;
                     display: flex;
                     flex-direction: column;
-                    padding: 16px 14px; /* Original Padding */
+                    padding: 16px 14px; 
                     transition: all 0.3s ease;
                     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
                     cursor: pointer;
@@ -435,32 +469,14 @@ const Leaderboard = () => {
                     position: relative;
                 }
                 
-                /* 🔥 DEFAULT STATE: Peeking out from sides 🔥 */
-                .top3-wrapper[data-rank="1"] { 
-                    z-index: 3; 
-                    transform: translateX(0) translateY(0) rotate(0deg); 
-                }
-                .top3-wrapper[data-rank="2"] { 
-                    z-index: 2; 
-                    transform: translateX(-40px) translateY(8px) rotate(-8deg) scale(0.95); 
-                }
-                .top3-wrapper[data-rank="3"] { 
-                    z-index: 1; 
-                    transform: translateX(40px) translateY(16px) rotate(8deg) scale(0.9); 
-                }
+                .top3-wrapper[data-rank="1"] { z-index: 3; transform: translateX(0) translateY(0) rotate(0deg); }
+                .top3-wrapper[data-rank="2"] { z-index: 2; transform: translateX(-40px) translateY(8px) rotate(-8deg) scale(0.95); }
+                .top3-wrapper[data-rank="3"] { z-index: 1; transform: translateX(40px) translateY(16px) rotate(8deg) scale(0.9); }
 
-                /* 🔥 HOVER STATE: Fan Out (Original Spacing) 🔥 */
-                .top3-stack-container:hover .top3-wrapper[data-rank="1"] { 
-                    transform: translateX(0) translateY(-10px) rotate(0deg); 
-                }
-                .top3-stack-container:hover .top3-wrapper[data-rank="2"] { 
-                    transform: translateX(-135%) translateY(0) rotate(0deg); 
-                }
-                .top3-stack-container:hover .top3-wrapper[data-rank="3"] { 
-                    transform: translateX(135%) translateY(0) rotate(0deg); 
-                }
+                .top3-stack-container:hover .top3-wrapper[data-rank="1"] { transform: translateX(0) translateY(-10px) rotate(0deg); }
+                .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-135%) translateY(0) rotate(0deg); }
+                .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translateX(135%) translateY(0) rotate(0deg); }
 
-                /* Individual Hover Interaction */
                 .top3-wrapper:hover { z-index: 20 !important; }
                 .top3-wrapper:hover .top3-card {
                     transform: translateY(-12px) scale(1.05);
@@ -563,7 +579,7 @@ const Leaderboard = () => {
                                         </div>
                                         
                                         {users.slice(3, 9).map((user, idx) => (
-                                            <div key={user.id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} style={{ display: 'flex', alignItems: 'center', padding: '0 20px', borderBottom: idx !== Math.min(users.length - 4, 5) ? `1px solid ${COLORS.border}` : 'none', flex: 1, cursor: 'pointer' }}>
+                                            <div key={user.id || user._id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} style={{ display: 'flex', alignItems: 'center', padding: '0 20px', borderBottom: idx !== Math.min(users.length - 4, 5) ? `1px solid ${COLORS.border}` : 'none', flex: 1, cursor: 'pointer' }}>
                                                 <div style={{ width: '55px', fontSize: '13px', fontWeight: 600, color: COLORS.textSecondary }}>{idx + 4}</div>
                                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} referrerPolicy="no-referrer"
@@ -580,40 +596,80 @@ const Leaderboard = () => {
                                 )}
                             </div>
 
-                            {/* ➡️ RIGHT COLUMN */}
+                            {/* ➡️ RIGHT COLUMN (Minimalist & Clean) */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 
-                                {/* Profile Card */}
-                                <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {/* Profile Card - Minimalist */}
+                                <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <img src={getAvatarUrl(currentUserStats.avatar, currentUserStats.name)} alt={currentUserStats.name} referrerPolicy="no-referrer"
-                                        style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: '#222', objectFit: 'cover', marginBottom: '14px' }} />
-                                    <h3 style={{ margin: '0 0 10px 0', fontSize: '17px', fontWeight: 700, color: '#FFF' }}>{currentUserStats.name}</h3>
-                                    <div style={{ background: '#222', borderRadius: '14px', padding: '5px 14px', fontSize: '11px', fontWeight: 500, color: COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Trophy size={12} color={COLORS.textSecondary} />
+                                        style={{ width: 72, height: 72, borderRadius: '50%', backgroundColor: '#222', objectFit: 'cover', marginBottom: '16px', border: `1px solid ${COLORS.border}` }} />
+                                    
+                                    {currentUserStats.name && (
+                                        <h3 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: 600, color: '#FFF', letterSpacing: '-0.01em' }}>
+                                            {currentUserStats.name}
+                                        </h3>
+                                    )}
+                                    
+                                    <div style={{ background: 'rgba(255, 255, 255, 0.04)', border: `1px solid ${COLORS.border}`, borderRadius: '20px', padding: '6px 16px', fontSize: '12px', fontWeight: 500, color: COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Trophy size={14} strokeWidth={2} color={COLORS.textSecondary} />
                                         Top {currentUserStats.percentile}% in Timmo users
                                     </div>
                                 </div>
 
-                                {/* Today's Summary */}
+                                {/* Today's Summary - Minimalist */}
                                 <div>
-                                    <h3 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: COLORS.textSecondary }}>Today's summary</h3>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                        {[
-                                            { label: 'Rank', value: `#${currentUserStats.rank}`, color: COLORS.gold, sub: 'Today' },
-                                            { label: 'Streak', value: `${currentUserStats.streak} days`, color: COLORS.orange, sub: 'Current' },
-                                            { label: 'Focus Time', value: formatXP(currentUserStats.focusTime), color: COLORS.blue, sub: 'Today' },
-                                            { label: 'Percentile', value: `${currentUserStats.percentile}%`, color: COLORS.green, sub: 'Today' },
-                                        ].map((item, i) => (
-                                            <div key={i} style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
-                                                <div style={{ fontSize: '11px', color: COLORS.textSecondary, fontWeight: 500, marginBottom: '6px' }}>{item.label}</div>
-                                                <div style={{ fontSize: '18px', fontWeight: 700, color: item.color }}>{item.value}</div>
-                                                <div style={{ fontSize: '10px', color: COLORS.textMuted, marginTop: '4px' }}>{item.sub}</div>
+                                    <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: COLORS.textPrimary }}>Today's summary</h3>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        
+                                        {/* Rank */}
+                                        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
+                                            <div style={{ fontSize: '12px', color: COLORS.textSecondary, fontWeight: 500, marginBottom: '8px' }}>Rank</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Crown size={14} color={COLORS.gold} strokeWidth={2.5} />
+                                                <span style={{ fontSize: '20px', fontWeight: 600, color: '#FFF', letterSpacing: '-0.02em' }}>
+                                                    {currentUserStats.rank !== '-' ? `#${currentUserStats.rank}` : '-'}
+                                                </span>
                                             </div>
-                                        ))}
+                                            <div style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '6px', fontWeight: 400 }}>Today</div>
+                                        </div>
+
+                                        {/* Streak */}
+                                        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
+                                            <div style={{ fontSize: '12px', color: COLORS.textSecondary, fontWeight: 500, marginBottom: '8px' }}>Streak</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Flame size={14} color={COLORS.orange} strokeWidth={2.5} />
+                                                <span style={{ fontSize: '20px', fontWeight: 600, color: '#FFF', letterSpacing: '-0.02em' }}>
+                                                    {currentUserStats.streak || 0}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '6px', fontWeight: 400 }}>Current</div>
+                                        </div>
+
+                                        {/* Focus Time */}
+                                        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
+                                            <div style={{ fontSize: '12px', color: COLORS.textSecondary, fontWeight: 500, marginBottom: '8px' }}>Focus Time</div>
+                                            <div style={{ fontSize: '20px', fontWeight: 600, color: '#FFF', letterSpacing: '-0.02em' }}>
+                                                {formatXP(currentUserStats.focusTime)}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '6px', fontWeight: 400 }}>Today</div>
+                                        </div>
+
+                                        {/* Percentile */}
+                                        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
+                                            <div style={{ fontSize: '12px', color: COLORS.textSecondary, fontWeight: 500, marginBottom: '8px' }}>Percentile</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Trophy size={14} color={COLORS.green} strokeWidth={2.5} />
+                                                <span style={{ fontSize: '20px', fontWeight: 600, color: '#FFF', letterSpacing: '-0.02em' }}>
+                                                    {currentUserStats.percentile}%
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '6px', fontWeight: 400 }}>Today</div>
+                                        </div>
+
                                     </div>
                                 </div>
 
-                                {/* 🔥 ENVELOPE FOLD CARD: YOU VS YOU 🔥 */}
+                                {/* 🔥 ENVELOPE FOLD CARD: YOU VS YOU (Clean) 🔥 */}
                                 <div className="env-card-wrapper">
                                     <div className="env-flap-shadow">
                                         <div className="env-flap"></div>
@@ -623,34 +679,32 @@ const Leaderboard = () => {
                                         <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                             
                                             <h2 style={{ 
-                                                fontSize: '28px', 
-                                                fontWeight: 900, 
+                                                fontSize: '22px', 
+                                                fontWeight: 700, 
                                                 color: '#FFFFFF', 
-                                                lineHeight: 1.15, 
+                                                lineHeight: 1.2, 
                                                 letterSpacing: '-0.02em',
-                                                margin: '0 0 12px 0',
-                                                textTransform: 'uppercase'
+                                                margin: '0 0 16px 0'
                                             }}>
                                                 It's always<br/>
-                                                <span style={{ color: COLORS.green }}>You vs You</span>
+                                                <span style={{ color: COLORS.textSecondary }}>You vs You</span>
                                             </h2>
                                             
-                                            <div style={{ width: '40px', height: '4px', backgroundColor: COLORS.green, borderRadius: '2px', marginBottom: '16px' }} />
+                                            <div style={{ width: '32px', height: '2px', backgroundColor: COLORS.border, borderRadius: '2px', marginBottom: '16px' }} />
                                             
                                             <p style={{ 
                                                 fontSize: '13px', 
                                                 color: COLORS.textSecondary, 
                                                 lineHeight: 1.6, 
                                                 margin: 0, 
-                                                fontWeight: 500, 
-                                                maxWidth: '90%' 
+                                                fontWeight: 400
                                             }}>
                                                 The only person you need to be better than is the person you were yesterday. Keep pushing.
                                             </p>
                                         </div>
                                         
                                         {/* Thinking Orb in Background */}
-                                        <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', transform: 'scale(2.2)', transformOrigin: 'bottom right', pointerEvents: 'none', zIndex: 1, opacity: 0.25 }}>
+                                        <div style={{ position: 'absolute', right: '-15px', bottom: '-15px', transform: 'scale(1.8)', transformOrigin: 'bottom right', pointerEvents: 'none', zIndex: 1, opacity: 0.15 }}>
                                             <ThinkingOrb state="searching" size={64} speed={0.65} />
                                         </div>
                                     </div>
