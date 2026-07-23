@@ -193,13 +193,24 @@ const TaskInput = memo(() => {
 
 const StrictModeToggle = memo(() => {
     const strictMode = useTimer(s => s.strictMode);
+    
     return (
         <div className="flex items-center justify-end w-full pr-2 mb-2 md:mb-6 flex-shrink-0">
-            <div className="flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => timerStore.setState({ strictMode: !strictMode })}>
-                <span className={`text-[10px] md:text-[11px] font-bold tracking-[0.1em] uppercase transition-colors ${strictMode ? 'text-[#E0E0E0]' : 'text-[#A3A3A3] group-hover:text-[#E0E0E0]'}`}>Strict Mode</span>
-                <div className={`w-8 h-4 md:w-9 md:h-5 rounded-full p-1 transition-colors duration-300 border flex items-center border-white/10 ${strictMode ? 'bg-white/10' : 'bg-[#1A1A1A]'}`} style={{boxShadow: 'inset 0 1px 3px rgba(0,0,0,1), 0 1px 0 rgba(255,255,255,0.05)'}}>
-                    <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-transform duration-300 ${strictMode ? 'bg-[#E0E0E0] translate-x-3 md:translate-x-4' : 'bg-[#A3A3A3] translate-x-0'}`} style={{boxShadow: '0 2px 4px rgba(0,0,0,0.5)'}} />
-                </div>
+            <div className="flex items-center gap-2 md:gap-3">
+                <span className={`text-[10px] md:text-[11px] font-bold tracking-[0.1em] uppercase transition-colors ${strictMode ? 'text-[#E0E0E0]' : 'text-[#A3A3A3]'}`}>
+                    Strict Mode
+                </span>
+                
+                {/* 🔥 PURE CSS BRUTALIST SWITCH 🔥 */}
+                <label className="switch sw-10">
+                    <input 
+                        type="checkbox" 
+                        tabIndex="-1" 
+                        checked={strictMode}
+                        onChange={(e) => timerStore.setState({ strictMode: e.target.checked })} 
+                    />
+                    <span className="track"><span className="thumb"></span></span>
+                </label>
             </div>
         </div>
     );
@@ -526,9 +537,57 @@ const Stopwatch = () => {
                 ::-webkit-scrollbar { width: 6px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+                /* =========================================
+                   🔥 PURE CSS BRUTALIST SWITCH 🔥
+                   ========================================= */
+                .switch {
+                  /* Theme tokens — override these to recolour the switch */
+                  --primary: #F4FF2B;
+                  --secondary: #0F191E;
+                  --surface: #E2F1F2;
+                  --on: var(--secondary);                                       
+                  --off: color-mix(in srgb, var(--secondary) 22%, var(--surface)); 
+                  --thumb: var(--surface);
+                  position: relative;
+                  display: inline-flex;
+                  cursor: pointer;
+                  -webkit-tap-highlight-color: transparent;
+                }
+                .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+                .switch .track {
+                  position: relative;
+                  width: 52px; height: 28px;
+                  border-radius: 9999px;
+                  background: var(--off);
+                  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+                }
+                .switch .thumb {
+                  position: absolute;
+                  top: 3px; left: 3px;
+                  width: 22px; height: 22px;
+                  border-radius: 50%;
+                  background: var(--thumb);
+                  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, box-shadow 0.3s ease;
+                }
+                .switch input:checked + .track { background: var(--on); }
+                .switch input:checked + .track .thumb { transform: translateX(24px); }
+                .switch input:focus-visible + .track { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+                /* .sw-10 Variation */
+                .sw-10 .track { background: var(--surface); border: 2px solid var(--secondary); box-shadow: 3px 3px 0 var(--secondary); }
+                .sw-10 .thumb { top: 1px; left: 1px; background: var(--secondary); }
+                .sw-10 input:checked + .track { background: var(--primary); }
+
+                /* Respect prefers-reduced-motion */
+                @media (prefers-reduced-motion: reduce) {
+                  .switch .track, .switch .thumb { transition: none !important; }
+                }
             `}</style>
+
             <div className="h-screen w-full relative font-sans text-white selection:bg-white/20 flex overflow-hidden" style={{ backgroundColor: COLORS.bg }}>
                 <ToastOverlay /> 
+                {/* ... baaki sab same rahega ... */}
                 
                 {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA 🔥 */}
                 <Sidebar activePage="Stopwatch" />

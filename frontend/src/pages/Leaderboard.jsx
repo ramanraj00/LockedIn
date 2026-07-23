@@ -8,7 +8,7 @@ import { ThinkingOrb } from 'thinking-orbs';
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
 
-// Modern warm-accent dashboard palette (inspired, NOT copied)
+// 🔥 Premium, soft metallic accents
 const COLORS = {
     bg: '#0F0F0F',
     card: '#171717',
@@ -17,10 +17,9 @@ const COLORS = {
     textSecondary: '#8A8A8A',
     textMuted: '#505050',
     border: '#262626',
-    // Warm data accents
-    gold: '#FACC15',
-    silver: '#94A3B8',
-    bronze: '#D97706',
+    gold: '#E4C573',   
+    silver: '#B4B4B8', 
+    bronze: '#C98B66', 
     green: '#34D399',
     blue: '#60A5FA',
     orange: '#FB923C',
@@ -115,64 +114,108 @@ const Leaderboard = () => {
         fetchLeaderboardData();
     }, []);
 
-    // ========== TOP 3 PODIUM CARDS (YOUR UNIQUE DESIGN) ==========
+    // ========== STACKED CARDS ANIMATION UI ==========
     const renderTop3Cards = () => {
         if (users.length < 3) return null;
+        
         const top3 = [
-            { ...users[0], rank: 1, accent: COLORS.gold, title: 'Champion' },
-            { ...users[1], rank: 2, accent: COLORS.silver, title: 'Challenger' },
-            { ...users[2], rank: 3, accent: COLORS.bronze, title: 'Contender' },
+            { ...users[0], rank: 1, accent: '#FBBF24', title: 'Champion' },   
+            { ...users[1], rank: 2, accent: '#94A3B8', title: 'Challenger' }, 
+            { ...users[2], rank: 3, accent: '#F97316', title: 'Contender' },  
         ];
 
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', width: '100%', marginBottom: '8px' }}>
-                {top3.map((user) => (
-                    <div key={user.id} style={{ 
-                        background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '10px', 
-                        padding: '20px', position: 'relative', overflow: 'hidden',
-                        transition: 'border-color 0.2s, background 0.2s', cursor: 'pointer'
-                    }}
-                    onClick={() => navigate(`/profile/${user.id || user._id}`)}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = user.accent + '40'; e.currentTarget.style.background = COLORS.cardHover; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = COLORS.border; e.currentTarget.style.background = COLORS.card; }}
-                    >
-                        {/* Subtle top accent line */}
-                        <div style={{ position: 'absolute', top: 0, left: '20%', right: '20%', height: '2px', background: `linear-gradient(90deg, transparent, ${user.accent}60, transparent)` }} />
+            <div className="top3-stack-container">
+                
+                {/* 🔥 NEW: LED SMOKE FLOATING PATTERN (Tightly fits behind cards horizontally) 🔥 */}
+                <div className="smoke-fade-wrapper">
+                    <div className="led-smoke-pattern" />
+                    <div className="led-smoke-dots" />
+                </div>
 
-                        {/* Avatar + Name Row */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div style={{ position: 'relative' }}>
+                {top3.map((user) => (
+                    <div 
+                        key={user.id} 
+                        className="top3-wrapper" 
+                        data-rank={user.rank}
+                        onClick={() => navigate(`/profile/${user.id || user._id}`)}
+                    >
+                        <div className="top3-card" style={{ padding: 0 }}>
+                            
+                            {/* 🔥 BANNER AREA */}
+                            <div style={{ 
+                                width: '100%', height: '100px', 
+                                position: 'relative', overflow: 'hidden',
+                                borderTopLeftRadius: '15px', borderTopRightRadius: '15px',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                {/* Blurred Background */}
+                                <div style={{ 
+                                    position: 'absolute', inset: -20, 
+                                    backgroundImage: `url(${getAvatarUrl(user.avatar, user.name)})`,
+                                    backgroundSize: 'cover', backgroundPosition: 'center',
+                                    filter: 'blur(15px) brightness(0.7)',
+                                    zIndex: 0
+                                }} />
+                                {/* Bottom fade gradient */}
+                                <div style={{ 
+                                    position: 'absolute', inset: 0, 
+                                    background: 'linear-gradient(to bottom, rgba(24,24,27,0) 20%, #18181B)', 
+                                    zIndex: 0 
+                                }} />
+
+                                {/* 🔥 CLEAN AVATAR */}
+                                <div style={{ position: 'relative', zIndex: 2, marginTop: '8px' }}>
                                     <img 
-                                        src={getAvatarUrl(user.avatar, user.name)} alt={user.name}
+                                        src={getAvatarUrl(user.avatar, user.name)} 
+                                        alt={user.name}
                                         referrerPolicy="no-referrer"
-                                        style={{ width: 42, height: 42, borderRadius: '50%', border: `2px solid ${user.accent}`, objectFit: 'cover' }} 
+                                        style={{ 
+                                            width: 64, height: 64, 
+                                            borderRadius: '12px',
+                                            objectFit: 'cover'
+                                        }} 
                                     />
-                                    <div style={{ position: 'absolute', bottom: -3, left: '50%', transform: 'translateX(-50%)', background: user.accent, color: '#000', width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '10px' }}>
-                                        {user.rank}
+                                    {/* Rank Pill */}
+                                    <div style={{ 
+                                        position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
+                                        background: '#18181B', borderRadius: '8px', padding: '2px 10px',
+                                        border: `1px solid ${user.accent}50`, display: 'flex', alignItems: 'center', gap: '4px',
+                                        boxShadow: '0 4px 8px rgba(0,0,0,0.5)', whiteSpace: 'nowrap'
+                                    }}>
+                                        {user.rank === 1 ? <Crown color={user.accent} size={11} strokeWidth={2.5} /> : <Trophy color={user.accent} size={11} strokeWidth={2.5} />}
+                                        <span style={{ fontSize: '11px', fontWeight: 800, color: user.accent }}>#{user.rank}</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: COLORS.textPrimary }}>{user.name}</h3>
-                                    <span style={{ fontSize: '10px', color: user.accent, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{user.title}</span>
-                                </div>
                             </div>
-                            {user.rank === 1 ? <Crown color={user.accent} size={22} /> : <Trophy color={user.accent} size={20} />}
-                        </div>
+                            
+                            {/* 🔥 NAME & TITLE */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1, zIndex: 2, padding: '16px 12px 10px 12px' }}>
+                                <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 700, color: '#FFF' }}>{user.name}</h3>
+                                <span style={{ fontSize: '11px', color: '#A1A1AA', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{user.title}</span>
+                            </div>
 
-                        {/* Stats */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${COLORS.border}`, paddingTop: '12px' }}>
-                            <div>
-                                <div style={{ fontSize: '10px', color: COLORS.textMuted, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '2px' }}>Focus</div>
-                                <div style={{ fontSize: '14px', color: COLORS.textPrimary, fontWeight: 700 }}>{formatXP(user.xp)}</div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '10px', color: COLORS.textMuted, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '2px' }}>Streak</div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
-                                    <span style={{ fontSize: '14px', color: COLORS.textPrimary, fontWeight: 700 }}>{user.streak || 0}</span>
-                                    <Flame size={13} color={COLORS.orange} />
+                            {/* 🔥 CLEAN BOLD STATS */}
+                            <div style={{ 
+                                display: 'flex', justifyContent: 'center', gap: '18px', 
+                                marginTop: 'auto', paddingBottom: '20px', zIndex: 2 
+                            }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#8A8A8A', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '2px' }}>FOCUS</span>
+                                    <span style={{ fontSize: '14px', color: '#FFF', fontWeight: 800 }}>{formatXP(user.xp)}</span>
+                                </div>
+                                
+                                <div style={{ width: '1px', height: '28px', backgroundColor: '#2A2A2D', alignSelf: 'center' }} />
+                                
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#8A8A8A', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '2px' }}>STREAK</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Flame size={13} color="#F97316" strokeWidth={3} />
+                                        <span style={{ fontSize: '14px', color: '#FFF', fontWeight: 800 }}>{user.streak || 0}</span>
+                                    </div>
                                 </div>
                             </div>
+                            
                         </div>
                     </div>
                 ))}
@@ -251,6 +294,179 @@ const Leaderboard = () => {
                     background-image: linear-gradient(90deg, #1A1A1A 0px, #242424 50%, #1A1A1A 100%);
                     background-size: 1000px 100%; animation: shimmer 2s infinite linear; border-radius: 6px;
                 }
+
+                /* 🔥 ENVELOPE FOLD ANIMATION 🔥 */
+                .env-card-wrapper {
+                    position: relative;
+                    flex: 1;
+                    display: flex;
+                    perspective: 1200px;
+                    cursor: pointer;
+                }
+                .env-card {
+                    background: ${COLORS.card};
+                    border: 1px solid ${COLORS.border};
+                    border-radius: 10px;
+                    padding: 36px 28px;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    position: relative;
+                    clip-path: polygon(0 0, calc(100% - 55px) 0, 100% 55px, 100% 100%, 0 100%);
+                    transition: background 0.4s ease;
+                }
+                .env-flap-shadow {
+                    position: absolute;
+                    top: -1px;
+                    right: -1px;
+                    width: 55px;
+                    height: 55px;
+                    filter: drop-shadow(-5px 5px 6px rgba(0,0,0,0.6));
+                    z-index: 20;
+                    transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .env-flap {
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(135deg, #333333 0%, #1A1A1A 100%);
+                    clip-path: polygon(0 0, 0 100%, 100% 100%);
+                    transform-origin: 50% 50%;
+                    transform: rotate3d(1, 1, 0, 0deg);
+                    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
+                }
+                .env-card-wrapper:hover .env-flap {
+                    transform: rotate3d(1, 1, 0, -180deg);
+                    background: ${COLORS.cardHover};
+                }
+                .env-card-wrapper:hover .env-flap-shadow {
+                    filter: drop-shadow(0 0 0 rgba(0,0,0,0));
+                }
+                .env-card-wrapper:hover .env-card {
+                    background: ${COLORS.cardHover};
+                }
+
+                /* =========================================================
+                   🔥 FLOATING LED DOT MATRIX PATTERN 🔥 
+                   ========================================================= */
+
+                .smoke-fade-wrapper {
+                    position: absolute;
+                    width: 550px; /* Perfectly sized to wrap behind fanned-out cards */
+                    height: 220px;
+                    z-index: 0;
+                    pointer-events: none;
+                    /* This radial gradient fades the edges of the pattern into the darkness */
+                    -webkit-mask-image: radial-gradient(ellipse at center, black 15%, transparent 68%);
+                    mask-image: radial-gradient(ellipse at center, black 15%, transparent 68%);
+                    /* Floating animation */
+                    animation: floatSmoke 4s ease-in-out infinite alternate;
+                }
+
+                @keyframes floatSmoke {
+                    0% { transform: translateY(6px); }
+                    100% { transform: translateY(-6px); }
+                }
+
+                .led-smoke-pattern {
+                    position: absolute;
+                    inset: 0;
+                    /* Beautiful Neon Liquid Colors (Pink, Yellow, Cyan, Purple) */
+                    background: 
+                        radial-gradient(circle at 15% 50%, #FF0055 0%, transparent 60%),
+                        radial-gradient(circle at 85% 50%, #00F0FF 0%, transparent 60%),
+                        radial-gradient(circle at 50% 15%, #FFB800 0%, transparent 60%),
+                        radial-gradient(circle at 50% 85%, #6E00FF 0%, transparent 60%);
+                    background-size: 150% 150%;
+                    animation: colorShift 8s ease-in-out infinite alternate;
+                }
+
+                @keyframes colorShift {
+                    0% { background-position: 0% 50%; opacity: 0.7; }
+                    50% { background-position: 100% 50%; opacity: 1; }
+                    100% { background-position: 50% 100%; opacity: 0.7; }
+                }
+
+                .led-smoke-dots {
+                    position: absolute;
+                    inset: 0;
+                    /* Ye mask gaps me #0F0F0F (tera background color) fill karta hai */
+                    /* Jisse dots ka shape ban jata hai exactly teri image jaisa */
+                    background-image: radial-gradient(circle, transparent 35%, #0F0F0F 45%);
+                    background-size: 8px 8px; /* Tighter matrix */
+                    z-index: 1;
+                }
+
+                /* =========================================================
+                   🔥 YOUR EXACT ORIGINAL STACKED CARDS CSS 🔥 
+                   (Zero Layout Changes)
+                   ========================================================= */
+                
+                .top3-stack-container {
+                    position: relative;
+                    width: 100%;
+                    height: 240px; /* Original Height maintained */
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 24px;
+                    perspective: 1200px; 
+                }
+                .top3-wrapper {
+                    position: absolute;
+                    width: 170px;  /* Original Width */
+                    height: 220px; /* Original Height */
+                    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    will-change: transform;
+                }
+                .top3-card {
+                    width: 100%;
+                    height: 100%;
+                    background: #18181B; 
+                    border: 1px solid #27272A;
+                    border-radius: 16px;
+                    display: flex;
+                    flex-direction: column;
+                    padding: 16px 14px; /* Original Padding */
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                    cursor: pointer;
+                    overflow: hidden; 
+                    position: relative;
+                }
+                
+                /* 🔥 DEFAULT STATE: Peeking out from sides 🔥 */
+                .top3-wrapper[data-rank="1"] { 
+                    z-index: 3; 
+                    transform: translateX(0) translateY(0) rotate(0deg); 
+                }
+                .top3-wrapper[data-rank="2"] { 
+                    z-index: 2; 
+                    transform: translateX(-40px) translateY(8px) rotate(-8deg) scale(0.95); 
+                }
+                .top3-wrapper[data-rank="3"] { 
+                    z-index: 1; 
+                    transform: translateX(40px) translateY(16px) rotate(8deg) scale(0.9); 
+                }
+
+                /* 🔥 HOVER STATE: Fan Out (Original Spacing) 🔥 */
+                .top3-stack-container:hover .top3-wrapper[data-rank="1"] { 
+                    transform: translateX(0) translateY(-10px) rotate(0deg); 
+                }
+                .top3-stack-container:hover .top3-wrapper[data-rank="2"] { 
+                    transform: translateX(-135%) translateY(0) rotate(0deg); 
+                }
+                .top3-stack-container:hover .top3-wrapper[data-rank="3"] { 
+                    transform: translateX(135%) translateY(0) rotate(0deg); 
+                }
+
+                /* Individual Hover Interaction */
+                .top3-wrapper:hover { z-index: 20 !important; }
+                .top3-wrapper:hover .top3-card {
+                    transform: translateY(-12px) scale(1.05);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+                    border-color: #27272A !important; 
+                }
             `}</style>
 
             <Sidebar activePage="Leaderboard" />
@@ -294,12 +510,12 @@ const Leaderboard = () => {
                     ) : (
                         <div className="animate-fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '20px', flex: 1, minHeight: 0 }}>
                             
-                            {/* ⬅️ LEFT COLUMN — YOUR UNIQUE LAYOUT */}
+                            {/* ⬅️ LEFT COLUMN */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, height: '100%' }}>
                                 
                                 {renderTop3Cards()}
 
-                                {/* Badge Showcase (YOUR UNIQUE FEATURE) */}
+                                {/* Badge Showcase */}
                                 <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', padding: '0 8px' }}>
                                         <h4 style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Badge Showcase</h4>
@@ -356,7 +572,7 @@ const Leaderboard = () => {
                                                 </div>
                                                 <div style={{ width: '130px', fontSize: '13px', color: COLORS.textPrimary, fontWeight: 500 }}>{formatXP(user.xp)}</div>
                                                 <div style={{ width: '80px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500, color: COLORS.textPrimary }}>
-                                                    <Flame size={13} color={COLORS.orange} strokeWidth={2.5} /> {user.streak || 0}
+                                                    <Flame size={13} color={`${COLORS.orange}80`} strokeWidth={2.5} /> {user.streak || 0}
                                                 </div>
                                             </div>
                                         ))}
@@ -397,24 +613,49 @@ const Leaderboard = () => {
                                     </div>
                                 </div>
 
-                                {/* You vs The World */}
-                                <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '24px', position: 'relative', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{ position: 'relative', zIndex: 10 }}>
-                                        <div style={{ fontSize: '11px', color: COLORS.textMuted, fontWeight: 700, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                                            {(users[0]?.name || 'YOU')} VS THE WORLD
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', marginBottom: '8px' }}>
-                                            <span style={{ fontSize: '38px', fontWeight: 900, color: '#FFF', lineHeight: 1 }}>{100 - currentUserStats.percentile}</span>
-                                            <span style={{ fontSize: '16px', fontWeight: 700, color: COLORS.textSecondary }}>%</span>
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: COLORS.textSecondary, lineHeight: 1.6 }}>
-                                            Focused more than {100 - currentUserStats.percentile}% of users today.
-                                        </div>
+                                {/* 🔥 ENVELOPE FOLD CARD: YOU VS YOU 🔥 */}
+                                <div className="env-card-wrapper">
+                                    <div className="env-flap-shadow">
+                                        <div className="env-flap"></div>
                                     </div>
-                                    <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', transform: 'scale(2.2)', transformOrigin: 'bottom right', pointerEvents: 'none', zIndex: 1, opacity: 0.75 }}>
-                                        <ThinkingOrb state="searching" size={64} speed={0.65} />
+                                    
+                                    <div className="env-card">
+                                        <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            
+                                            <h2 style={{ 
+                                                fontSize: '28px', 
+                                                fontWeight: 900, 
+                                                color: '#FFFFFF', 
+                                                lineHeight: 1.15, 
+                                                letterSpacing: '-0.02em',
+                                                margin: '0 0 12px 0',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                It's always<br/>
+                                                <span style={{ color: COLORS.green }}>You vs You</span>
+                                            </h2>
+                                            
+                                            <div style={{ width: '40px', height: '4px', backgroundColor: COLORS.green, borderRadius: '2px', marginBottom: '16px' }} />
+                                            
+                                            <p style={{ 
+                                                fontSize: '13px', 
+                                                color: COLORS.textSecondary, 
+                                                lineHeight: 1.6, 
+                                                margin: 0, 
+                                                fontWeight: 500, 
+                                                maxWidth: '90%' 
+                                            }}>
+                                                The only person you need to be better than is the person you were yesterday. Keep pushing.
+                                            </p>
+                                        </div>
+                                        
+                                        {/* Thinking Orb in Background */}
+                                        <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', transform: 'scale(2.2)', transformOrigin: 'bottom right', pointerEvents: 'none', zIndex: 1, opacity: 0.25 }}>
+                                            <ThinkingOrb state="searching" size={64} speed={0.65} />
+                                        </div>
                                     </div>
                                 </div>
+                                
                             </div>
                         </div>
                     )}
