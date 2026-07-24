@@ -89,7 +89,7 @@ const Top3Stack = memo(({ users, navigate }) => {
             <div className="fake-card-wrapper fake-l2">{renderFakeCard('#3b82f6', '#f59e0b', '#ef4444', 'left')}</div> 
             <div className="fake-card-wrapper fake-l1">{renderFakeCard('#ec4899', '#8b5cf6', '#eab308', 'left')}</div> 
 
-            {/* 🔥 RIGHT FAKE CARDS (New Theme inspired by Left's Neon Vibe) */}
+            {/* 🔥 RIGHT FAKE CARDS */}
             <div className="fake-card-wrapper fake-r3">{renderFakeCard('#4f46e5', '#a855f7', '#f97316', 'right')}</div> 
             <div className="fake-card-wrapper fake-r2">{renderFakeCard('#3b82f6', '#4338ca', '#f43f5e', 'right')}</div> 
             <div className="fake-card-wrapper fake-r1">{renderFakeCard('#8b5cf6', '#ec4899', '#06b6d4', 'right')}</div> 
@@ -163,10 +163,23 @@ const BadgeCarousel = memo(() => {
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             
-            {/* 🔥 FIX: Sleek Border added below Achievements Text */}
+            {/* 🔥 FIX: Same fade effect and proper length applied to Achievements text */}
             <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid #262626' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.01em', margin: 0 }}>Achievements</h3>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', paddingBottom: '8px' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.01em', margin: 0 }}>
+                            Achievements
+                        </h3>
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            width: '130%', 
+                            height: '2px',
+                            background: 'linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
+                            borderRadius: '2px'
+                        }} />
+                    </div>
                 </div>
             </div>
 
@@ -215,7 +228,6 @@ const BadgeCarousel = memo(() => {
                                                 }} 
                                             />
 
-                                            {/* LOCK ICON */}
                                             <div style={{
                                                 position: 'absolute',
                                                 bottom: '4px',
@@ -368,6 +380,12 @@ const Leaderboard = () => {
         <div style={{ display: 'flex', height: '100vh', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', sans-serif" }}>
             
             <style>{`
+                /* 🔥 ADDED LOCAL POPPINS FONT */
+                @font-face {
+                    font-family: 'Poppins';
+                    src: url('/poppin.ttf') format('truetype');
+                }
+
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { background-color: ${COLORS.bg}; }
                 
@@ -406,12 +424,10 @@ const Leaderboard = () => {
                     100% { left: 150%; }
                 }
 
-                /* 🔥 FAKE CARDS WRAPPER */
                 .fake-card-wrapper {
                     position: absolute;
                     width: 170px;
                     height: 220px;
-                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-out;
                     will-change: transform, opacity;
                     z-index: 0;
                     pointer-events: none;
@@ -428,31 +444,64 @@ const Leaderboard = () => {
                     overflow: hidden;
                 }
 
-                .fake-l3 { transform: translateX(-160px) translateY(58px) rotate(-26deg) scale(0.8) translateZ(0); }
-                .fake-r3 { transform: translateX(160px) translateY(58px) rotate(26deg) scale(0.8) translateZ(0); }
-                
-                .fake-l2 { transform: translateX(-120px) translateY(38px) rotate(-20deg) scale(0.85) translateZ(0); }
-                .fake-r2 { transform: translateX(120px) translateY(38px) rotate(20deg) scale(0.85) translateZ(0); }
-                
-                .fake-l1 { transform: translateX(-80px) translateY(22px) rotate(-14deg) scale(0.9) translateZ(0); }
-                .fake-r1 { transform: translateX(80px) translateY(22px) rotate(14deg) scale(0.9) translateZ(0); }
+                /* --- NORMAL STATE --- */
+                .fake-l1 { 
+                    transform: translateX(-80px) translateY(22px) rotate(-14deg) scale(0.9) translateZ(0); 
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.0s, opacity 0.4s ease-out 0.0s;
+                }
+                .fake-r1 { 
+                    transform: translateX(80px) translateY(22px) rotate(14deg) scale(0.9) translateZ(0); 
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.0s, opacity 0.4s ease-out 0.0s;
+                }
 
-                /* 🔥 HOVER EFFECT: Fake cards slide exactly BEHIND the real cards */
+                .fake-l2 { 
+                    transform: translateX(-120px) translateY(38px) rotate(-20deg) scale(0.85) translateZ(0); 
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s, opacity 0.4s ease-out 0.1s;
+                }
+                .fake-r2 { 
+                    transform: translateX(120px) translateY(38px) rotate(20deg) scale(0.85) translateZ(0); 
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s, opacity 0.4s ease-out 0.1s;
+                }
+
+                .fake-l3 { 
+                    transform: translateX(-160px) translateY(58px) rotate(-26deg) scale(0.8) translateZ(0); 
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s, opacity 0.4s ease-out 0.2s;
+                }
+                .fake-r3 { 
+                    transform: translateX(160px) translateY(58px) rotate(26deg) scale(0.8) translateZ(0); 
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s, opacity 0.4s ease-out 0.2s;
+                }
+
+                /* --- HOVER STATE --- */
                 .top3-stack-container:hover .fake-l1,
                 .top3-stack-container:hover .fake-l2,
                 .top3-stack-container:hover .fake-l3 { 
                     opacity: 0; 
                     transform: translateX(-135%) translateY(0) rotate(0deg) scale(0.9) translateZ(0); 
                 }
-                
+
                 .top3-stack-container:hover .fake-r1,
                 .top3-stack-container:hover .fake-r2,
                 .top3-stack-container:hover .fake-r3 { 
                     opacity: 0; 
                     transform: translateX(135%) translateY(0) rotate(0deg) scale(0.9) translateZ(0); 
                 }
+
+                .top3-stack-container:hover .fake-l3,
+                .top3-stack-container:hover .fake-r3 {
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.0s, opacity 0.3s ease-out 0.3s;
+                }
+
+                .top3-stack-container:hover .fake-l2,
+                .top3-stack-container:hover .fake-r2 {
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s, opacity 0.3s ease-out 0.4s;
+                }
+
+                .top3-stack-container:hover .fake-l1,
+                .top3-stack-container:hover .fake-r1 {
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s, opacity 0.3s ease-out 0.5s;
+                }
                 
-                /* 🔥 FIX: Margin Bottom 40px added here so cards float nicely above the table 🔥 */
                 .top3-stack-container {
                     position: relative;
                     width: 100%;
@@ -460,7 +509,7 @@ const Leaderboard = () => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    margin-bottom: 40px; /* <--- HERE */
+                    margin-bottom: 40px; 
                     perspective: 1200px; 
                 }
                 
@@ -515,10 +564,36 @@ const Leaderboard = () => {
                 <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     
                     {/* ===== HEADER ===== */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', marginLeft: '64px' }}>
-                        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.03em', margin: 0 }}>
-                            Leaderboard
-                        </h1>
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        marginBottom: '32px', 
+                        marginLeft: '64px'
+                    }}>
+                        <div style={{ position: 'relative', paddingBottom: '12px' }}>
+                            <h1 style={{ 
+                                fontFamily: "'Poppins', sans-serif", 
+                                fontSize: '48px', 
+                                fontWeight: 900, 
+                                color: '#FFF', 
+                                letterSpacing: '-0.02em', 
+                                margin: 0, 
+                                lineHeight: 1 
+                            }}>
+                                Leaderboard
+                            </h1>
+                            <div style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                width: '130%', 
+                                height: '2px',
+                                background: 'linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
+                                borderRadius: '2px'
+                            }} />
+                        </div>
+
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', border: `1px solid ${COLORS.border}`, borderRadius: '8px', padding: '7px 14px', fontSize: '11px', color: COLORS.textSecondary, fontWeight: 500 }}>
                                 <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: COLORS.green }} />
@@ -545,11 +620,10 @@ const Leaderboard = () => {
                         <div className="animate-fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0 }}>
                             
                             {/* ⬅️ LEFT COLUMN */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 0, height: '100%', paddingBottom: '16px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
                                 
                                 <Top3Stack users={users} navigate={navigate} />
 
-                                {/* Table for Rank 4+ */}
                                 {users.length > 3 && (
                                     <div className="table-container" style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', minHeight: 0, overflow: 'hidden' }}>
                                         <div style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, fontSize: '12px', color: COLORS.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: '#1A1A1A', flexShrink: 0 }}>
@@ -559,9 +633,17 @@ const Leaderboard = () => {
                                             <div style={{ width: '90px', textAlign: 'center' }}>Streak</div>
                                         </div>
                                         
-                                        <div className="table-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-                                            {users.slice(3, 9).map((user, idx, arr) => (
-                                                <div key={user.id || user._id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} style={{ display: 'flex', alignItems: 'center', padding: '16px 24px', borderBottom: idx !== arr.length - 1 ? `1px solid ${COLORS.border}` : 'none', cursor: 'pointer' }}>
+                                        <div className="table-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                            {users.slice(3, 8).map((user, idx, arr) => (
+                                                <div key={user.id || user._id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} 
+                                                     style={{ 
+                                                         flex: 1, 
+                                                         display: 'flex', 
+                                                         alignItems: 'center', 
+                                                         padding: '0 24px', 
+                                                         borderBottom: idx !== arr.length - 1 ? `1px solid ${COLORS.border}` : 'none', 
+                                                         cursor: 'pointer' 
+                                                     }}>
                                                     <div style={{ width: '60px', fontSize: '14px', fontWeight: 700, color: COLORS.textSecondary }}>#{idx + 4}</div>
                                                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                         <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} referrerPolicy="no-referrer"
@@ -581,14 +663,12 @@ const Leaderboard = () => {
                             </div>
 
                             {/* ➡️ RIGHT COLUMN */}
-                            <div className="right-column-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 0, height: '100%', paddingBottom: '16px', overflowY: 'hidden' }}>
+                            <div className="right-column-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
                                 
-                                {/* 🔥 BADGE CAROUSEL */}
-                                <div style={{ height: '240px', width: '100%', flexShrink: 0 }}>
+                                <div style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px' }}>
                                     <BadgeCarousel />
                                 </div>
 
-                                {/* 🔥 HERO CARD */}
                                 <div style={{
                                     position: 'relative',
                                     width: '100%',
@@ -659,7 +739,7 @@ const Leaderboard = () => {
                                     <div style={{ 
                                         position: 'relative', 
                                         zIndex: 1, 
-                                        flex: 1, 
+                                        flex: 1,
                                         display: 'grid', 
                                         gridTemplateColumns: '1fr 1fr', 
                                         gridTemplateRows: '1fr 1fr',
