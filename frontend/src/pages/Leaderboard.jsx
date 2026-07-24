@@ -62,8 +62,39 @@ const Top3Stack = memo(({ users, navigate }) => {
         { ...users[2], rank: 3, accent: '#F97316', title: 'Contender' },  
     ];
 
+    const renderFakeCard = (color1, color2, color3, side) => {
+        const angle = side === 'left' ? '135deg' : '225deg';
+        return (
+            <div className="fake-card">
+                <div style={{ width: '100%', height: '100px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
+                    <div style={{ 
+                        position: 'absolute', inset: -20, 
+                        background: `linear-gradient(${angle}, ${color1} 0%, ${color2} 50%, ${color3} 100%)`,
+                        opacity: 0.85,
+                        filter: 'blur(15px)',
+                        zIndex: 0,
+                        transform: 'translateZ(0)',
+                        willChange: 'transform'
+                    }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(24,24,27,0) 20%, #18181B)', zIndex: 0 }} />
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="top3-stack-container">
+            {/* 🔥 LEFT FAKE CARDS */}
+            <div className="fake-card-wrapper fake-l3">{renderFakeCard('#06b6d4', '#3b82f6', '#8b5cf6', 'left')}</div> 
+            <div className="fake-card-wrapper fake-l2">{renderFakeCard('#3b82f6', '#f59e0b', '#ef4444', 'left')}</div> 
+            <div className="fake-card-wrapper fake-l1">{renderFakeCard('#ec4899', '#8b5cf6', '#eab308', 'left')}</div> 
+
+            {/* 🔥 RIGHT FAKE CARDS (New Theme inspired by Left's Neon Vibe) */}
+            <div className="fake-card-wrapper fake-r3">{renderFakeCard('#4f46e5', '#a855f7', '#f97316', 'right')}</div> 
+            <div className="fake-card-wrapper fake-r2">{renderFakeCard('#3b82f6', '#4338ca', '#f43f5e', 'right')}</div> 
+            <div className="fake-card-wrapper fake-r1">{renderFakeCard('#8b5cf6', '#ec4899', '#06b6d4', 'right')}</div> 
+
+            {/* REAL CARDS */}
             {top3.map((user) => (
                 <div 
                     key={user.id || user._id} 
@@ -132,8 +163,11 @@ const BadgeCarousel = memo(() => {
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             
-            <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.01em', margin: 0 }}>Achievements</h3>
+            {/* 🔥 FIX: Sleek Border added below Achievements Text */}
+            <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid #262626' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.01em', margin: 0 }}>Achievements</h3>
+                </div>
             </div>
 
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1200px' }}>
@@ -146,13 +180,13 @@ const BadgeCarousel = memo(() => {
                     slideToClickedSlide={true} 
                     coverflowEffect={{
                         rotate: 0,       
-                        stretch: 220,    // 🔥 YE RAHA MAIN CHANGE! (Space ko directly 110 -> 220 kiya hai gap ke liye)
+                        stretch: 250,    
                         depth: 300,      
                         modifier: 1,   
                         slideShadows: false, 
                     }}
                     modules={[EffectCoverflow]}
-                    style={{ width: '100%', maxWidth: '550px', height: '160px' }} // 🔥 MaxWidth bada ki taaki badges cut na ho border par
+                    style={{ width: '100%', maxWidth: '550px', height: '160px' }} 
                 >
                     {ALL_BADGES.map((badge) => (
                         <SwiperSlide key={badge.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
@@ -371,8 +405,54 @@ const Leaderboard = () => {
                     20% { left: 150%; }
                     100% { left: 150%; }
                 }
+
+                /* 🔥 FAKE CARDS WRAPPER */
+                .fake-card-wrapper {
+                    position: absolute;
+                    width: 170px;
+                    height: 220px;
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease-out;
+                    will-change: transform, opacity;
+                    z-index: 0;
+                    pointer-events: none;
+                }
+
+                .fake-card {
+                    width: 100%;
+                    height: 100%;
+                    background: #18181B; 
+                    border: 1px solid #27272A;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .fake-l3 { transform: translateX(-160px) translateY(58px) rotate(-26deg) scale(0.8) translateZ(0); }
+                .fake-r3 { transform: translateX(160px) translateY(58px) rotate(26deg) scale(0.8) translateZ(0); }
                 
-                /* 🔥 SUPER SMOOTH CARD ANIMATIONS 🔥 */
+                .fake-l2 { transform: translateX(-120px) translateY(38px) rotate(-20deg) scale(0.85) translateZ(0); }
+                .fake-r2 { transform: translateX(120px) translateY(38px) rotate(20deg) scale(0.85) translateZ(0); }
+                
+                .fake-l1 { transform: translateX(-80px) translateY(22px) rotate(-14deg) scale(0.9) translateZ(0); }
+                .fake-r1 { transform: translateX(80px) translateY(22px) rotate(14deg) scale(0.9) translateZ(0); }
+
+                /* 🔥 HOVER EFFECT: Fake cards slide exactly BEHIND the real cards */
+                .top3-stack-container:hover .fake-l1,
+                .top3-stack-container:hover .fake-l2,
+                .top3-stack-container:hover .fake-l3 { 
+                    opacity: 0; 
+                    transform: translateX(-135%) translateY(0) rotate(0deg) scale(0.9) translateZ(0); 
+                }
+                
+                .top3-stack-container:hover .fake-r1,
+                .top3-stack-container:hover .fake-r2,
+                .top3-stack-container:hover .fake-r3 { 
+                    opacity: 0; 
+                    transform: translateX(135%) translateY(0) rotate(0deg) scale(0.9) translateZ(0); 
+                }
+                
+                /* 🔥 FIX: Margin Bottom 40px added here so cards float nicely above the table 🔥 */
                 .top3-stack-container {
                     position: relative;
                     width: 100%;
@@ -380,7 +460,7 @@ const Leaderboard = () => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    margin-bottom: 0px;
+                    margin-bottom: 40px; /* <--- HERE */
                     perspective: 1200px; 
                 }
                 
@@ -388,7 +468,7 @@ const Leaderboard = () => {
                     position: absolute;
                     width: 170px;  
                     height: 220px; 
-                    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
                     will-change: transform;
                     transform: translateZ(0);
                 }
@@ -415,7 +495,7 @@ const Leaderboard = () => {
                 
                 .top3-wrapper[data-rank="1"] { z-index: 3; transform: translateX(0) translateY(0) rotate(0deg) translateZ(0); }
                 .top3-wrapper[data-rank="2"] { z-index: 2; transform: translateX(-40px) translateY(8px) rotate(-8deg) scale(0.95) translateZ(0); }
-                .top3-wrapper[data-rank="3"] { z-index: 1; transform: translateX(40px) translateY(16px) rotate(8deg) scale(0.9) translateZ(0); }
+                .top3-wrapper[data-rank="3"] { z-index: 1; transform: translateX(40px) translateY(8px) rotate(8deg) scale(0.95) translateZ(0); }
 
                 .top3-stack-container:hover .top3-wrapper[data-rank="1"] { transform: translateX(0) translateY(-10px) rotate(0deg) translateZ(0); }
                 .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-135%) translateY(0) rotate(0deg) translateZ(0); }
@@ -490,7 +570,6 @@ const Leaderboard = () => {
                                                     </div>
                                                     <div style={{ width: '140px', fontSize: '14px', color: COLORS.textPrimary, fontWeight: 600 }}>{formatXP(user.xp)}</div>
                                                     <div style={{ width: '90px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: COLORS.textPrimary }}>
-                                                        {/* 🔥 Fire icon size 24px in table */}
                                                         <img src="/color-fire.png" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} /> 
                                                         {user.streak || 0}
                                                     </div>
@@ -522,10 +601,23 @@ const Leaderboard = () => {
                                     flexDirection: 'column',
                                     boxShadow: '0 8px 30px rgba(0,0,0,0.3)', 
                                 }}>
+                                    
+                                    <div style={{
+                                        position: 'absolute',
+                                        inset: -20,
+                                        backgroundImage: `url(${getAvatarUrl(currentUserStats.avatar, currentUserStats.name)})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        filter: 'blur(30px) brightness(0.5)',
+                                        zIndex: 0,
+                                        transform: 'translateZ(0)',
+                                        willChange: 'transform'
+                                    }} />
+
                                     <div style={{
                                         position: 'absolute',
                                         inset: 0,
-                                        background: 'linear-gradient(to bottom, #1E1E1E 0%, #121212 150px)',
+                                        background: 'linear-gradient(to bottom, rgba(18,18,18,0.2) 0%, #121212 150px)',
                                         zIndex: 0
                                     }} />
 
