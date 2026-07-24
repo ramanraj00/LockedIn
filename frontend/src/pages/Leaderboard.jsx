@@ -163,7 +163,6 @@ const BadgeCarousel = memo(() => {
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             
-            {/* 🔥 FIX: Same fade effect and proper length applied to Achievements text */}
             <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div style={{ position: 'relative', paddingBottom: '8px' }}>
@@ -396,8 +395,8 @@ const Leaderboard = () => {
                 .animate-fade-up { animation: fadeUp 0.35s ease forwards; }
 
                 /* 🔥 SCROLLBAR HIDING 🔥 */
-                .right-column-scroll::-webkit-scrollbar, .table-scroll::-webkit-scrollbar { display: none; }
-                .right-column-scroll, .table-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+                .right-column-scroll::-webkit-scrollbar, .table-scroll::-webkit-scrollbar, .main-content-wrapper::-webkit-scrollbar { display: none; }
+                .right-column-scroll, .table-scroll, .main-content-wrapper { -ms-overflow-style: none; scrollbar-width: none; }
 
                 @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
                 .skeleton {
@@ -556,15 +555,55 @@ const Leaderboard = () => {
                     box-shadow: 0 20px 40px rgba(0,0,0,0.8);
                     border-color: #27272A !important; 
                 }
+
+                /* 🔥 MOBILE RESPONSIVE MEDIA QUERIES 🔥 */
+                @media (max-width: 1024px) {
+                    .main-content-wrapper { padding: 56px 20px 20px 20px !important; overflow-y: auto !important; }
+                    .leaderboard-header { margin-left: 0 !important; flex-direction: column !important; align-items: flex-start !important; gap: 12px; margin-bottom: 24px !important; }
+                    .main-grid { display: flex !important; flex-direction: column !important; gap: 32px; height: auto !important; min-height: auto !important; }
+                    .left-col, .right-col { height: auto !important; min-height: auto !important; }
+                    
+                    .table-container { flex: none !important; height: auto !important; min-height: auto !important; }
+                    .table-scroll { overflow-y: visible !important; height: auto !important; }
+                    .list-row { padding: 20px 24px !important; } 
+                }
+
+                @media (max-width: 768px) {
+                    .leaderboard-title { font-size: 36px !important; }
+                    .table-container { overflow-x: auto !important; }
+                    .table-header-row, .table-scroll { min-width: 500px; }
+                    
+                    .top3-stack-container { transform: scale(0.75) !important; margin-bottom: 10px !important; height: 280px !important; margin-top: 10px !important; }
+                    
+                    .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-110%) translateY(0) rotate(0deg) translateZ(0) !important; }
+                    .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translateX(110%) translateY(0) rotate(0deg) translateZ(0) !important; }
+                    
+                    .stats-header { padding: 24px 16px !important; flex-direction: column !important; text-align: center !important; }
+                    .stats-val { font-size: 22px !important; }
+                    
+                    .badge-carousel-wrapper { transform: scale(0.85); }
+                }
+
+                @media (max-width: 480px) {
+                    .leaderboard-title { font-size: 32px !important; }
+                    
+                    .top3-stack-container { transform: scale(0.6) !important; margin-bottom: 0px !important; height: 260px !important; margin-top: 10px !important; }
+                    
+                    .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-105%) translateY(0) rotate(0deg) translateZ(0) !important; }
+                    .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translateX(105%) translateY(0) rotate(0deg) translateZ(0) !important; }
+                    
+                    .badge-carousel-wrapper { transform: scale(0.7); margin-bottom: 10px !important; }
+                }
             `}</style>
 
             <Sidebar activePage="Leaderboard" />
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 36px', width: '100%', overflowY: 'hidden' }}>
+            {/* 🔥 main-content-wrapper (Scrolls fully on mobile) */}
+            <div className="main-content-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 36px', width: '100%', overflowY: 'hidden' }}>
                 <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     
                     {/* ===== HEADER ===== */}
-                    <div style={{ 
+                    <div className="leaderboard-header" style={{ 
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center', 
@@ -572,7 +611,7 @@ const Leaderboard = () => {
                         marginLeft: '64px'
                     }}>
                         <div style={{ position: 'relative', paddingBottom: '12px' }}>
-                            <h1 style={{ 
+                            <h1 className="leaderboard-title" style={{ 
                                 fontFamily: "'Poppins', sans-serif", 
                                 fontSize: '48px', 
                                 fontWeight: 900, 
@@ -603,30 +642,30 @@ const Leaderboard = () => {
                     </div>
 
                     {isLoading ? (
-                        <div className="animate-fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '20px', flex: 1, minHeight: 0 }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '20px', flex: 1, minHeight: 0 }}>
+                            <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
                                     {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: '140px', borderRadius: '10px' }} />)}
                                 </div>
                                 <div className="skeleton" style={{ height: '90px', borderRadius: '10px' }} />
                                 <div className="skeleton" style={{ flex: 1, borderRadius: '10px' }} />
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            <div className="right-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <div className="skeleton" style={{ height: '240px', borderRadius: '10px', background: 'transparent' }} />
                                 <div className="skeleton" style={{ flex: 1, borderRadius: '10px' }} />
                             </div>
                         </div>
                     ) : (
-                        <div className="animate-fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0 }}>
+                        <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0 }}>
                             
                             {/* ⬅️ LEFT COLUMN */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
+                            <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
                                 
                                 <Top3Stack users={users} navigate={navigate} />
 
                                 {users.length > 3 && (
-                                    <div className="table-container" style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '16px', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', minHeight: 0, overflow: 'hidden' }}>
-                                        <div style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, fontSize: '12px', color: COLORS.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: '#1A1A1A', flexShrink: 0 }}>
+                                    <div className="table-container" style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '0', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', minHeight: 0, overflow: 'hidden' }}>
+                                        <div className="table-header-row" style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, fontSize: '12px', color: COLORS.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: '#1A1A1A', flexShrink: 0 }}>
                                             <div style={{ width: '60px' }}>Rank</div>
                                             <div style={{ flex: 1 }}>Name</div>
                                             <div style={{ width: '140px' }}>Today's time</div>
@@ -663,18 +702,19 @@ const Leaderboard = () => {
                             </div>
 
                             {/* ➡️ RIGHT COLUMN */}
-                            <div className="right-column-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
+                            <div className="right-col right-column-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
                                 
-                                <div style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px' }}>
+                                <div className="badge-carousel-wrapper" style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px' }}>
                                     <BadgeCarousel />
                                 </div>
 
+                                {/* 🔥 FIXED: Right profile card borderRadius set to '0' 🔥 */}
                                 <div style={{
                                     position: 'relative',
                                     width: '100%',
                                     flex: 1, 
                                     background: '#121212',
-                                    borderRadius: '24px',
+                                    borderRadius: '0',
                                     border: '1px solid #27272A',
                                     overflow: 'hidden',
                                     display: 'flex',
@@ -702,7 +742,7 @@ const Leaderboard = () => {
                                     }} />
 
                                     {/* 1. TOP SECTION */}
-                                    <div style={{ position: 'relative', zIndex: 1, padding: '36px 32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <div className="stats-header" style={{ position: 'relative', zIndex: 1, padding: '36px 32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
                                         <img 
                                             src={getAvatarUrl(currentUserStats.avatar, currentUserStats.name)} 
                                             alt={currentUserStats.name} 
@@ -746,22 +786,22 @@ const Leaderboard = () => {
                                     }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px' }}>
                                             <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>CURRENT RANK</span>
-                                            <span style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>#{currentUserStats.rank !== '-' ? currentUserStats.rank : '-'}</span>
+                                            <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>#{currentUserStats.rank !== '-' ? currentUserStats.rank : '-'}</span>
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px' }}>
                                             <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>PERCENTILE</span>
-                                            <span style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>Top {currentUserStats.percentile}%</span>
+                                            <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>Top {currentUserStats.percentile}%</span>
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '16px' }}>
                                             <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>FOCUS TIME</span>
-                                            <span style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{formatXP(currentUserStats.focusTime)}</span>
+                                            <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{formatXP(currentUserStats.focusTime)}</span>
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
                                             <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>DAY STREAK</span>
-                                            <span style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{currentUserStats.streak || 0}</span>
+                                            <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{currentUserStats.streak || 0}</span>
                                         </div>
                                     </div>
                                     
