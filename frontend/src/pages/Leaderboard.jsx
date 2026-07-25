@@ -51,7 +51,7 @@ const getAvatarUrl = (avatar, name) => {
 };
 
 // =======================================================
-// 🔥 COMPONENT: Clean & SUPER SMOOTH Top3 Stack
+// 🔥 COMPONENT: Clean & SUPER SMOOTH Top3 Stack (SAFARI OPTIMIZED)
 // =======================================================
 const Top3Stack = memo(({ users, navigate }) => {
     if (users.length < 3) return null;
@@ -67,14 +67,12 @@ const Top3Stack = memo(({ users, navigate }) => {
         return (
             <div className="fake-card">
                 <div style={{ width: '100%', height: '100px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
+                    {/* SAFARI FIX: Removed blur(15px) & willChange on inner child because linear-gradient is already smooth */}
                     <div style={{ 
                         position: 'absolute', inset: -20, 
                         background: `linear-gradient(${angle}, ${color1} 0%, ${color2} 50%, ${color3} 100%)`,
                         opacity: 0.85,
-                        filter: 'blur(15px)',
-                        zIndex: 0,
-                        transform: 'translateZ(0)',
-                        willChange: 'transform'
+                        zIndex: 0
                     }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(24,24,27,0) 20%, #18181B)', zIndex: 0 }} />
                 </div>
@@ -104,7 +102,8 @@ const Top3Stack = memo(({ users, navigate }) => {
                 >
                     <div className="top3-card" style={{ padding: 0 }}>
                         <div style={{ width: '100%', height: '100px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '15px', borderTopRightRadius: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${getAvatarUrl(user.avatar, user.name)})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px) brightness(0.7)', zIndex: 0, transform: 'translateZ(0)', willChange: 'transform' }} />
+                            {/* SAFARI FIX: Removed translateZ and willChange from this inner blurred layer */}
+                            <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${getAvatarUrl(user.avatar, user.name)})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px) brightness(0.7)', zIndex: 0 }} />
                             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(24,24,27,0) 20%, #18181B)', zIndex: 0 }} />
                             
                             <div style={{ position: 'relative', zIndex: 2, marginTop: '8px' }}>
@@ -423,6 +422,22 @@ const Leaderboard = () => {
                     100% { left: 150%; }
                 }
 
+                /* 🔥 L-SHAPE DECORATIVE DASHED CORNER 🔥 */
+                .decorative-corner {
+                    position: absolute;
+                    top: -32px;
+                    right: calc(360px + 32px);
+                    width: 90px;
+                    height: 90px;
+                    border-top: 2px dashed rgba(255,255,255,0.25);
+                    border-right: 2px dashed rgba(255,255,255,0.25);
+                    border-top-right-radius: 16px;
+                    pointer-events: none;
+                    z-index: 10;
+                    -webkit-mask-image: linear-gradient(to bottom left, black 10%, transparent 90%);
+                    mask-image: linear-gradient(to bottom left, black 10%, transparent 90%);
+                }
+
                 .fake-card-wrapper {
                     position: absolute;
                     width: 170px;
@@ -430,6 +445,8 @@ const Leaderboard = () => {
                     will-change: transform, opacity;
                     z-index: 0;
                     pointer-events: none;
+                    -webkit-backface-visibility: hidden;
+                    backface-visibility: hidden;
                 }
 
                 .fake-card {
@@ -441,33 +458,35 @@ const Leaderboard = () => {
                     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
                     position: relative;
                     overflow: hidden;
+                    -webkit-backface-visibility: hidden;
+                    backface-visibility: hidden;
                 }
 
-                /* --- NORMAL STATE --- */
+                /* --- SAFARI FIX: Using translate3d instead of translateX/Y for GPU Acceleration --- */
                 .fake-l1 { 
-                    transform: translateX(-80px) translateY(22px) rotate(-14deg) scale(0.9) translateZ(0); 
+                    transform: translate3d(-80px, 22px, 0) rotate(-14deg) scale(0.9); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.0s, opacity 0.4s ease-out 0.0s;
                 }
                 .fake-r1 { 
-                    transform: translateX(80px) translateY(22px) rotate(14deg) scale(0.9) translateZ(0); 
+                    transform: translate3d(80px, 22px, 0) rotate(14deg) scale(0.9); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.0s, opacity 0.4s ease-out 0.0s;
                 }
 
                 .fake-l2 { 
-                    transform: translateX(-120px) translateY(38px) rotate(-20deg) scale(0.85) translateZ(0); 
+                    transform: translate3d(-120px, 38px, 0) rotate(-20deg) scale(0.85); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s, opacity 0.4s ease-out 0.1s;
                 }
                 .fake-r2 { 
-                    transform: translateX(120px) translateY(38px) rotate(20deg) scale(0.85) translateZ(0); 
+                    transform: translate3d(120px, 38px, 0) rotate(20deg) scale(0.85); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s, opacity 0.4s ease-out 0.1s;
                 }
 
                 .fake-l3 { 
-                    transform: translateX(-160px) translateY(58px) rotate(-26deg) scale(0.8) translateZ(0); 
+                    transform: translate3d(-160px, 58px, 0) rotate(-26deg) scale(0.8); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s, opacity 0.4s ease-out 0.2s;
                 }
                 .fake-r3 { 
-                    transform: translateX(160px) translateY(58px) rotate(26deg) scale(0.8) translateZ(0); 
+                    transform: translate3d(160px, 58px, 0) rotate(26deg) scale(0.8); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s, opacity 0.4s ease-out 0.2s;
                 }
 
@@ -476,14 +495,14 @@ const Leaderboard = () => {
                 .top3-stack-container:hover .fake-l2,
                 .top3-stack-container:hover .fake-l3 { 
                     opacity: 0; 
-                    transform: translateX(-135%) translateY(0) rotate(0deg) scale(0.9) translateZ(0); 
+                    transform: translate3d(-135%, 0, 0) rotate(0deg) scale(0.9); 
                 }
 
                 .top3-stack-container:hover .fake-r1,
                 .top3-stack-container:hover .fake-r2,
                 .top3-stack-container:hover .fake-r3 { 
                     opacity: 0; 
-                    transform: translateX(135%) translateY(0) rotate(0deg) scale(0.9) translateZ(0); 
+                    transform: translate3d(135%, 0, 0) rotate(0deg) scale(0.9); 
                 }
 
                 .top3-stack-container:hover .fake-l3,
@@ -518,7 +537,11 @@ const Leaderboard = () => {
                     height: 220px; 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
                     will-change: transform;
-                    transform: translateZ(0);
+                    /* SAFARI FIX */
+                    transform: translate3d(0, 0, 0);
+                    -webkit-transform: translate3d(0, 0, 0);
+                    -webkit-backface-visibility: hidden;
+                    backface-visibility: hidden;
                 }
                 
                 .top3-card {
@@ -536,22 +559,24 @@ const Leaderboard = () => {
                     overflow: hidden; 
                     position: relative;
                     will-change: transform;
-                    transform: translateZ(0);
+                    /* SAFARI FIX */
+                    transform: translate3d(0, 0, 0);
+                    -webkit-transform: translate3d(0, 0, 0);
                     -webkit-backface-visibility: hidden;
                     backface-visibility: hidden;
                 }
                 
-                .top3-wrapper[data-rank="1"] { z-index: 3; transform: translateX(0) translateY(0) rotate(0deg) translateZ(0); }
-                .top3-wrapper[data-rank="2"] { z-index: 2; transform: translateX(-40px) translateY(8px) rotate(-8deg) scale(0.95) translateZ(0); }
-                .top3-wrapper[data-rank="3"] { z-index: 1; transform: translateX(40px) translateY(8px) rotate(8deg) scale(0.95) translateZ(0); }
+                .top3-wrapper[data-rank="1"] { z-index: 3; transform: translate3d(0, 0, 0) rotate(0deg); }
+                .top3-wrapper[data-rank="2"] { z-index: 2; transform: translate3d(-40px, 8px, 0) rotate(-8deg) scale(0.95); }
+                .top3-wrapper[data-rank="3"] { z-index: 1; transform: translate3d(40px, 8px, 0) rotate(8deg) scale(0.95); }
 
-                .top3-stack-container:hover .top3-wrapper[data-rank="1"] { transform: translateX(0) translateY(-10px) rotate(0deg) translateZ(0); }
-                .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-135%) translateY(0) rotate(0deg) translateZ(0); }
-                .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translateX(135%) translateY(0) rotate(0deg) translateZ(0); }
+                .top3-stack-container:hover .top3-wrapper[data-rank="1"] { transform: translate3d(0, -10px, 0) rotate(0deg); }
+                .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translate3d(-135%, 0, 0) rotate(0deg); }
+                .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translate3d(135%, 0, 0) rotate(0deg); }
 
                 .top3-wrapper:hover { z-index: 20 !important; }
                 .top3-wrapper:hover .top3-card {
-                    transform: translateY(-12px) scale(1.05) translateZ(0);
+                    transform: translate3d(0, -12px, 0) scale(1.05);
                     box-shadow: 0 20px 40px rgba(0,0,0,0.8);
                     border-color: #27272A !important; 
                 }
@@ -566,6 +591,8 @@ const Leaderboard = () => {
                     .table-container { flex: none !important; height: auto !important; min-height: auto !important; }
                     .table-scroll { overflow-y: visible !important; height: auto !important; }
                     .list-row { padding: 20px 24px !important; } 
+                    
+                    .decorative-corner { display: none; } /* HIDDEN ON MOBILE */
                 }
 
                 @media (max-width: 768px) {
@@ -575,8 +602,8 @@ const Leaderboard = () => {
                     
                     .top3-stack-container { transform: scale(0.75) !important; margin-bottom: 10px !important; height: 280px !important; margin-top: 10px !important; }
                     
-                    .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-110%) translateY(0) rotate(0deg) translateZ(0) !important; }
-                    .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translateX(110%) translateY(0) rotate(0deg) translateZ(0) !important; }
+                    .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translate3d(-110%, 0, 0) rotate(0deg) !important; }
+                    .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translate3d(110%, 0, 0) rotate(0deg) !important; }
                     
                     .stats-header { padding: 24px 16px !important; flex-direction: column !important; text-align: center !important; }
                     .stats-val { font-size: 22px !important; }
@@ -589,8 +616,8 @@ const Leaderboard = () => {
                     
                     .top3-stack-container { transform: scale(0.6) !important; margin-bottom: 0px !important; height: 260px !important; margin-top: 10px !important; }
                     
-                    .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translateX(-105%) translateY(0) rotate(0deg) translateZ(0) !important; }
-                    .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translateX(105%) translateY(0) rotate(0deg) translateZ(0) !important; }
+                    .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translate3d(-105%, 0, 0) rotate(0deg) !important; }
+                    .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translate3d(105%, 0, 0) rotate(0deg) !important; }
                     
                     .badge-carousel-wrapper { transform: scale(0.7); margin-bottom: 10px !important; }
                 }
@@ -598,7 +625,7 @@ const Leaderboard = () => {
 
             <Sidebar activePage="Leaderboard" />
 
-            {/* 🔥 main-content-wrapper (Scrolls fully on mobile) */}
+            {/* 🔥 main-content-wrapper */}
             <div className="main-content-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 36px', width: '100%', overflowY: 'hidden' }}>
                 <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     
@@ -642,7 +669,11 @@ const Leaderboard = () => {
                     </div>
 
                     {isLoading ? (
-                        <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '20px', flex: 1, minHeight: 0 }}>
+                        <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0, position: 'relative' }}>
+                            
+                            {/* 🔥 Dashed L-Bracket added here 🔥 */}
+                            <div className="decorative-corner" />
+
                             <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
                                     {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: '140px', borderRadius: '10px' }} />)}
@@ -656,8 +687,11 @@ const Leaderboard = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0 }}>
+                        <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0, position: 'relative' }}>
                             
+                            {/* 🔥 Dashed L-Bracket added here too 🔥 */}
+                            <div className="decorative-corner" />
+
                             {/* ⬅️ LEFT COLUMN */}
                             <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
                                 
@@ -708,7 +742,6 @@ const Leaderboard = () => {
                                     <BadgeCarousel />
                                 </div>
 
-                                {/* 🔥 FIXED: Right profile card borderRadius set to '0' 🔥 */}
                                 <div style={{
                                     position: 'relative',
                                     width: '100%',
@@ -775,7 +808,7 @@ const Leaderboard = () => {
                                     {/* 2. MAIN DIVIDER LINE */}
                                     <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
-                                    {/* 3. BOTTOM SECTION */}
+                                    {/* 3. BOTTOM SECTION (Reconstructed for you!) */}
                                     <div style={{ 
                                         position: 'relative', 
                                         zIndex: 1, 
@@ -800,13 +833,15 @@ const Leaderboard = () => {
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-                                            <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>DAY STREAK</span>
-                                            <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{currentUserStats.streak || 0}</span>
+                                            <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>STREAK</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <img src="/color-fire.png" alt="Streak" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                                                <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{currentUserStats.streak}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    
+
                                 </div>
-                                
                             </div>
                         </div>
                     )}
@@ -816,4 +851,4 @@ const Leaderboard = () => {
     );
 };
 
-export default memo(Leaderboard);
+export default Leaderboard;

@@ -99,37 +99,37 @@ router.post("/session/:id/resume", async (req, res) => {
   }
 });
 
-// 5. 🔥 FIX 1: COMPLETE WORKSPACE (Combines workspace chunks + stopwatch backup time)
+// 🔥 FIX 3: COMPLETE WORKSPACE (Proper sync on Save)
 router.patch("/day/:id/complete", async (req, res) => {
   try {
     const userId = req.user.id;
 
     const daySession = await dailysessionmodel.findOne({ _id: req.params.id, userId });
     if (!daySession) return res.status(404).json({ message: "Day session not found" });
-    if (daySession.status === "completed") return res.status(400).json({ message: "Day session already completed" });
 
+    // Agar koi timer chal raha tha, toh use stop karo
     const runningSession = await timermodel.findOne({ daySessionId: req.params.id, userId, status: "running" });
-
     if (runningSession) {
       const endTime = new Date();
-      runningSession.duration = (runningSession.duration || 0) + Math.floor((endTime.getTime() - runningSession.startTime.getTime()) / 1000);
+      const elapsedSeconds = Math.floor((endTime - runningSession.startTime) / 1000);
+      runningSession.duration = (runningSession.duration || 0) + elapsedSeconds;
       runningSession.endTime = endTime;
       runningSession.status = "completed";
       await runningSession.save();
     }
 
-    const sessions = await timermodel.find({ daySessionId: req.params.id, userId });
-    const totalTime = sessions.reduce((sum, session) => sum + (session.duration || 0), 0);
+    // Saare chunks ka time sum karo (100% accurate)
+    const allSessions = await timermodel.find({ daySessionId: req.params.id, userId });
+    let totalSeconds = 0;
+    allSessions.forEach(s => totalSeconds += (s.duration || 0));
 
-    // 🔥 MAIN LOGIC: Workspace Time + Stopwatch Time
-    daySession.totalDaytime = totalTime + (daySession.stopwatchTime || 0);
-    daySession.status = "completed";
-
+    daySession.totalDaytime = totalSeconds;
+    daySession.status = "completed"; // Ya frontend jo status pass kare
     await daySession.save();
 
-    return res.status(200).json({ message: "Day session completed", totalTime: daySession.totalDaytime, totalSessions: sessions.length });
+    res.status(200).json({ message: "Day session completed", daySession });
   } catch (err) {
-    return res.status(500).json({ message: "Something went wrong", error: err.message });
+    res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 });
 
@@ -166,43 +166,60 @@ router.get("/day/all", async (req, res) => {
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 });
-
-// 9. CREATE NEW DAY WORKSPACE
+// 🔥 FIX 1: WORKSPACE DAY CREATION (Strict Midnight Date)
 router.post("/day/add", async (req, res) => {
   try {
     const userId = req.user.id;
+    
+    // Exact Midnight par set karna ZAROORI hai!
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); 
 
-    const existing = await dailysessionmodel.findOne({ userId, date: today });
-    if (existing) return res.status(400).json({ message: "Workspace for today already exists" });
+    const daySession = await dailysessionmodel.create({
+      userId,
+      title: req.body.title || "My Workspace",
+      date: today, // Hamesha 00:00:00 save hoga
+      totalDaytime: 0,
+      status: "active"
+    });
 
-    const newDay = await dailysessionmodel.create({ title: "My Workspace", date: today, userId });
-    res.status(201).json({ message: "Workspace created", daySession: newDay });
+    res.status(201).json({ message: "Workspace box created", daySession });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 });
 
-// 10. PAUSE WORKSPACE SESSION
+// 🔥 FIX 2: PAUSE WORKSPACE SESSION (Updates totalDaytime Live)
 router.patch("/session/:id/pause", async (req, res) => {
   try {
     const userId = req.user.id;
-    const session = await timermodel.findOne({ _id: req.params.id, userId, status: "running" });
 
-    if (!session) return res.status(404).json({ message: "Running session not found" });
+    const session = await timermodel.findOne({ _id: req.params.id, userId });
+    if (!session || session.status !== "running") {
+        return res.status(400).json({ message: "No running session found" });
+    }
 
     const endTime = new Date();
-    const duration = Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000);
-
+    const elapsedSeconds = Math.floor((endTime - session.startTime) / 1000);
+    session.duration = (session.duration || 0) + elapsedSeconds;
     session.endTime = endTime;
-    session.duration = (session.duration || 0) + duration;
     session.status = "paused";
-
     await session.save();
+
+    // 👉 YAHAN SE MAIN BOX (totalDaytime) BHI UPDATE HOGA
+    const daySession = await dailysessionmodel.findById(session.daySessionId);
+    if (daySession) {
+        const allSessions = await timermodel.find({ daySessionId: daySession._id, userId });
+        let totalSeconds = 0;
+        allSessions.forEach(s => totalSeconds += (s.duration || 0));
+        
+        daySession.totalDaytime = totalSeconds;
+        await daySession.save();
+    }
+
     res.status(200).json({ message: "Session paused", session });
   } catch (err) {
-    res.status(500).json({ message: "Something went wrong", error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 

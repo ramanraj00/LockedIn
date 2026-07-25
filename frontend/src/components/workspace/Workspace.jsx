@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrypto } from '../../context/CryptoContext'; 
-import { X, ChevronDown, ChevronUp, ChevronRight, Plus, History, ArrowLeft } from 'lucide-react';
-import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
+import { X, ChevronDown, ChevronUp, ChevronRight, Plus, History, ArrowLeft, Info, AlertTriangle } from 'lucide-react';
+import Sidebar from '../../components/Sidebar/Sidebar';
 
 const COLORS = {
     bg: '#000000',
@@ -42,14 +42,16 @@ const Workspace = () => {
     const [addingTaskDayId, setAddingTaskDayId] = useState(null);
     const [newTaskText, setNewTaskText] = useState("");
     const [isCreatingBox, setIsCreatingBox] = useState(false);
+    
     const [globalError, setGlobalError] = useState(null);
+    const [toastMessage, setToastMessage] = useState(null); 
+    const [deleteBoxWarning, setDeleteBoxWarning] = useState(null);
     
     const [localStartTimes, setLocalStartTimes] = useState({});
     const [now, setNow] = useState(Date.now());
     const [decryptedTexts, setDecryptedTexts] = useState({});
     const dropdownRef = useRef(null);
     const [confirmAction, setConfirmAction] = useState(null);
-    const [deleteWarning, setDeleteWarning] = useState(null); 
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -70,6 +72,13 @@ const Workspace = () => {
             return () => clearTimeout(timer);
         }
     }, [globalError]);
+
+    useEffect(() => {
+        if (toastMessage) {
+            const timer = setTimeout(() => setToastMessage(null), 3500);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
 
     useEffect(() => {
         if (isLocked) return;
@@ -135,6 +144,12 @@ const Workspace = () => {
     };
 
     const handleCreateDaySession = async () => {
+        const todayBoxExists = daySessions.some(d => isToday(d.date));
+        if (todayBoxExists) {
+            setToastMessage("Today's workspace box already exists.");
+            return;
+        }
+
         setIsCreatingBox(true);
         setGlobalError(null);
         try {
@@ -144,8 +159,13 @@ const Workspace = () => {
                 credentials: "include"
             });
             if (res.ok) {
-                fetchWorkspaceData();
-                setViewMode('main'); 
+                const data = await res.json();
+                if (data.message === "Today's box already exists") {
+                    setToastMessage("Today's workspace box already exists.");
+                } else {
+                    fetchWorkspaceData();
+                    setViewMode('main'); 
+                }
             }
             else {
                 const errData = await res.json().catch(() => ({}));
@@ -239,9 +259,12 @@ const Workspace = () => {
 
     const handleDeleteTask = async (taskId, dayId) => {
         const tasks = tasksByDay[dayId] || [];
-        const day = daySessions.find(d => d._id === dayId);
-        const isOld = day && !isToday(day.date);
-        if (tasks.length === 1 && isOld) { setDeleteWarning({ taskId, dayId }); return; }
+        
+        if (tasks.length === 1) { 
+            setDeleteBoxWarning({ taskId, dayId }); 
+            return; 
+        }
+
         setTasksByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).filter(t => t._id !== taskId) }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         try {
@@ -251,12 +274,15 @@ const Workspace = () => {
     };
 
     const confirmDeleteLastTask = async () => {
-        if (!deleteWarning) return;
-        const { taskId, dayId } = deleteWarning;
-        setDeleteWarning(null);
+        if (!deleteBoxWarning) return;
+        const { taskId, dayId } = deleteBoxWarning;
+        setDeleteBoxWarning(null);
+        
         setTasksByDay(prev => ({ ...prev, [dayId]: [] }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
+        
         try { await fetch(`http://localhost:3000/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" }); } catch {}
+        
         handleDeleteDaySession(dayId);
     };
 
@@ -369,12 +395,11 @@ const Workspace = () => {
         return 'pending';
     };
 
-    // 🔥 FIX: Ye function check karta hai ki box dikhana chahiye ya nahi (Ghost box hide karega)
     const isValidBox = (day) => {
-        if (isToday(day.date)) return true; // Aaj ka box hamesha dikhega
+        if (isToday(day.date)) return true;
         const tasks = tasksByDay[day._id] || [];
         const time = getCalculatedTime(day._id);
-        return tasks.length > 0 || time > 0; // Sirf tab dikhega jab isme koi task ho ya timer chala ho
+        return tasks.length > 0 || time > 0;
     };
 
     const getGroupedHistory = () => {
@@ -385,7 +410,6 @@ const Workspace = () => {
         else if (historyRange === '6months') cutoff.setMonth(current.getMonth() - 6);
         else if (historyRange === 'year') cutoff.setFullYear(current.getFullYear() - 1);
 
-        // Filter lagaya empty boxes hatane ke liye
         const filtered = daySessions.filter(s => new Date(s.date) >= cutoff && isValidBox(s));
         const grouped = {};
         
@@ -410,7 +434,6 @@ const Workspace = () => {
         setExpandedHistoryNodes(prev => ({ ...prev, [nodeId]: !prev[nodeId] }));
     };
 
-    // Filter lagaya empty ghost boxes hatane ke liye
     const mainScreenDays = daySessions.filter(day => {
         const d = new Date(day.date);
         const sevenDaysAgo = new Date();
@@ -507,18 +530,11 @@ const Workspace = () => {
                                             <span style={{ color: COLORS.textPrimary, fontSize: 14, textDecoration: task.status ? 'line-through' : 'none' }}>{decryptedTexts[task._id] || task.encryptedDescription}</span>
                                         )}
                                     </div>
-                                    {deleteWarning?.taskId === task._id ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                                            <span style={{ fontSize: 12, color: '#FBBF24', whiteSpace: 'nowrap' }}>time won't count in analytics</span>
-                                            <button onClick={confirmDeleteLastTask} className="action-btn" style={{ color: '#EF4444' }}>delete</button>
-                                            <button onClick={() => setDeleteWarning(null)} className="action-btn">keep</button>
-                                        </div>
-                                    ) : (
-                                        <div style={{ display: 'flex', gap: 16 }}>
-                                            <button onClick={() => handleToggleTask(task._id, task.status, day._id)} className="action-btn">{task.status ? 'undo' : 'done'}</button>
-                                            <button onClick={() => handleDeleteTask(task._id, day._id)} className="action-btn">delete</button>
-                                        </div>
-                                    )}
+                                    
+                                    <div style={{ display: 'flex', gap: 16 }}>
+                                        <button onClick={() => handleToggleTask(task._id, task.status, day._id)} className="action-btn">{task.status ? 'undo' : 'done'}</button>
+                                        <button onClick={() => handleDeleteTask(task._id, day._id)} className="action-btn">delete</button>
+                                    </div>
                                 </div>
                             ))}
                             {tasks.length === 0 && addingTaskDayId !== day._id && <div style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 16 }}>no tasks yet.</div>}
@@ -548,6 +564,11 @@ const Workspace = () => {
                 * { box-sizing: border-box; }
                 .header-btn { background: none; border: none; color: ${COLORS.textPrimary}; font-size: 14px; font-weight: 400; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; }
                 .header-btn:hover { opacity: 0.6; }
+                
+                /* 🔥 New Solid White Buttons */
+                .white-btn { background: #FFFFFF; color: #000000; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; }
+                .white-btn:hover { opacity: 0.8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
+
                 .timer-text-btn { font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 6px; border: 1px solid transparent; outline: none; }
                 .start-btn { background: #E5E7EB; color: #000; }
                 .start-btn:hover { background: #FFFFFF; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
@@ -563,15 +584,73 @@ const Workspace = () => {
                 ::-webkit-scrollbar { width: 6px; }
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+                @keyframes slideDown {
+                    from { opacity: 0; transform: translate(-50%, -15px); }
+                    to { opacity: 1; transform: translate(-50%, 0); }
+                }
             `}</style>
             
             <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
                 
-                {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA */}
                 <Sidebar activePage="Workspace" />
 
                 <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+                    
                     {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>{globalError}</div>}
+                    
+                    {toastMessage && (
+                        <div style={{ 
+                            position: 'fixed', top: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, 
+                            padding: '12px 24px', 
+                            border: '1px solid rgba(255,255,255,0.1)', 
+                            backgroundColor: '#0A0A0A', 
+                            color: '#F4F4F5', 
+                            fontSize: 14, 
+                            fontFamily: "'Inter', sans-serif",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
+                            borderRadius: 8, 
+                            boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                            animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)', 
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10
+                        }}>
+                            <Info size={18} color="#9CA3AF" />
+                            {toastMessage}
+                        </div>
+                    )}
+
+                    {/* 🔥 UPDATED: Velvet Red Bold Warning & White Buttons */}
+                    {deleteBoxWarning && (
+                        <div style={{
+                            position: 'fixed', top: 32, left: '50%', transform: 'translateX(-50%)',
+                            zIndex: 9999,
+                            backgroundColor: '#0A0A0A',
+                            border: '1px solid rgba(255, 255, 255, 0.2)', /* 🔥 Clean White/Transparent Border */
+                            borderRadius: 8,
+                            padding: '16px 24px',
+                            boxShadow: '0 12px 32px rgba(0,0,0,0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 24,
+                            animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <AlertTriangle size={24} color="#E11D48" /> {/* 🔥 Velvet Red */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <span style={{ fontSize: 14, fontWeight: 700, color: '#E11D48', fontFamily: "'Inter', sans-serif", letterSpacing: '0.01em' }}>Delete Last Task?</span> {/* 🔥 Velvet Red & Bold */}
+                                    <span style={{ fontSize: 13, color: '#A1A1AA', fontFamily: "'Inter', sans-serif" }}>This will permanently delete today's box and all tracked time.</span>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 12, marginLeft: 16 }}>
+                                {/* 🔥 White Background Buttons */}
+                                <button onClick={() => confirmDeleteLastTask()} className="white-btn" style={{ fontWeight: 700 }}>Delete Box</button>
+                                <button onClick={() => setDeleteBoxWarning(null)} className="white-btn" style={{ fontWeight: 600 }}>Cancel</button>
+                            </div>
+                        </div>
+                    )}
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
