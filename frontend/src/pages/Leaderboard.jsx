@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar/Sidebar'; 
 import { Trophy, Crown, Activity, Lock } from 'lucide-react'; 
@@ -53,13 +53,13 @@ const getAvatarUrl = (avatar, name) => {
 // =======================================================
 // 🔥 COMPONENT: Clean & SUPER SMOOTH Top3 Stack (SAFARI OPTIMIZED)
 // =======================================================
-const Top3Stack = memo(({ users, navigate }) => {
-    if (users.length < 3) return null;
+const Top3Stack = memo(({ top3Users, navigate }) => {
+    if (!top3Users || top3Users.length < 3) return null;
 
     const top3 = [
-        { ...users[0], rank: 1, accent: '#FBBF24', title: 'Champion' },   
-        { ...users[1], rank: 2, accent: '#94A3B8', title: 'Challenger' }, 
-        { ...users[2], rank: 3, accent: '#F97316', title: 'Contender' },  
+        { ...top3Users[0], rank: 1, accent: '#FBBF24', title: 'Champion' },   
+        { ...top3Users[1], rank: 2, accent: '#94A3B8', title: 'Challenger' }, 
+        { ...top3Users[2], rank: 3, accent: '#F97316', title: 'Contender' },  
     ];
 
     const renderFakeCard = (color1, color2, color3, side) => {
@@ -288,6 +288,42 @@ const BadgeCarousel = memo(() => {
 
 
 // =======================================================
+// 🔥 COMPONENT: Extracted Table to prevent main re-renders
+// =======================================================
+const LeaderboardTable = memo(({ tableUsers, navigate }) => {
+    if (!tableUsers || tableUsers.length === 0) return null;
+    return (
+        <div className="table-container" style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '0', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', minHeight: 0, overflow: 'hidden' }}>
+            <div className="table-header-row" style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, fontSize: '12px', color: COLORS.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: '#1A1A1A', flexShrink: 0 }}>
+                <div style={{ width: '60px' }}>Rank</div>
+                <div style={{ flex: 1 }}>Name</div>
+                <div style={{ width: '140px' }}>Today's time</div>
+                <div style={{ width: '90px', textAlign: 'center' }}>Streak</div>
+            </div>
+            
+            <div className="table-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {tableUsers.map((user, idx, arr) => (
+                    <div key={user.id || user._id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} 
+                         style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: idx !== arr.length - 1 ? `1px solid ${COLORS.border}` : 'none', cursor: 'pointer' }}>
+                        <div style={{ width: '60px', fontSize: '14px', fontWeight: 700, color: COLORS.textSecondary }}>#{idx + 4}</div>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} referrerPolicy="no-referrer"
+                                style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#222', objectFit: 'cover' }} />
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textPrimary }}>{user.name}</span>
+                        </div>
+                        <div style={{ width: '140px', fontSize: '14px', color: COLORS.textPrimary, fontWeight: 600 }}>{formatXP(user.xp)}</div>
+                        <div style={{ width: '90px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: COLORS.textPrimary }}>
+                            <img src="/color-fire.png" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} /> 
+                            {user.streak || 0}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+});
+
+// =======================================================
 // MAIN COMPONENT
 // =======================================================
 const Leaderboard = () => {
@@ -308,12 +344,41 @@ const Leaderboard = () => {
     });
 
     useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
+        const fetchData = async (isBackground = false) => {
+            const fetchStartTime = Date.now();
+            let isCached = false;
+
+            if (!isBackground) {
+                try {
+                    const cachedUsers = localStorage.getItem('leaderboard_users');
+                    const cachedStats = localStorage.getItem('leaderboard_stats');
+                    if (cachedUsers && cachedStats) {
+                        setUsers(JSON.parse(cachedUsers));
+                        setCurrentUserStats(JSON.parse(cachedStats));
+                        isCached = true;
+                        setIsLoading(true); // Artificial 1s skeleton for reload
+                    } else {
+                        setIsLoading(true);
+                    }
+                } catch (e) {
+                    setIsLoading(true);
+                }
+            }
+
             try {
-                const res = await fetch('http://localhost:3000/api/leaderboard', { credentials: 'include' });
-                const leaderboardData = res.ok ? await res.json() : [];
-                setUsers(leaderboardData);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds MAX!
+
+                const [leaderboardRes, authRes] = await Promise.allSettled([
+                    fetch('http://localhost:3000/api/leaderboard', { credentials: 'include', signal: controller.signal }),
+                    fetch('http://localhost:3000/api/auth/me', { credentials: 'include', signal: controller.signal })
+                ]);
+                
+                clearTimeout(timeoutId);
+
+                const leaderboardData = (leaderboardRes.status === 'fulfilled' && leaderboardRes.value.ok) 
+                    ? await leaderboardRes.value.json() 
+                    : [];
                 
                 let loggedInName = '';
                 let loggedInAvatar = null;
@@ -321,10 +386,9 @@ const Leaderboard = () => {
                 let loggedInStreak = 0;
                 let loggedInXp = 0;
                 
-                try {
-                    const authRes = await fetch("http://localhost:3000/api/auth/me", { credentials: "include" });
-                    if (authRes.ok) {
-                        const authData = await authRes.json();
+                if (authRes.status === 'fulfilled' && authRes.value.ok) {
+                    try {
+                        const authData = await authRes.value.json();
                         if (authData && authData.user) {
                             const u = authData.user;
                             loggedInName = u.name || u.username || '';
@@ -333,9 +397,9 @@ const Leaderboard = () => {
                             loggedInStreak = Number(u.streak || 0);
                             loggedInXp = Number(u.xp || u.focusTime || 0);
                         }
+                    } catch (err) {
+                        console.error("Error parsing auth API:", err);
                     }
-                } catch (authErr) {
-                    console.error("Error fetching current user from auth API:", authErr);
                 }
 
                 let myIndex = -1;
@@ -352,27 +416,58 @@ const Leaderboard = () => {
                     const beatCount = totalUsers - (myIndex + 1);
                     const percentile = totalUsers > 1 ? Math.floor((beatCount / totalUsers) * 100) : 99;
                     
-                    setCurrentUserStats({
+                    const newStats = {
                         name: me.name || loggedInName, 
                         avatar: me.avatar || loggedInAvatar,
                         rank: myIndex + 1, 
                         streak: me.streak || loggedInStreak,
                         focusTime: me.xp || loggedInXp, 
                         percentile: Math.max(1, percentile)
-                    });
+                    };
+                    setCurrentUserStats(newStats);
+                    localStorage.setItem('leaderboard_stats', JSON.stringify(newStats));
                 } else {
-                    setCurrentUserStats({ 
+                    const newStats = { 
                         name: loggedInName, avatar: loggedInAvatar, rank: '-', streak: loggedInStreak, focusTime: loggedInXp, percentile: 0 
-                    });
+                    };
+                    setCurrentUserStats(newStats);
+                    localStorage.setItem('leaderboard_stats', JSON.stringify(newStats));
+                }
+
+                if (leaderboardRes.status === 'fulfilled') {
+                    setUsers(leaderboardData);
+                    localStorage.setItem('leaderboard_users', JSON.stringify(leaderboardData));
                 }
             } catch (error) { 
                 console.error("Error fetching data:", error); 
             } finally { 
-                setIsLoading(false); 
+                if (!isBackground) {
+                    const elapsed = Date.now() - fetchStartTime;
+                    if (isCached) {
+                        const waitTime = Math.max(0, 1000 - elapsed);
+                        setTimeout(() => setIsLoading(false), waitTime);
+                    } else {
+                        setIsLoading(false); 
+                    }
+                }
             }
         };
-        fetchData();
+
+        fetchData(false);
+
+        const intervalId = setInterval(() => {
+            fetchData(true);
+        }, 5 * 60 * 1000);
+
+        return () => clearInterval(intervalId);
     }, []);
+
+    const handleNavigate = useCallback((id) => {
+        navigate(`/profile/${id}`);
+    }, [navigate]);
+
+    const top3Users = useMemo(() => users.slice(0, 3), [users]);
+    const tableUsers = useMemo(() => users.slice(3, 8), [users]);
 
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', sans-serif" }}>
@@ -674,16 +769,113 @@ const Leaderboard = () => {
                             {/* 🔥 Dashed L-Bracket added here 🔥 */}
                             <div className="decorative-corner" />
 
-                            <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-                                    {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: '140px', borderRadius: '10px' }} />)}
+                            {/* ⬅️ LEFT COLUMN SKELETON */}
+                            <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
+                                
+                                {/* TOP 3 STACK SKELETON (Matching Real UI) */}
+                                <div style={{ position: 'relative', width: '100%', height: '240px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '40px', perspective: '1200px' }}>
+                                    {/* Fake left skeleton */}
+                                    <div className="skeleton" style={{ position: 'absolute', width: '170px', height: '220px', borderRadius: '16px', transform: 'translate3d(-120px, 38px, 0) rotate(-20deg) scale(0.85)', opacity: 0.6, zIndex: 1, border: '1px solid #27272A' }} />
+                                    
+                                    {/* Fake right skeleton */}
+                                    <div className="skeleton" style={{ position: 'absolute', width: '170px', height: '220px', borderRadius: '16px', transform: 'translate3d(120px, 38px, 0) rotate(20deg) scale(0.85)', opacity: 0.6, zIndex: 1, border: '1px solid #27272A' }} />
+                                    
+                                    {/* Main center skeleton */}
+                                    <div style={{ position: 'relative', width: '170px', height: '220px', borderRadius: '16px', zIndex: 3, border: '1px solid #27272A', display: 'flex', flexDirection: 'column', padding: '16px 14px', background: '#18181B', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+                                        {/* Avatar skeleton */}
+                                        <div className="skeleton" style={{ position: 'relative', width: '64px', height: '64px', borderRadius: '12px', alignSelf: 'center', marginTop: '8px', zIndex: 2 }} />
+                                        
+                                        {/* Name & Title skeleton */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '16px', gap: '8px', zIndex: 2 }}>
+                                            <div className="skeleton" style={{ width: '80%', height: '14px', borderRadius: '4px' }} />
+                                            <div className="skeleton" style={{ width: '50%', height: '10px', borderRadius: '4px' }} />
+                                        </div>
+                                        
+                                        {/* Stats skeleton */}
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', marginTop: 'auto', marginBottom: '4px', zIndex: 2 }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                <div className="skeleton" style={{ width: '30px', height: '8px', borderRadius: '2px' }} />
+                                                <div className="skeleton" style={{ width: '40px', height: '14px', borderRadius: '4px' }} />
+                                            </div>
+                                            <div style={{ width: '1px', height: '28px', backgroundColor: '#2A2A2D', alignSelf: 'center' }} />
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                <div className="skeleton" style={{ width: '30px', height: '8px', borderRadius: '2px' }} />
+                                                <div className="skeleton" style={{ width: '40px', height: '14px', borderRadius: '4px' }} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="skeleton" style={{ height: '90px', borderRadius: '10px' }} />
-                                <div className="skeleton" style={{ flex: 1, borderRadius: '10px' }} />
+
+                                {/* TABLE SKELETON */}
+                                <div style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '0', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
+                                    <div style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, backgroundColor: '#1A1A1A' }}>
+                                        <div className="skeleton" style={{ width: '40px', height: '12px', borderRadius: '4px' }} />
+                                        <div className="skeleton" style={{ flex: 1, height: '12px', borderRadius: '4px', margin: '0 24px' }} />
+                                        <div className="skeleton" style={{ width: '100px', height: '12px', borderRadius: '4px' }} />
+                                        <div className="skeleton" style={{ width: '60px', height: '12px', borderRadius: '4px', marginLeft: '24px' }} />
+                                    </div>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                        {[1, 2, 3, 4, 5].map((i, idx) => (
+                                            <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: idx !== 4 ? `1px solid ${COLORS.border}` : 'none' }}>
+                                                <div className="skeleton" style={{ width: '24px', height: '16px', borderRadius: '4px' }} />
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '36px' }}>
+                                                    <div className="skeleton" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                                                    <div className="skeleton" style={{ width: '120px', height: '16px', borderRadius: '4px' }} />
+                                                </div>
+                                                <div className="skeleton" style={{ width: '80px', height: '16px', borderRadius: '4px' }} />
+                                                <div className="skeleton" style={{ width: '24px', height: '24px', borderRadius: '50%', marginLeft: '80px' }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="right-col" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                <div className="skeleton" style={{ height: '240px', borderRadius: '10px', background: 'transparent' }} />
-                                <div className="skeleton" style={{ flex: 1, borderRadius: '10px' }} />
+
+                            {/* ➡️ RIGHT COLUMN SKELETON */}
+                            <div className="right-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
+                                
+                                {/* CAROUSEL SKELETON */}
+                                <div style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px', display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
+                                        <div className="skeleton" style={{ width: '140px', height: '24px', borderRadius: '4px' }} />
+                                    </div>
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px' }}>
+                                        <div className="skeleton" style={{ width: '60px', height: '60px', borderRadius: '12px', opacity: 0.4 }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                                            <div className="skeleton" style={{ width: '90px', height: '90px', borderRadius: '16px' }} />
+                                            <div className="skeleton" style={{ width: '70px', height: '12px', borderRadius: '4px' }} />
+                                        </div>
+                                        <div className="skeleton" style={{ width: '60px', height: '60px', borderRadius: '12px', opacity: 0.4 }} />
+                                    </div>
+                                </div>
+
+                                {/* USER PROFILE SKELETON */}
+                                <div style={{ position: 'relative', width: '100%', flex: 1, background: '#121212', borderRadius: '0', border: '1px solid #27272A', display: 'flex', flexDirection: 'column', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
+                                    <div style={{ padding: '36px 32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                        <div className="skeleton" style={{ width: '96px', height: '96px', borderRadius: '50%', flexShrink: 0, border: '2px solid rgba(255,255,255,0.12)' }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                                            <div className="skeleton" style={{ width: '70%', height: '28px', borderRadius: '6px' }} />
+                                        </div>
+                                    </div>
+                                    <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', gap: '10px' }}>
+                                            <div className="skeleton" style={{ width: '80px', height: '12px', borderRadius: '3px' }} />
+                                            <div className="skeleton" style={{ width: '50px', height: '28px', borderRadius: '6px' }} />
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', gap: '10px' }}>
+                                            <div className="skeleton" style={{ width: '80px', height: '12px', borderRadius: '3px' }} />
+                                            <div className="skeleton" style={{ width: '80px', height: '28px', borderRadius: '6px' }} />
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,0.06)', gap: '10px' }}>
+                                            <div className="skeleton" style={{ width: '80px', height: '12px', borderRadius: '3px' }} />
+                                            <div className="skeleton" style={{ width: '90px', height: '28px', borderRadius: '6px' }} />
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                            <div className="skeleton" style={{ width: '80px', height: '12px', borderRadius: '3px' }} />
+                                            <div className="skeleton" style={{ width: '50px', height: '28px', borderRadius: '6px' }} />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -695,44 +887,8 @@ const Leaderboard = () => {
                             {/* ⬅️ LEFT COLUMN */}
                             <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
                                 
-                                <Top3Stack users={users} navigate={navigate} />
-
-                                {users.length > 3 && (
-                                    <div className="table-container" style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '0', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', minHeight: 0, overflow: 'hidden' }}>
-                                        <div className="table-header-row" style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, fontSize: '12px', color: COLORS.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: '#1A1A1A', flexShrink: 0 }}>
-                                            <div style={{ width: '60px' }}>Rank</div>
-                                            <div style={{ flex: 1 }}>Name</div>
-                                            <div style={{ width: '140px' }}>Today's time</div>
-                                            <div style={{ width: '90px', textAlign: 'center' }}>Streak</div>
-                                        </div>
-                                        
-                                        <div className="table-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                            {users.slice(3, 8).map((user, idx, arr) => (
-                                                <div key={user.id || user._id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} 
-                                                     style={{ 
-                                                         flex: 1, 
-                                                         display: 'flex', 
-                                                         alignItems: 'center', 
-                                                         padding: '0 24px', 
-                                                         borderBottom: idx !== arr.length - 1 ? `1px solid ${COLORS.border}` : 'none', 
-                                                         cursor: 'pointer' 
-                                                     }}>
-                                                    <div style={{ width: '60px', fontSize: '14px', fontWeight: 700, color: COLORS.textSecondary }}>#{idx + 4}</div>
-                                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} referrerPolicy="no-referrer"
-                                                            style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#222', objectFit: 'cover' }} />
-                                                        <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textPrimary }}>{user.name}</span>
-                                                    </div>
-                                                    <div style={{ width: '140px', fontSize: '14px', color: COLORS.textPrimary, fontWeight: 600 }}>{formatXP(user.xp)}</div>
-                                                    <div style={{ width: '90px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: COLORS.textPrimary }}>
-                                                        <img src="/color-fire.png" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} /> 
-                                                        {user.streak || 0}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                <Top3Stack top3Users={top3Users} navigate={handleNavigate} />
+                                <LeaderboardTable tableUsers={tableUsers} navigate={handleNavigate} />
                             </div>
 
                             {/* ➡️ RIGHT COLUMN */}
