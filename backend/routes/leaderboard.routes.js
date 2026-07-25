@@ -10,14 +10,23 @@ router.get("/", async (req, res) => {
     try {
         const users = await User.find({});
         
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // 🔥 FIX 1: Exact Midnight ke bajaye poore din ki Time Range banayenge
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
 
         const leaderboardData = [];
 
         for (const user of users) {
-            // 1. Get Today's Focus Time (totalDaytime in seconds)
-            const todaySession = await dailysessionmodel.findOne({ userId: user._id, date: today });
+            // 🔥 FIX 2: Range query lagayenge taki agar Date me thoda bhi timestamp difference ho, tab bhi box mil jaye!
+            const todaySession = await dailysessionmodel.findOne({ 
+                userId: user._id, 
+                date: { $gte: startOfDay, $lte: endOfDay } 
+            });
+            
+            // Ab pakka tumhara 18 min wala data yahan load hoga!
             const xp = todaySession ? (todaySession.totalDaytime || 0) : 0;
 
             // 2. Gather Data for Streaks
@@ -73,7 +82,9 @@ router.get("/", async (req, res) => {
 
               const lastStudyDate = new Date(studyDays[studyDays.length - 1].date);
               lastStudyDate.setHours(0, 0, 0, 0);
-              const diffFromToday = Math.floor((today - lastStudyDate) / (1000 * 60 * 60 * 24));
+              
+              // startOfDay se diff compare karenge purane logic ke bajaye (Zada accurate)
+              const diffFromToday = Math.floor((startOfDay - lastStudyDate) / (1000 * 60 * 60 * 24));
               if (diffFromToday > 1) {
                 currentStreak = 0;
               }
@@ -88,7 +99,7 @@ router.get("/", async (req, res) => {
                 avatar: user.imageUrl || null,
                 xp: xp,
                 currentStreak: currentStreak,
-                longestStreak: longestStreak, // Extra property for sorting
+                longestStreak: longestStreak, 
                 badges: userBadges,
                 // MongoDB ki ID ke andar timestamp chhupa hota hai!
                 createdAt: user.createdAt ? new Date(user.createdAt).getTime() : user._id.getTimestamp().getTime()
@@ -99,30 +110,15 @@ router.get("/", async (req, res) => {
         // 3. 🔥 ULTIMATE TIE-BREAKER SORTING LOGIC 🔥
         // ==========================================
         leaderboardData.sort((a, b) => {
-            // Rule 1: Highest XP (Today's time) first
-            if (b.xp !== a.xp) {
-                return b.xp - a.xp; // Descending
-            }
-            
-            // Rule 2: If XP is same, Highest Current Streak first
-            if (b.currentStreak !== a.currentStreak) {
-                return b.currentStreak - a.currentStreak; // Descending
-            }
-            
-            // Rule 3: If Current Streak is same, Highest Longest Streak first
-            if (b.longestStreak !== a.longestStreak) {
-                return b.longestStreak - a.longestStreak; // Descending
-            }
-            
-            // Rule 4: If Longest Streak is also same, Oldest User first
-            // Smaller timestamp means older account. Hum smaller ko upar chahte hain (Ascending)
-            return a.createdAt - b.createdAt; 
+            if (b.xp !== a.xp) return b.xp - a.xp; // Rule 1: XP
+            if (b.currentStreak !== a.currentStreak) return b.currentStreak - a.currentStreak; // Rule 2: Current Streak
+            if (b.longestStreak !== a.longestStreak) return b.longestStreak - a.longestStreak; // Rule 3: Longest Streak
+            return a.createdAt - b.createdAt; // Rule 4: Oldest User first
         });
 
         // ==========================================
         // 4. Send Clean Data to Frontend
         // ==========================================
-        // (Frontend ko longestStreak aur createdAt nahi chahiye, sirf zaroori chizein bhejenge)
         const finalData = leaderboardData.map(u => ({
             id: u.id,
             name: u.name,

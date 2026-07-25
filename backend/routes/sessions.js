@@ -29,7 +29,7 @@ router.post("/session/start", async function (req, res) {
   }
 });
 
-// 2. UPDATE WORKSPACE DAY (Title, Deadline, Status)
+// 2. UPDATE WORKSPACE DAY
 router.patch("/day/:id", async function (req, res) {
   try {
     const userId = req.user.id;
@@ -99,35 +99,33 @@ router.post("/session/:id/resume", async (req, res) => {
   }
 });
 
-// 🔥 FIX 3: COMPLETE WORKSPACE (Proper sync on Save)
+// 5. 🔥 FIX: COMPLETE WORKSPACE (Proper Sync on Save - ADDs time)
 router.patch("/day/:id/complete", async (req, res) => {
   try {
     const userId = req.user.id;
+    let addedDuration = 0;
 
-    const daySession = await dailysessionmodel.findOne({ _id: req.params.id, userId });
-    if (!daySession) return res.status(404).json({ message: "Day session not found" });
-
-    // Agar koi timer chal raha tha, toh use stop karo
     const runningSession = await timermodel.findOne({ daySessionId: req.params.id, userId, status: "running" });
     if (runningSession) {
       const endTime = new Date();
-      const elapsedSeconds = Math.floor((endTime - runningSession.startTime) / 1000);
-      runningSession.duration = (runningSession.duration || 0) + elapsedSeconds;
+      addedDuration = Math.floor((endTime - runningSession.startTime) / 1000);
+      runningSession.duration = (runningSession.duration || 0) + addedDuration;
       runningSession.endTime = endTime;
       runningSession.status = "completed";
       await runningSession.save();
     }
 
-    // Saare chunks ka time sum karo (100% accurate)
-    const allSessions = await timermodel.find({ daySessionId: req.params.id, userId });
-    let totalSeconds = 0;
-    allSessions.forEach(s => totalSeconds += (s.duration || 0));
+    // Sirf naya time jodenge, overwrite nahi karenge!
+    if (addedDuration > 0) {
+        await dailysessionmodel.updateOne(
+            { _id: req.params.id, userId },
+            { $inc: { totalDaytime: addedDuration }, $set: { status: "completed" } }
+        );
+    } else {
+        await dailysessionmodel.updateOne({ _id: req.params.id, userId }, { $set: { status: "completed" } });
+    }
 
-    daySession.totalDaytime = totalSeconds;
-    daySession.status = "completed"; // Ya frontend jo status pass kare
-    await daySession.save();
-
-    res.status(200).json({ message: "Day session completed", daySession });
+    res.status(200).json({ message: "Day session completed" });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
@@ -144,12 +142,22 @@ router.get("/day/:daySessionId/sessions", async (req, res) => {
   }
 });
 
-// 7. DELETE SINGLE SESSION
+// 7. 🔥 FIX: DELETE SINGLE SESSION (Proper Decrement)
 router.delete("/session/:id", async (req, res) => {
   try {
     const userId = req.user.id;
     const session = await timermodel.findOneAndDelete({ _id: req.params.id, userId });
+    
     if (!session) return res.status(404).json({ message: "Session not found" });
+    
+    // Agar timer chunk delete hota hai, toh total time se uska duration minus kar do (stopwatch effect nahi hoga)
+    if (session.duration > 0) {
+       await dailysessionmodel.updateOne(
+           { _id: session.daySessionId },
+           { $inc: { totalDaytime: -session.duration } }
+       );
+    }
+    
     res.status(200).json({ message: "Session deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -166,19 +174,18 @@ router.get("/day/all", async (req, res) => {
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 });
-// 🔥 FIX 1: WORKSPACE DAY CREATION (Strict Midnight Date)
+
+// 9. WORKSPACE DAY CREATION (Strict Midnight Date)
 router.post("/day/add", async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    // Exact Midnight par set karna ZAROORI hai!
     const today = new Date();
     today.setHours(0, 0, 0, 0); 
 
     const daySession = await dailysessionmodel.create({
       userId,
       title: req.body.title || "My Workspace",
-      date: today, // Hamesha 00:00:00 save hoga
+      date: today, 
       totalDaytime: 0,
       status: "active"
     });
@@ -189,57 +196,55 @@ router.post("/day/add", async (req, res) => {
   }
 });
 
-// 🔥 FIX 2: PAUSE WORKSPACE SESSION (Updates totalDaytime Live)
+// 10. 🔥 FIX: PAUSE WORKSPACE SESSION (Perfect Incremental Add)
 router.patch("/session/:id/pause", async (req, res) => {
   try {
     const userId = req.user.id;
+    const session = await timermodel.findOne({ _id: req.params.id, userId, status: "running" });
 
-    const session = await timermodel.findOne({ _id: req.params.id, userId });
-    if (!session || session.status !== "running") {
-        return res.status(400).json({ message: "No running session found" });
-    }
+    if (!session) return res.status(400).json({ message: "Running session not found" });
 
     const endTime = new Date();
-    const elapsedSeconds = Math.floor((endTime - session.startTime) / 1000);
-    session.duration = (session.duration || 0) + elapsedSeconds;
+    const duration = Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000);
+
     session.endTime = endTime;
+    session.duration = (session.duration || 0) + duration;
     session.status = "paused";
     await session.save();
 
-    // 👉 YAHAN SE MAIN BOX (totalDaytime) BHI UPDATE HOGA
-    const daySession = await dailysessionmodel.findById(session.daySessionId);
-    if (daySession) {
-        const allSessions = await timermodel.find({ daySessionId: daySession._id, userId });
-        let totalSeconds = 0;
-        allSessions.forEach(s => totalSeconds += (s.duration || 0));
-        
-        daySession.totalDaytime = totalSeconds;
-        await daySession.save();
-    }
+    // Sirf is naye duration ko add karenge, purana (stopwatch ka) overwrite nahi hoga!
+    await dailysessionmodel.updateOne(
+      { _id: session.daySessionId },
+      { $inc: { totalDaytime: duration } }
+    );
 
     res.status(200).json({ message: "Session paused", session });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 });
 
-// 11. 🔥 FIX 2: RESET ROUTE (Resets stopwatch backup time too)
+// 11. 🔥 FIX: CAREFUL RESET ROUTE
 router.delete("/day/:id/sessions/reset", async (req, res) => {
   try {
     const userId = req.user.id;
     const daySessionId = req.params.id;
 
+    // Sirf workspace ke chunks nikal ke unka time minus karenge (Stopwatch time safe rahega!)
+    const sessions = await timermodel.find({ daySessionId, userId });
+    let totalWorkspaceTime = 0;
+    sessions.forEach(s => totalWorkspaceTime += (s.duration || 0));
+
     await timermodel.deleteMany({ daySessionId, userId });
 
     const daySession = await dailysessionmodel.findOneAndUpdate(
       { _id: daySessionId, userId },
-      { $set: { totalDaytime: 0, stopwatchTime: 0, status: "active" } }, 
+      { $inc: { totalDaytime: -totalWorkspaceTime }, $set: { status: "active" } }, 
       { new: true }
     );
 
     if (!daySession) return res.status(404).json({ message: "Day session not found" });
-
-    res.status(200).json({ message: "Timer reset to 00:00:00 successfully", daySession });
+    res.status(200).json({ message: "Timer reset successfully", daySession });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
@@ -266,7 +271,7 @@ router.post("/stopwatch/start", async (req, res) => {
         const d = Math.floor((new Date() - r.startTime) / 1000);
         await dailysessionmodel.updateOne(
             { _id: r.daySessionId }, 
-            { $inc: { totalDaytime: d, stopwatchTime: d } } // 🔥 ADD to both
+            { $inc: { totalDaytime: d, stopwatchTime: d } } 
         );
         await timermodel.deleteOne({ _id: r._id });
     }
@@ -284,7 +289,7 @@ router.post("/stopwatch/start", async (req, res) => {
   }
 });
 
-// 13. 🔥 MASTER FIX: STOPWATCH STOP (Secure Chunking + Clean Reset)
+// 13. STOPWATCH STOP (Secure Chunking)
 router.post("/stopwatch/stop", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -295,7 +300,6 @@ router.post("/stopwatch/stop", async (req, res) => {
     const daySession = await dailysessionmodel.findOne({ userId, date: today });
     if (!daySession) return res.status(200).json({ success: true });
 
-    // 🔥 Agar user ne Reset daba diya, toh current aur pichle saare paused chunks delete maardo!
     if (isReset) {
         if (sessionId) await timermodel.deleteOne({ _id: sessionId });
         await timermodel.deleteMany({ userId, status: "paused" });
@@ -309,21 +313,17 @@ router.post("/stopwatch/stop", async (req, res) => {
             currentDuration = Math.floor((new Date() - session.startTime) / 1000);
             
             if (!isFinalSave) {
-                // 🔥 PAUSE HUA HAI: Time ko temporarily chunk me save karo, main DB me mat dalo
                 session.duration = (session.duration || 0) + currentDuration;
                 session.status = "paused";
                 await session.save();
                 return res.status(200).json({ success: true, duration: currentDuration });
             } else {
-                // Final save pe current chunk delete kar do
                 await timermodel.deleteOne({ _id: session._id });
             }
         }
     }
 
-    // 🔥 FINAL SAVE: Saare purane paused chunks ko uthao, unka time jodo aur delete karo
     let totalDurationToSave = currentDuration;
-    
     if (isFinalSave) {
         const pausedSessions = await timermodel.find({ userId, status: "paused" });
         for (let p of pausedSessions) {
@@ -332,6 +332,7 @@ router.post("/stopwatch/stop", async (req, res) => {
         }
 
         if (totalDurationToSave > 0) {
+            // Yeh hamesha `$inc` karta hai!
             await dailysessionmodel.updateOne(
                 { _id: daySession._id }, 
                 { 
@@ -350,83 +351,26 @@ router.post("/stopwatch/stop", async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
-// 14. GET TODAY'S STATS (With Auto-Cleanup)
+// 14. 🔥 FIX: GET TODAY'S STATS (Only Stopwatch Time!)
 router.get("/stopwatch/today-stats", async (req, res) => {
   try {
     const userId = req.user.id;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    
+    // Use range instead of exact date for safe fetching
+    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
 
-    const daySession = await dailysessionmodel.findOne({ userId, date: today });
+    const daySession = await dailysessionmodel.findOne({ userId, date: { $gte: startOfDay, $lte: endOfDay } });
     if (!daySession) return res.status(200).json({ success: true, totalDaytime: 0, totalSessions: 0 });
-
-    // 🔥 GARBAGE COLLECTOR: Agar ek bhi session save nahi hua, par time accumulated hai, toh usey ZERO karo
-    if (daySession.totalSessions === 0 && daySession.totalDaytime > 0) {
-        daySession.totalDaytime = 0;
-        daySession.stopwatchTime = 0;
-        await daySession.save();
-    }
 
     res.status(200).json({ 
         success: true, 
-        totalDaytime: daySession.totalDaytime || 0, 
+        // 🔥 FIX: Ab ye sirf aur sirf stopwatchTime bhejega, workspace ka nahi!
+        totalDaytime: daySession.stopwatchTime || 0, 
         totalSessions: daySession.totalSessions || 0 
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-
-
-router.patch("/session/:id/pause", async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const session = await timermodel.findOne({ _id: req.params.id, userId, status: "running" });
-
-    if (!session) return res.status(404).json({ message: "Running session not found" });
-
-    const endTime = new Date();
-    const duration = Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000);
-
-    session.endTime = endTime;
-    session.duration = (session.duration || 0) + duration;
-    session.status = "paused";
-
-    await session.save();
-
-    // 🔥 FIX: Incremental Update! 
-    // Jaise hi user Save karega, time direct Dashboard (totalDaytime) me jud jayega!
-    await dailysessionmodel.updateOne(
-      { _id: session.daySessionId },
-      { $inc: { totalDaytime: duration } }
-    );
-
-    res.status(200).json({ message: "Session paused", session });
-  } catch (err) {
-    res.status(500).json({ message: "Something went wrong", error: err.message });
-  }
-});
-
-router.delete("/session/:id", async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const session = await timermodel.findOneAndDelete({ _id: req.params.id, userId });
-    
-    if (!session) return res.status(404).json({ message: "Session not found" });
-    
-    // 🔥 FIX: Agar timer chunk delete hota hai, toh dashboard se uska time minus kar do
-    if (session.duration > 0) {
-       await dailysessionmodel.updateOne(
-           { _id: session.daySessionId },
-           { $inc: { totalDaytime: -session.duration } }
-       );
-    }
-    
-    res.status(200).json({ message: "Session deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
 });
 
