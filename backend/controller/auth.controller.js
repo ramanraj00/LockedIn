@@ -298,14 +298,45 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;
-        const { about } = req.body;
-        const user = await usermodel.findByIdAndUpdate(userId, { about }, { new: true }).select("-password");
-        res.status(200).json({ success: true, user });
+        const { about, name, email, avatar } = req.body;
+        
+        const updateData = {};
+        
+        if (about !== undefined) updateData.about = about;
+        if (name) updateData.name = name;
+        if (email) updateData.email = email.toLowerCase();
+        
+        if (avatar) {
+            const ALLOWED_AVATARS = [
+                "/avatars/gwen.png", 
+                "/avatars/spidey.png", 
+                "/avatars/buttercup.png", 
+                "/avatars/henry.png"
+            ];
+            
+            if (ALLOWED_AVATARS.includes(avatar) || avatar.startsWith('http') || avatar.includes('avatars/avatar')) {
+                updateData.imageUrl = avatar;
+                updateData.avatar = avatar;
+            }
+        }
+
+        const user = await usermodel.findByIdAndUpdate(
+            userId, 
+            { $set: updateData }, 
+            { new: true } 
+        ).select("-password");
+
+        res.status(200).json({ 
+            success: true, 
+            user, 
+            message: "Profile updated successfully" 
+        });
+        
     } catch (error) {
+        console.error("Profile Update Error:", error);
         res.status(500).json({ success: false, message: "Error updating profile" });
     }
 };
-
 exports.updateLinks = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar/Sidebar'; 
 import { useSettings } from '../context/SettingsContext';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, CheckCircle2 } from 'lucide-react';
 
 const AVATARS = [
     "/avatars/gwen.png", 
@@ -18,7 +18,7 @@ const FONTS = [
     { id: 'Instrument Sans', name: 'Instrument', desc: 'Elegant & sleek' }
 ];
 
-// Refined Premium Theme
+// 🔥 DARK THEME REVERTED
 const THEME = {
     bg: '#0A0A0A',
     sectionBg: '#121212',
@@ -26,7 +26,8 @@ const THEME = {
     textPrimary: '#FFFFFF',
     textSecondary: '#A1A1AA',
     cardHover: 'rgba(255,255,255,0.03)',
-    accent: '#FFFFFF'
+    accent: '#FFFFFF',
+    inputBg: 'rgba(255,255,255,0.03)'
 };
 
 const Settings = () => {
@@ -40,11 +41,27 @@ const Settings = () => {
     const [profile, setProfile] = useState({ name: '', email: '', avatar: AVATARS[0] });
     const [isSaving, setIsSaving] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    
+    // 🔥 TOAST STATE
+    const [toast, setToast] = useState(null);
+
+    // 🔥 SMOOTH SLIDER STATES (Local state prevents whole app from re-rendering on every drag step)
+    const [localScale, setLocalScale] = useState(fontSizeMultiplier || 1);
+    const [localBrightness, setLocalBrightness] = useState(textBrightness || 1);
+
+    // Sync local states if context changes externally
+    useEffect(() => { setLocalScale(fontSizeMultiplier); }, [fontSizeMultiplier]);
+    useEffect(() => { setLocalBrightness(textBrightness); }, [textBrightness]);
+
+    const showToast = (message) => {
+        setToast(message);
+        setTimeout(() => setToast(null), 3000);
+    };
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch('http://localhost:3000/api/auth/profile', { credentials: 'include' });
+                const res = await fetch('http://localhost:3000/api/auth/me', { credentials: 'include' });
                 const data = await res.json();
                 if (data.success && data.user) {
                     setProfile({
@@ -63,13 +80,15 @@ const Settings = () => {
     const handleProfileUpdate = async () => {
         setIsSaving(true);
         try {
-            const res = await fetch('http://localhost:3000/api/auth/updateProfile', {
+            const res = await fetch('http://localhost:3000/api/auth/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ name: profile.name, email: profile.email, avatar: profile.avatar })
             });
-            if (res.ok) alert("Profile Updated Successfully!");
+            if (res.ok) {
+                showToast("Profile Updated Successfully!");
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -165,7 +184,7 @@ const Settings = () => {
             placeholder={placeholder}
             style={{
                 width: '100%', maxWidth: '320px',
-                backgroundColor: 'rgba(255,255,255,0.03)',
+                backgroundColor: THEME.inputBg,
                 border: `1px solid ${THEME.border}`,
                 color: THEME.textPrimary,
                 padding: '12px 16px',
@@ -176,17 +195,19 @@ const Settings = () => {
                 transition: 'border 0.2s'
             }}
             onFocus={(e) => { e.target.style.borderColor = THEME.textPrimary; e.target.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
-            onBlur={(e) => { e.target.style.borderColor = THEME.border; e.target.style.backgroundColor = 'rgba(255,255,255,0.03)'; }}
+            onBlur={(e) => { e.target.style.borderColor = THEME.border; e.target.style.backgroundColor = THEME.inputBg; }}
         />
     );
 
-    // Custom CSS for slider to make it look premium
-    const Slider = ({ value, min, max, step, onChange, formatLabel }) => (
+    // 🔥 UPDATED SLIDER FOR BUTTERY SMOOTH 60FPS
+    const Slider = ({ value, min, max, step, onChange, onCommit, formatLabel }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', width: '100%', maxWidth: '360px' }}>
             <input 
                 type="range" min={min} max={max} step={step}
                 value={value}
                 onChange={onChange}
+                onMouseUp={onCommit}
+                onTouchEnd={onCommit}
                 className="premium-slider"
                 style={{ flex: 1 }}
             />
@@ -228,7 +249,7 @@ const Settings = () => {
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: THEME.bg, overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
             
-            {/* Custom Styles for Premium Slider */}
+            {/* Custom Styles for Premium Slider Dark Mode */}
             <style>{`
                 .premium-slider {
                     -webkit-appearance: none;
@@ -263,12 +284,43 @@ const Settings = () => {
                 }
             `}</style>
 
+            {/* 🔥 TOAST NOTIFICATION (DARK THEME) */}
+            {toast && (
+                <div style={{
+                    position: 'absolute',
+                    top: '32px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: '#FFFFFF',
+                    color: '#0A0A0A',
+                    padding: '12px 24px',
+                    borderRadius: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                    zIndex: 1000,
+                    animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}>
+                    <CheckCircle2 size={18} color="#059669" />
+                    {toast}
+                    <style>{`
+                        @keyframes slideDown {
+                            from { opacity: 0; transform: translate(-50%, -20px); }
+                            to { opacity: 1; transform: translate(-50%, 0); }
+                        }
+                    `}</style>
+                </div>
+            )}
+
             {/* SIDEBAR */}
             <Sidebar activePage="Settings" />
 
-            {/* MAIN CONTENT AREA */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '48px', display: 'flex', justifyContent: 'center' }}>
-                <div style={{ width: '100%', maxWidth: '900px' }}>
+            {/* MAIN CONTENT AREA - Full Width */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '48px', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ width: '100%' }}>
                     
                     {/* HEADER */}
                     <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -290,7 +342,7 @@ const Settings = () => {
                             description="Choose the primary font family for the application."
                             alignTop={true}
                         >
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', width: '100%' }}>
                                 {FONTS.map(font => (
                                     <SelectCard 
                                         key={font.id}
@@ -308,8 +360,14 @@ const Settings = () => {
                             description="Adjust the overall size of text and UI elements."
                         >
                             <Slider 
-                                value={fontSizeMultiplier} min={0.7} max={1.3} step={0.05} 
-                                onChange={(e) => setFontSizeMultiplier(parseFloat(e.target.value))}
+                                value={localScale} min={0.7} max={1.3} step={0.05} 
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setLocalScale(val);
+                                    // Instant DOM update for buttery smoothness skipping React re-render
+                                    document.documentElement.style.setProperty('--font-size-multiplier', val);
+                                }}
+                                onCommit={() => setFontSizeMultiplier(localScale)}
                                 formatLabel={(v) => `${Math.round(v * 100)}%`}
                             />
                         </Row>
@@ -320,8 +378,14 @@ const Settings = () => {
                             isLast={true}
                         >
                             <Slider 
-                                value={textBrightness} min={0.3} max={1} step={0.05} 
-                                onChange={(e) => setTextBrightness(parseFloat(e.target.value))}
+                                value={localBrightness} min={0.3} max={1} step={0.05} 
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setLocalBrightness(val);
+                                    // Instant DOM update for buttery smoothness skipping React re-render
+                                    document.documentElement.style.setProperty('--text-brightness', val);
+                                }}
+                                onCommit={() => setTextBrightness(localBrightness)}
                                 formatLabel={(v) => `${Math.round(v * 100)}%`}
                             />
                         </Row>
