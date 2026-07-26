@@ -23,6 +23,8 @@ import Analytics from './components/Analytics/Analytics.jsx';
 // Leaderboard
 import Leaderboard from './pages/Leaderboard';
 
+// 🔥 SETTINGS PAGE IMPORT
+import Settings from './pages/Settings'; 
 
 function App() {
   return (
@@ -71,6 +73,10 @@ function App() {
 
        <Route path="/profile/:userId"
         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+      {/* 🔥 SETTINGS ROUTE ADD KIYA HAI */}
+      <Route path="/settings"
+        element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
     </Routes>
   );

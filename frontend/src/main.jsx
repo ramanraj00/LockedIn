@@ -9,16 +9,20 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CryptoProvider } from './context/CryptoContext.jsx'; 
 // 🔥 IMPORT CALENDAR NOTIFICATION PROVIDER
 import { CalendarNotificationProvider } from './context/CalendarNotificationProvider.jsx'; // Path check kar lena
+// 🔥 IMPORT SETTINGS PROVIDER
+import { SettingsProvider } from './context/SettingsContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter> 
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <CryptoProvider>
-          {/* 🔥 APP KO CALENDAR NOTIFICATIONS SE BHI WRAP KAR DIYA */}
-          <CalendarNotificationProvider>
-            <App />
-          </CalendarNotificationProvider>
+          {/* 🔥 APP KO CALENDAR NOTIFICATIONS AUR SETTINGS SE WRAP KIYA HAI */}
+          <SettingsProvider>
+            <CalendarNotificationProvider>
+              <App />
+            </CalendarNotificationProvider>
+          </SettingsProvider>
         </CryptoProvider>
       </GoogleOAuthProvider>
     </BrowserRouter>

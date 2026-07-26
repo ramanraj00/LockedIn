@@ -36,18 +36,73 @@ const formatXP = (seconds) => {
     return `${s}s`; 
 };
 
-const getAvatarUrl = (avatar, name) => {
-    if (avatar && avatar.startsWith('http://localhost:5173')) {
-        return avatar.replace('http://localhost:5173', '');
-    }
-    if (avatar) return avatar;
-    const avatarCount = 4;
+// 🔥 Helper function for Name-based Background Colors
+const getColorFromName = (name) => {
+    const gradients = [
+        'linear-gradient(135deg, #6366F1, #8B5CF6)',
+        'linear-gradient(135deg, #EC4899, #F43F5E)',
+        'linear-gradient(135deg, #F97316, #EAB308)',
+        'linear-gradient(135deg, #22C55E, #14B8A6)',
+        'linear-gradient(135deg, #06B6D4, #3B82F6)',
+    ];
     let hash = 0;
     for (let i = 0; i < (name || 'U').length; i++) {
         hash = (name || 'U').charCodeAt(i) + ((hash << 5) - hash);
     }
-    const index = (Math.abs(hash) % avatarCount) + 1;
-    return `/avatars/avatar${index}.png`;
+    return gradients[Math.abs(hash) % gradients.length];
+};
+
+// 🔥 Safe Avatar Component with First Letter Fallback
+const Avatar = ({ src, name, size = 32, style = {} }) => {
+    const [error, setError] = useState(false);
+    const initial = (name || 'U').charAt(0).toUpperCase();
+    const hasValidSrc = src && src.trim() !== '' && src !== 'null' && src !== 'undefined' && !src.includes('default');
+
+    if (!hasValidSrc || error) {
+        return (
+            <div style={{
+                width: size, height: size, borderRadius: style.borderRadius || '50%',
+                background: getColorFromName(name),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#FFF', fontWeight: 800, fontSize: size * 0.45,
+                flexShrink: 0, ...style
+            }}>
+                {initial}
+            </div>
+        );
+    }
+
+    return (
+        <img
+            src={src}
+            alt={name}
+            referrerPolicy="no-referrer"
+            onError={() => setError(true)}
+            style={{ width: size, height: size, borderRadius: style.borderRadius || '50%', objectFit: 'cover', flexShrink: 0, ...style }}
+        />
+    );
+};
+
+const getAvatarUrl = (avatar, name) => {
+    if (avatar && avatar !== 'null' && avatar !== 'undefined') {
+        if (avatar.startsWith('http://localhost:5173')) {
+            return avatar.replace('http://localhost:5173', '');
+        }
+        if (avatar.startsWith('http') || avatar.startsWith('data:')) {
+            return avatar;
+        }
+        if (avatar.includes('avatars/')) {
+            return avatar.startsWith('/') ? avatar : `/${avatar}`;
+        }
+        if (avatar.includes('uploads/')) {
+            return avatar.startsWith('/') ? `http://localhost:3000${avatar}` : `http://localhost:3000/${avatar}`;
+        }
+        if (avatar.startsWith('/')) {
+            return `http://localhost:3000${avatar}`;
+        }
+        return avatar;
+    }
+    return null;
 };
 
 // =======================================================
@@ -67,7 +122,6 @@ const Top3Stack = memo(({ top3Users, navigate }) => {
         return (
             <div className="fake-card">
                 <div style={{ width: '100%', height: '100px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
-                    {/* SAFARI FIX: Removed blur(15px) & willChange on inner child because linear-gradient is already smooth */}
                     <div style={{ 
                         position: 'absolute', inset: -20, 
                         background: `linear-gradient(${angle}, ${color1} 0%, ${color2} 50%, ${color3} 100%)`,
@@ -82,32 +136,28 @@ const Top3Stack = memo(({ top3Users, navigate }) => {
 
     return (
         <div className="top3-stack-container">
-            {/* 🔥 LEFT FAKE CARDS */}
             <div className="fake-card-wrapper fake-l3">{renderFakeCard('#06b6d4', '#3b82f6', '#8b5cf6', 'left')}</div> 
             <div className="fake-card-wrapper fake-l2">{renderFakeCard('#3b82f6', '#f59e0b', '#ef4444', 'left')}</div> 
             <div className="fake-card-wrapper fake-l1">{renderFakeCard('#ec4899', '#8b5cf6', '#eab308', 'left')}</div> 
 
-            {/* 🔥 RIGHT FAKE CARDS */}
             <div className="fake-card-wrapper fake-r3">{renderFakeCard('#4f46e5', '#a855f7', '#f97316', 'right')}</div> 
             <div className="fake-card-wrapper fake-r2">{renderFakeCard('#3b82f6', '#4338ca', '#f43f5e', 'right')}</div> 
             <div className="fake-card-wrapper fake-r1">{renderFakeCard('#8b5cf6', '#ec4899', '#06b6d4', 'right')}</div> 
 
-            {/* REAL CARDS */}
-            {top3.map((user) => (
+            {top3.map((user, idx) => (
                 <div 
-                    key={user.id || user._id} 
+                    key={user.id || user._id || `top3-${idx}`} 
                     className="top3-wrapper" 
                     data-rank={user.rank}
                     onClick={() => navigate(`/profile/${user.id || user._id}`)}
                 >
                     <div className="top3-card" style={{ padding: 0 }}>
                         <div style={{ width: '100%', height: '100px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '15px', borderTopRightRadius: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            {/* SAFARI FIX: Removed translateZ and willChange from this inner blurred layer */}
                             <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${getAvatarUrl(user.avatar, user.name)})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px) brightness(0.7)', zIndex: 0 }} />
                             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(24,24,27,0) 20%, #18181B)', zIndex: 0 }} />
                             
                             <div style={{ position: 'relative', zIndex: 2, marginTop: '8px' }}>
-                                <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} referrerPolicy="no-referrer" style={{ width: 64, height: 64, borderRadius: '12px', objectFit: 'cover' }} />
+                                <Avatar src={getAvatarUrl(user.avatar, user.name)} name={user.name} size={64} style={{ borderRadius: '12px' }} />
                                 <div style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', background: '#18181B', borderRadius: '8px', padding: '2px 10px', border: `1px solid ${user.accent}50`, display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 8px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
                                     {user.rank === 1 ? <Crown color={user.accent} size={11} strokeWidth={2.5} /> : <Trophy color={user.accent} size={11} strokeWidth={2.5} />}
                                     <span style={{ fontSize: '11px', fontWeight: 800, color: user.accent }}>#{user.rank}</span>
@@ -161,7 +211,6 @@ const BadgeCarousel = memo(() => {
 
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            
             <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div style={{ position: 'relative', paddingBottom: '8px' }}>
@@ -169,11 +218,7 @@ const BadgeCarousel = memo(() => {
                             Achievements
                         </h3>
                         <div style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            width: '130%', 
-                            height: '2px',
+                            position: 'absolute', bottom: 0, left: 0, width: '130%', height: '2px',
                             background: 'linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
                             borderRadius: '2px'
                         }} />
@@ -183,95 +228,44 @@ const BadgeCarousel = memo(() => {
 
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1200px' }}>
                 <Swiper
-                    effect={'coverflow'}
-                    grabCursor={true}
-                    centeredSlides={true}
-                    slidesPerView={3} 
-                    loop={true}
-                    slideToClickedSlide={true} 
-                    coverflowEffect={{
-                        rotate: 0,       
-                        stretch: 250,    
-                        depth: 300,      
-                        modifier: 1,   
-                        slideShadows: false, 
-                    }}
-                    modules={[EffectCoverflow]}
-                    style={{ width: '100%', maxWidth: '550px', height: '160px' }} 
+                    effect={'coverflow'} grabCursor={true} centeredSlides={true} slidesPerView={3} loop={true} slideToClickedSlide={true} 
+                    coverflowEffect={{ rotate: 0, stretch: 250, depth: 300, modifier: 1, slideShadows: false }}
+                    modules={[EffectCoverflow]} style={{ width: '100%', maxWidth: '550px', height: '160px' }} 
                 >
                     {ALL_BADGES.map((badge) => (
                         <SwiperSlide key={badge.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
                             {({ isActive, isPrev, isNext }) => {
                                 const showBadge = isActive || isPrev || isNext;
-                                
                                 return (
                                     <div style={{ 
-                                        display: 'flex',
-                                        flexDirection: 'column', 
-                                        alignItems: 'center',
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center',
                                         transition: 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
                                         opacity: showBadge ? (isActive ? 1 : 0.4) : 0, 
                                         transform: isActive ? 'scale(1.2)' : 'scale(1)', 
                                         pointerEvents: showBadge ? 'auto' : 'none'
                                     }}>
                                         <div style={{ position: 'relative', width: '90px', height: '90px' }}>
-                                            <img 
-                                                src={badge.imageUrl} 
-                                                alt={badge.name} 
-                                                style={{ 
-                                                    width: '100%', 
-                                                    height: '100%', 
-                                                    objectFit: 'contain',
-                                                    filter: 'none' 
-                                                }} 
-                                            />
-
+                                            <img src={badge.imageUrl} alt={badge.name} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'none' }} />
                                             <div style={{
-                                                position: 'absolute',
-                                                bottom: '4px',
-                                                right: '4px',
-                                                width: '24px',
-                                                height: '24px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#111218', 
-                                                border: '2px solid #2A2C38', 
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                boxShadow: '0 4px 8px rgba(0,0,0,0.6)',
-                                                zIndex: 10
+                                                position: 'absolute', bottom: '4px', right: '4px', width: '24px', height: '24px',
+                                                borderRadius: '50%', backgroundColor: '#111218', border: '2px solid #2A2C38', 
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.6)', zIndex: 10
                                             }}>
                                                 <Lock size={11} color="#8A8F9E" strokeWidth={2.5} />
                                             </div>
-
                                             {isActive && (
                                                 <div className="badge-shimmer-overlay" style={{
-                                                    position: 'absolute',
-                                                    inset: 0,
-                                                    zIndex: 2,
-                                                    WebkitMaskImage: `url(${badge.imageUrl})`,
-                                                    maskImage: `url(${badge.imageUrl})`,
-                                                    WebkitMaskSize: 'contain',
-                                                    maskSize: 'contain',
-                                                    WebkitMaskRepeat: 'no-repeat',
-                                                    maskRepeat: 'no-repeat',
-                                                    WebkitMaskPosition: 'center',
-                                                    maskPosition: 'center',
-                                                    pointerEvents: 'none'
+                                                    position: 'absolute', inset: 0, zIndex: 2,
+                                                    WebkitMaskImage: `url(${badge.imageUrl})`, maskImage: `url(${badge.imageUrl})`,
+                                                    WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                                                    WebkitMaskPosition: 'center', maskPosition: 'center', pointerEvents: 'none'
                                                 }} />
                                             )}
                                         </div>
-                                        
                                         <span style={{
-                                            marginTop: '12px',
-                                            fontSize: '11px',
-                                            fontWeight: 800,
-                                            color: '#FFF',
-                                            letterSpacing: '0.08em',
-                                            textTransform: 'uppercase',
-                                            opacity: isActive ? 1 : 0, 
-                                            transition: 'opacity 0.3s ease',
-                                            textAlign: 'center'
+                                            marginTop: '12px', fontSize: '11px', fontWeight: 800, color: '#FFF',
+                                            letterSpacing: '0.08em', textTransform: 'uppercase', opacity: isActive ? 1 : 0, 
+                                            transition: 'opacity 0.3s ease', textAlign: 'center'
                                         }}>
                                             {badge.name}
                                         </span>
@@ -303,12 +297,11 @@ const LeaderboardTable = memo(({ tableUsers, navigate }) => {
             
             <div className="table-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {tableUsers.map((user, idx, arr) => (
-                    <div key={user.id || user._id} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} 
+                    <div key={user.id || user._id || `table-${idx}`} className="list-row" onClick={() => navigate(`/profile/${user.id || user._id}`)} 
                          style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: idx !== arr.length - 1 ? `1px solid ${COLORS.border}` : 'none', cursor: 'pointer' }}>
                         <div style={{ width: '60px', fontSize: '14px', fontWeight: 700, color: COLORS.textSecondary }}>#{idx + 4}</div>
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} referrerPolicy="no-referrer"
-                                style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#222', objectFit: 'cover' }} />
+                            <Avatar src={getAvatarUrl(user.avatar, user.name)} name={user.name} size={32} />
                             <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textPrimary }}>{user.name}</span>
                         </div>
                         <div style={{ width: '140px', fontSize: '14px', color: COLORS.textPrimary, fontWeight: 600 }}>{formatXP(user.xp)}</div>
@@ -345,40 +338,19 @@ const Leaderboard = () => {
 
     useEffect(() => {
         const fetchData = async (isBackground = false) => {
-            const fetchStartTime = Date.now();
-            let isCached = false;
-
-            if (!isBackground) {
-                try {
-                    const cachedUsers = localStorage.getItem('leaderboard_users');
-                    const cachedStats = localStorage.getItem('leaderboard_stats');
-                    if (cachedUsers && cachedStats) {
-                        setUsers(JSON.parse(cachedUsers));
-                        setCurrentUserStats(JSON.parse(cachedStats));
-                        isCached = true;
-                        setIsLoading(true); // Artificial 1s skeleton for reload
-                    } else {
-                        setIsLoading(true);
-                    }
-                } catch (e) {
-                    setIsLoading(true);
-                }
-            }
-
+            if (!isBackground) setIsLoading(true);
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds MAX!
-
+                // 🔥 Parallel Execution using Promise.allSettled for super fast loading
                 const [leaderboardRes, authRes] = await Promise.allSettled([
-                    fetch('http://localhost:3000/api/leaderboard', { credentials: 'include', signal: controller.signal }),
-                    fetch('http://localhost:3000/api/auth/me', { credentials: 'include', signal: controller.signal })
+                    fetch('http://localhost:3000/api/leaderboard', { credentials: 'include' }),
+                    fetch("http://localhost:3000/api/auth/me", { credentials: "include" })
                 ]);
-                
-                clearTimeout(timeoutId);
 
-                const leaderboardData = (leaderboardRes.status === 'fulfilled' && leaderboardRes.value.ok) 
-                    ? await leaderboardRes.value.json() 
-                    : [];
+                let leaderboardData = [];
+                if (leaderboardRes.status === 'fulfilled' && leaderboardRes.value.ok) {
+                    leaderboardData = await leaderboardRes.value.json();
+                }
+                setUsers(leaderboardData);
                 
                 let loggedInName = '';
                 let loggedInAvatar = null;
@@ -387,18 +359,14 @@ const Leaderboard = () => {
                 let loggedInXp = 0;
                 
                 if (authRes.status === 'fulfilled' && authRes.value.ok) {
-                    try {
-                        const authData = await authRes.value.json();
-                        if (authData && authData.user) {
-                            const u = authData.user;
-                            loggedInName = u.name || u.username || '';
-                            loggedInAvatar = u.avatar || u.imageUrl || u.picture || null;
-                            loggedInId = u._id || u.id || null;
-                            loggedInStreak = Number(u.streak || 0);
-                            loggedInXp = Number(u.xp || u.focusTime || 0);
-                        }
-                    } catch (err) {
-                        console.error("Error parsing auth API:", err);
+                    const authData = await authRes.value.json();
+                    if (authData && authData.user) {
+                        const u = authData.user;
+                        loggedInName = u.name || u.username || '';
+                        loggedInAvatar = u.avatar || u.imageUrl || u.picture || null;
+                        loggedInId = u._id || u.id || null;
+                        loggedInStreak = Number(u.streak || 0);
+                        loggedInXp = Number(u.xp || u.focusTime || 0);
                     }
                 }
 
@@ -416,40 +384,23 @@ const Leaderboard = () => {
                     const beatCount = totalUsers - (myIndex + 1);
                     const percentile = totalUsers > 1 ? Math.floor((beatCount / totalUsers) * 100) : 99;
                     
-                    const newStats = {
+                    setCurrentUserStats({
                         name: me.name || loggedInName, 
                         avatar: me.avatar || loggedInAvatar,
                         rank: myIndex + 1, 
                         streak: me.streak || loggedInStreak,
                         focusTime: me.xp || loggedInXp, 
                         percentile: Math.max(1, percentile)
-                    };
-                    setCurrentUserStats(newStats);
-                    localStorage.setItem('leaderboard_stats', JSON.stringify(newStats));
+                    });
                 } else {
-                    const newStats = { 
+                    setCurrentUserStats({ 
                         name: loggedInName, avatar: loggedInAvatar, rank: '-', streak: loggedInStreak, focusTime: loggedInXp, percentile: 0 
-                    };
-                    setCurrentUserStats(newStats);
-                    localStorage.setItem('leaderboard_stats', JSON.stringify(newStats));
-                }
-
-                if (leaderboardRes.status === 'fulfilled') {
-                    setUsers(leaderboardData);
-                    localStorage.setItem('leaderboard_users', JSON.stringify(leaderboardData));
+                    });
                 }
             } catch (error) { 
                 console.error("Error fetching data:", error); 
             } finally { 
-                if (!isBackground) {
-                    const elapsed = Date.now() - fetchStartTime;
-                    if (isCached) {
-                        const waitTime = Math.max(0, 1000 - elapsed);
-                        setTimeout(() => setIsLoading(false), waitTime);
-                    } else {
-                        setIsLoading(false); 
-                    }
-                }
+                if (!isBackground) setIsLoading(false); 
             }
         };
 
@@ -462,8 +413,10 @@ const Leaderboard = () => {
         return () => clearInterval(intervalId);
     }, []);
 
+    // 🔥 Absolute route check to prevent double profile bug
     const handleNavigate = useCallback((id) => {
-        navigate(`/profile/${id}`);
+        let cleanId = id.toString().replace('/profile/', '');
+        navigate(`/profile/${cleanId}`);
     }, [navigate]);
 
     const top3Users = useMemo(() => users.slice(0, 3), [users]);
@@ -473,7 +426,6 @@ const Leaderboard = () => {
         <div style={{ display: 'flex', height: '100vh', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', sans-serif" }}>
             
             <style>{`
-                /* 🔥 ADDED LOCAL POPPINS FONT */
                 @font-face {
                     font-family: 'Poppins';
                     src: url('/poppin.ttf') format('truetype');
@@ -488,7 +440,6 @@ const Leaderboard = () => {
                 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
                 .animate-fade-up { animation: fadeUp 0.35s ease forwards; }
 
-                /* 🔥 SCROLLBAR HIDING 🔥 */
                 .right-column-scroll::-webkit-scrollbar, .table-scroll::-webkit-scrollbar, .main-content-wrapper::-webkit-scrollbar { display: none; }
                 .right-column-scroll, .table-scroll, .main-content-wrapper { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -499,7 +450,6 @@ const Leaderboard = () => {
                     background-size: 1000px 100%; animation: shimmer 2s infinite linear; border-radius: 6px;
                 }
                 
-                /* 🔥 BADGE SHIMMER EFFECT 🔥 */
                 .badge-shimmer-overlay::after {
                     content: '';
                     position: absolute;
@@ -517,7 +467,6 @@ const Leaderboard = () => {
                     100% { left: 150%; }
                 }
 
-                /* 🔥 L-SHAPE DECORATIVE DASHED CORNER 🔥 */
                 .decorative-corner {
                     position: absolute;
                     top: -32px;
@@ -557,7 +506,6 @@ const Leaderboard = () => {
                     backface-visibility: hidden;
                 }
 
-                /* --- SAFARI FIX: Using translate3d instead of translateX/Y for GPU Acceleration --- */
                 .fake-l1 { 
                     transform: translate3d(-80px, 22px, 0) rotate(-14deg) scale(0.9); 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.0s, opacity 0.4s ease-out 0.0s;
@@ -585,7 +533,6 @@ const Leaderboard = () => {
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s, opacity 0.4s ease-out 0.2s;
                 }
 
-                /* --- HOVER STATE --- */
                 .top3-stack-container:hover .fake-l1,
                 .top3-stack-container:hover .fake-l2,
                 .top3-stack-container:hover .fake-l3 { 
@@ -632,7 +579,6 @@ const Leaderboard = () => {
                     height: 220px; 
                     transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
                     will-change: transform;
-                    /* SAFARI FIX */
                     transform: translate3d(0, 0, 0);
                     -webkit-transform: translate3d(0, 0, 0);
                     -webkit-backface-visibility: hidden;
@@ -654,7 +600,6 @@ const Leaderboard = () => {
                     overflow: hidden; 
                     position: relative;
                     will-change: transform;
-                    /* SAFARI FIX */
                     transform: translate3d(0, 0, 0);
                     -webkit-transform: translate3d(0, 0, 0);
                     -webkit-backface-visibility: hidden;
@@ -676,83 +621,49 @@ const Leaderboard = () => {
                     border-color: #27272A !important; 
                 }
 
-                /* 🔥 MOBILE RESPONSIVE MEDIA QUERIES 🔥 */
                 @media (max-width: 1024px) {
                     .main-content-wrapper { padding: 56px 20px 20px 20px !important; overflow-y: auto !important; }
                     .leaderboard-header { margin-left: 0 !important; flex-direction: column !important; align-items: flex-start !important; gap: 12px; margin-bottom: 24px !important; }
                     .main-grid { display: flex !important; flex-direction: column !important; gap: 32px; height: auto !important; min-height: auto !important; }
                     .left-col, .right-col { height: auto !important; min-height: auto !important; }
-                    
                     .table-container { flex: none !important; height: auto !important; min-height: auto !important; }
                     .table-scroll { overflow-y: visible !important; height: auto !important; }
                     .list-row { padding: 20px 24px !important; } 
-                    
-                    .decorative-corner { display: none; } /* HIDDEN ON MOBILE */
+                    .decorative-corner { display: none; }
                 }
 
                 @media (max-width: 768px) {
                     .leaderboard-title { font-size: 36px !important; }
                     .table-container { overflow-x: auto !important; }
                     .table-header-row, .table-scroll { min-width: 500px; }
-                    
                     .top3-stack-container { transform: scale(0.75) !important; margin-bottom: 10px !important; height: 280px !important; margin-top: 10px !important; }
-                    
                     .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translate3d(-110%, 0, 0) rotate(0deg) !important; }
                     .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translate3d(110%, 0, 0) rotate(0deg) !important; }
-                    
                     .stats-header { padding: 24px 16px !important; flex-direction: column !important; text-align: center !important; }
                     .stats-val { font-size: 22px !important; }
-                    
                     .badge-carousel-wrapper { transform: scale(0.85); }
                 }
 
                 @media (max-width: 480px) {
                     .leaderboard-title { font-size: 32px !important; }
-                    
                     .top3-stack-container { transform: scale(0.6) !important; margin-bottom: 0px !important; height: 260px !important; margin-top: 10px !important; }
-                    
                     .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translate3d(-105%, 0, 0) rotate(0deg) !important; }
                     .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translate3d(105%, 0, 0) rotate(0deg) !important; }
-                    
                     .badge-carousel-wrapper { transform: scale(0.7); margin-bottom: 10px !important; }
                 }
             `}</style>
 
             <Sidebar activePage="Leaderboard" />
 
-            {/* 🔥 main-content-wrapper */}
             <div className="main-content-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 36px', width: '100%', overflowY: 'hidden' }}>
                 <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     
-                    {/* ===== HEADER ===== */}
-                    <div className="leaderboard-header" style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        marginBottom: '32px', 
-                        marginLeft: '64px'
-                    }}>
+                    <div className="leaderboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', marginLeft: '64px' }}>
                         <div style={{ position: 'relative', paddingBottom: '12px' }}>
-                            <h1 className="leaderboard-title" style={{ 
-                                fontFamily: "'Poppins', sans-serif", 
-                                fontSize: '48px', 
-                                fontWeight: 900, 
-                                color: '#FFF', 
-                                letterSpacing: '-0.02em', 
-                                margin: 0, 
-                                lineHeight: 1 
-                            }}>
+                            <h1 className="leaderboard-title" style={{ fontFamily: "'Poppins', sans-serif", fontSize: '48px', fontWeight: 900, color: '#FFF', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>
                                 Leaderboard
                             </h1>
-                            <div style={{
-                                position: 'absolute',
-                                bottom: 0,
-                                left: 0,
-                                width: '130%', 
-                                height: '2px',
-                                background: 'linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
-                                borderRadius: '2px'
-                            }} />
+                            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '130%', height: '2px', background: 'linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)', borderRadius: '2px' }} />
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -765,33 +676,18 @@ const Leaderboard = () => {
 
                     {isLoading ? (
                         <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0, position: 'relative' }}>
-                            
-                            {/* 🔥 Dashed L-Bracket added here 🔥 */}
                             <div className="decorative-corner" />
 
-                            {/* ⬅️ LEFT COLUMN SKELETON */}
                             <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
-                                
-                                {/* TOP 3 STACK SKELETON (Matching Real UI) */}
                                 <div style={{ position: 'relative', width: '100%', height: '240px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '40px', perspective: '1200px' }}>
-                                    {/* Fake left skeleton */}
                                     <div className="skeleton" style={{ position: 'absolute', width: '170px', height: '220px', borderRadius: '16px', transform: 'translate3d(-120px, 38px, 0) rotate(-20deg) scale(0.85)', opacity: 0.6, zIndex: 1, border: '1px solid #27272A' }} />
-                                    
-                                    {/* Fake right skeleton */}
                                     <div className="skeleton" style={{ position: 'absolute', width: '170px', height: '220px', borderRadius: '16px', transform: 'translate3d(120px, 38px, 0) rotate(20deg) scale(0.85)', opacity: 0.6, zIndex: 1, border: '1px solid #27272A' }} />
-                                    
-                                    {/* Main center skeleton */}
                                     <div style={{ position: 'relative', width: '170px', height: '220px', borderRadius: '16px', zIndex: 3, border: '1px solid #27272A', display: 'flex', flexDirection: 'column', padding: '16px 14px', background: '#18181B', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
-                                        {/* Avatar skeleton */}
                                         <div className="skeleton" style={{ position: 'relative', width: '64px', height: '64px', borderRadius: '12px', alignSelf: 'center', marginTop: '8px', zIndex: 2 }} />
-                                        
-                                        {/* Name & Title skeleton */}
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '16px', gap: '8px', zIndex: 2 }}>
                                             <div className="skeleton" style={{ width: '80%', height: '14px', borderRadius: '4px' }} />
                                             <div className="skeleton" style={{ width: '50%', height: '10px', borderRadius: '4px' }} />
                                         </div>
-                                        
-                                        {/* Stats skeleton */}
                                         <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', marginTop: 'auto', marginBottom: '4px', zIndex: 2 }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                                                 <div className="skeleton" style={{ width: '30px', height: '8px', borderRadius: '2px' }} />
@@ -806,7 +702,6 @@ const Leaderboard = () => {
                                     </div>
                                 </div>
 
-                                {/* TABLE SKELETON */}
                                 <div style={{ width: '100%', background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: '0', flex: 1, display: 'flex', flexDirection: 'column', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
                                     <div style={{ display: 'flex', padding: '16px 24px', borderBottom: `1px solid ${COLORS.border}`, backgroundColor: '#1A1A1A' }}>
                                         <div className="skeleton" style={{ width: '40px', height: '12px', borderRadius: '4px' }} />
@@ -830,10 +725,7 @@ const Leaderboard = () => {
                                 </div>
                             </div>
 
-                            {/* ➡️ RIGHT COLUMN SKELETON */}
                             <div className="right-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
-                                
-                                {/* CAROUSEL SKELETON */}
                                 <div style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px', display: 'flex', flexDirection: 'column' }}>
                                     <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
                                         <div className="skeleton" style={{ width: '140px', height: '24px', borderRadius: '4px' }} />
@@ -848,7 +740,6 @@ const Leaderboard = () => {
                                     </div>
                                 </div>
 
-                                {/* USER PROFILE SKELETON */}
                                 <div style={{ position: 'relative', width: '100%', flex: 1, background: '#121212', borderRadius: '0', border: '1px solid #27272A', display: 'flex', flexDirection: 'column', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
                                     <div style={{ padding: '36px 32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
                                         <div className="skeleton" style={{ width: '96px', height: '96px', borderRadius: '50%', flexShrink: 0, border: '2px solid rgba(255,255,255,0.12)' }} />
@@ -880,99 +771,53 @@ const Leaderboard = () => {
                         </div>
                     ) : (
                         <div className="animate-fade-up main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '32px', flex: 1, minHeight: 0, position: 'relative' }}>
-                            
-                            {/* 🔥 Dashed L-Bracket added here too 🔥 */}
                             <div className="decorative-corner" />
 
-                            {/* ⬅️ LEFT COLUMN */}
                             <div className="left-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
-                                
                                 <Top3Stack top3Users={top3Users} navigate={handleNavigate} />
                                 <LeaderboardTable tableUsers={tableUsers} navigate={handleNavigate} />
                             </div>
 
-                            {/* ➡️ RIGHT COLUMN */}
                             <div className="right-col right-column-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', minHeight: 0, height: '100%' }}>
-                                
                                 <div className="badge-carousel-wrapper" style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px' }}>
                                     <BadgeCarousel />
                                 </div>
 
                                 <div style={{
-                                    position: 'relative',
-                                    width: '100%',
-                                    flex: 1, 
-                                    background: '#121212',
-                                    borderRadius: '0',
-                                    border: '1px solid #27272A',
-                                    overflow: 'hidden',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    boxShadow: '0 8px 30px rgba(0,0,0,0.3)', 
+                                    position: 'relative', width: '100%', flex: 1, background: '#121212', borderRadius: '0',
+                                    border: '1px solid #27272A', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', 
                                 }}>
                                     
                                     <div style={{
-                                        position: 'absolute',
-                                        inset: -20,
+                                        position: 'absolute', inset: -20,
                                         backgroundImage: `url(${getAvatarUrl(currentUserStats.avatar, currentUserStats.name)})`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        filter: 'blur(30px) brightness(0.5)',
-                                        zIndex: 0,
-                                        transform: 'translateZ(0)',
-                                        willChange: 'transform'
+                                        backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px) brightness(0.5)',
+                                        zIndex: 0, transform: 'translateZ(0)', willChange: 'transform'
                                     }} />
 
                                     <div style={{
-                                        position: 'absolute',
-                                        inset: 0,
+                                        position: 'absolute', inset: 0,
                                         background: 'linear-gradient(to bottom, rgba(18,18,18,0.2) 0%, #121212 150px)',
                                         zIndex: 0
                                     }} />
 
-                                    {/* 1. TOP SECTION */}
                                     <div className="stats-header" style={{ position: 'relative', zIndex: 1, padding: '36px 32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                        <img 
+                                        <Avatar 
                                             src={getAvatarUrl(currentUserStats.avatar, currentUserStats.name)} 
-                                            alt={currentUserStats.name} 
-                                            referrerPolicy="no-referrer"
-                                            style={{ 
-                                                width: 96, 
-                                                height: 96, 
-                                                borderRadius: '50%', 
-                                                objectFit: 'cover', 
-                                                border: '2px solid rgba(255,255,255,0.12)', 
-                                                boxShadow: '0 12px 30px rgba(0,0,0,0.5)',
-                                                flexShrink: 0 
-                                            }} 
+                                            name={currentUserStats.name} 
+                                            size={96} 
+                                            style={{ border: '2px solid rgba(255,255,255,0.12)', boxShadow: '0 12px 30px rgba(0,0,0,0.5)' }} 
                                         />
                                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
-                                            <h2 style={{ 
-                                                margin: 0, 
-                                                fontSize: '28px', 
-                                                fontWeight: 800, 
-                                                color: '#FFF', 
-                                                letterSpacing: '-0.02em', 
-                                                lineHeight: 1.2, 
-                                                wordBreak: 'break-word' 
-                                            }}>
+                                            <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', lineHeight: 1.2, wordBreak: 'break-word' }}>
                                                 {currentUserStats.name}
                                             </h2>
                                         </div>
                                     </div>
 
-                                    {/* 2. MAIN DIVIDER LINE */}
                                     <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
-                                    {/* 3. BOTTOM SECTION (Reconstructed for you!) */}
-                                    <div style={{ 
-                                        position: 'relative', 
-                                        zIndex: 1, 
-                                        flex: 1,
-                                        display: 'grid', 
-                                        gridTemplateColumns: '1fr 1fr', 
-                                        gridTemplateRows: '1fr 1fr',
-                                    }}>
+                                    <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '16px' }}>
                                             <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>CURRENT RANK</span>
                                             <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>#{currentUserStats.rank !== '-' ? currentUserStats.rank : '-'}</span>

@@ -26,6 +26,7 @@ const ALL_BADGES = [
     { id: 'crowned',   name: 'Crowned',   description: "Honorable", requirement: 'Stay consistent for 12 months and 1 day', requiredDays: 366, imageUrl: '/badges/lastlevel.png' },
 ];
 
+// 🔥 Helper function for Name-based Background Colors
 const getColorFromName = (name) => {
     const gradients = [
         'linear-gradient(135deg, #6366F1, #8B5CF6)',
@@ -44,14 +45,35 @@ const getColorFromName = (name) => {
     return gradients[Math.abs(hash) % gradients.length];
 };
 
-const getRandomAvatar = (name) => {
-    const avatarCount = 4;
-    let hash = 0;
-    for (let i = 0; i < (name || 'U').length; i++) {
-        hash = (name || 'U').charCodeAt(i) + ((hash << 5) - hash);
+// 🔥 Safe Avatar Component with First Letter Fallback
+const Avatar = ({ src, name, size = 32, style = {} }) => {
+    const [error, setError] = useState(false);
+    const initial = (name || 'U').charAt(0).toUpperCase();
+    const hasValidSrc = src && src.trim() !== '' && src !== 'null' && src !== 'undefined' && !src.includes('default');
+
+    if (!hasValidSrc || error) {
+        return (
+            <div style={{
+                width: size, height: size, borderRadius: style.borderRadius || '50%',
+                background: getColorFromName(name),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#FFF', fontWeight: 800, fontSize: size * 0.45,
+                flexShrink: 0, ...style
+            }}>
+                {initial}
+            </div>
+        );
     }
-    const index = (Math.abs(hash) % avatarCount) + 1;
-    return `/avatars/avatar${index}.png`;
+
+    return (
+        <img
+            src={src}
+            alt={name}
+            referrerPolicy="no-referrer"
+            onError={() => setError(true)}
+            style={{ width: size, height: size, borderRadius: style.borderRadius || '50%', objectFit: 'cover', flexShrink: 0, ...style }}
+        />
+    );
 };
 
 const Profile = () => {
@@ -60,7 +82,7 @@ const Profile = () => {
     const isPublicView = !!userId;
     
     const [user, setUser] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null); // The logged-in user
+    const [currentUser, setCurrentUser] = useState(null); 
     const [loading, setLoading] = useState(true);
     const [isFetchingProfile, setIsFetchingProfile] = useState(false);
     const [error, setError] = useState(null);
@@ -71,25 +93,21 @@ const Profile = () => {
     const [aboutText, setAboutText] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     
-    // Add Link states
     const [isAddingLink, setIsAddingLink] = useState(false);
     const [newLinkUrl, setNewLinkUrl] = useState("");
 
-    // SEARCH STATE
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const searchRef = useRef(null);
 
-    // FOLLOW STATE
     const [isFollowing, setIsFollowing] = useState(false);
     const [isFollowLoading, setIsFollowLoading] = useState(false);
     const [followersCount, setFollowersCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
     const [followModalData, setFollowModalData] = useState({ isOpen: false, type: 'followers', users: [], isLoading: false });
 
-    // NOTIFICATION STATE
     const [notifications, setNotifications] = useState([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -168,17 +186,14 @@ const Profile = () => {
                 setFollowersCount(data.user.followers?.length || 0);
                 setFollowingCount(data.user.following?.length || 0);
 
-                // Check if current user is following this profile
                 if (isPublicView && meData.user && meData.user.following) {
                     setIsFollowing(meData.user.following.includes(data.user._id));
                 }
 
                 const targetId = isPublicView ? userId : data.user._id;
                 try {
-                    // 🔥 ACTUAL API URL FROM ANALYTICS COMPONENT
                     let heatmapUrl = "http://localhost:3000/api/dashboard/dashboard/heatmap";
                     if (isPublicView) {
-                        // Passing userId as query param in case backend supports fetching for others
                         heatmapUrl = `http://localhost:3000/api/dashboard/dashboard/heatmap?userId=${targetId}`;
                     }
 
@@ -186,7 +201,6 @@ const Profile = () => {
                     const heatData = await heatmapRes.json();
                     
                     if (heatmapRes.ok && heatData.heatmapData) {
-                        // Exactly matching the Analytics logic: d.intensity > 0 || d.hours > 0
                         const activeCount = heatData.heatmapData.filter(d => (d.intensity > 0 || d.hours > 0)).length;
                         setActiveDays(activeCount);
                     } else {
@@ -260,7 +274,6 @@ const Profile = () => {
         setIsFollowLoading(true);
         const wasFollowing = isFollowing;
         
-        // Optimistic UI Update
         setIsFollowing(!wasFollowing);
         setFollowersCount(prev => wasFollowing ? prev - 1 : prev + 1);
 
@@ -270,7 +283,6 @@ const Profile = () => {
             });
             if (!response.ok) throw new Error("Failed to follow");
         } catch (err) {
-            // Revert on error
             setIsFollowing(wasFollowing);
             setFollowersCount(prev => wasFollowing ? prev + 1 : prev - 1);
             console.error("Error following user", err);
@@ -293,15 +305,19 @@ const Profile = () => {
         }
     };
 
-    const renderAvatar = (userObj = user) => {
-        const isGoogleUser = userObj?.authProvider === 'google' || !!userObj?.googleId;
-        const hasRealImage = userObj?.imageUrl && userObj.imageUrl.trim() !== '' && !userObj.imageUrl.includes('default');
-        if (hasRealImage) return <img src={userObj.imageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
-        if (isGoogleUser) return <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: getColorFromName(userObj?.name), color: '#fff', fontWeight: 700 }}>{userObj?.name?.charAt(0).toUpperCase()}</div>;
-        return <img src={getRandomAvatar(userObj?.name)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
-    };
-
     if (loading) return <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]"><Sidebar activePage="Profile" /><div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" /></div>;
+
+    // 🔥 Fallback UI / Broken Link Fix (Blue Screen Hatane Ke Liye)
+    if (!loading && !user) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg, color: COLORS.textPrimary }}>
+                <Sidebar activePage="Profile" />
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>User Not Found</h2>
+                <p style={{ color: COLORS.textMuted, marginTop: '8px' }}>This profile does not exist or the link is broken.</p>
+                <button onClick={() => navigate('/')} style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: '#3B82F6', borderRadius: '12px', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}>Go Back</button>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -384,7 +400,7 @@ const Profile = () => {
                                 ) : followModalData.users.length > 0 ? (
                                     followModalData.users.map(u => (
                                         <div key={u._id} className="search-result-item" onClick={() => { setFollowModalData({ isOpen: false, type: '', users: [], isLoading: false }); navigate(`/profile/${u._id}`); }}>
-                                            <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', fontSize: 16 }}>{renderAvatar(u)}</div>
+                                            <Avatar src={u.imageUrl || u.avatar} name={u.name} size={40} />
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <span style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>{u.name}</span>
                                                 {u.username && <span style={{ color: COLORS.textMuted, fontSize: 13 }}>@{u.username}</span>}
@@ -411,8 +427,9 @@ const Profile = () => {
                                 
                                 {/* LEFT COLUMN: AVATAR, LINKS, FOLLOW STATS */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', flexShrink: 0, width: 220 }}>
-                                    <div style={{ width: 180, height: 180, borderRadius: '50%', border: `2px solid ${COLORS.borderHover}`, backgroundColor: COLORS.card, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', fontSize: '72px' }}>
-                                        {renderAvatar()}
+                                    <div style={{ width: 180, height: 180, borderRadius: '50%', border: `2px solid ${COLORS.borderHover}`, backgroundColor: COLORS.card, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                                        {/* 🔥 Main Profile Image using Avatar component */}
+                                        <Avatar src={user.imageUrl || user.avatar} name={user.name} size={180} />
                                     </div>
                                     
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
@@ -503,9 +520,7 @@ const Profile = () => {
                                                             <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                                                                 {notifications.length > 0 ? notifications.map(n => (
                                                                     <div key={n._id} className="search-result-item" onClick={() => { setShowNotifications(false); navigate(`/profile/${n.sender._id}`); }}>
-                                                                        <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', fontSize: 12, backgroundColor: '#333' }}>
-                                                                            {renderAvatar(n.sender)}
-                                                                        </div>
+                                                                        <Avatar src={n.sender.imageUrl || n.sender.avatar} name={n.sender.name} size={32} />
                                                                         <div style={{ fontSize: 14 }}>
                                                                             <span style={{ fontWeight: 600, color: '#fff' }}>{n.sender.name}</span> started following you.
                                                                         </div>
@@ -527,7 +542,7 @@ const Profile = () => {
                                                         ) : searchResults.length > 0 ? (
                                                             searchResults.map(result => (
                                                                 <div key={result._id} className="search-result-item" onClick={() => { navigate(`/profile/${result._id}`); setShowDropdown(false); setSearchQuery(""); }}>
-                                                                    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#333', flexShrink: 0, fontSize: '12px' }}>{renderAvatar(result)}</div>
+                                                                    <Avatar src={result.imageUrl || result.avatar} name={result.name} size={32} />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                         <span style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{result.name}</span>
                                                                         {result.username && <span style={{ color: COLORS.textMuted, fontSize: 12 }}>@{result.username}</span>}
