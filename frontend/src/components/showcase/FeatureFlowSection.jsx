@@ -1,0 +1,173 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Flame, Clock, Grid, User, Users, Trophy, BarChart2, Settings,
+  Calendar, Activity, Target, TrendingUp, CheckCircle2 
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const topIcons = [
+  { name: 'Streaks', icon: Flame },
+  { name: 'Focus Time', icon: Clock },
+  { name: 'Heatmap', icon: Grid },
+  { name: 'Profile', icon: User },
+  { name: 'Follow', icon: Users },
+  { name: 'Leaderboard', icon: Trophy },
+  { name: 'Analytics', icon: BarChart2 },
+  { name: 'Settings', icon: Settings },
+];
+
+const features = [
+  {
+    title: 'Track Everything',
+    desc: 'Every focus session, task, and minute is automatically tracked.',
+    icon: Calendar
+  },
+  {
+    title: 'Understand Patterns',
+    desc: 'Heatmaps and analytics reveal your habits and productivity trends.',
+    icon: Activity
+  },
+  {
+    title: 'Compete & Connect',
+    desc: 'Follow others, compare stats, and climb the global leaderboard.',
+    icon: Users
+  },
+  {
+    title: 'Build Consistency',
+    desc: 'Grow streaks, earn achievements, and improve a little every day.',
+    icon: Target
+  },
+  {
+    title: 'Long-Term Growth',
+    desc: 'All features work together to help you build better habits, stay focused, and achieve your goals.',
+    icon: TrendingUp
+  }
+];
+
+const FeatureFlowSection = () => {
+  return (
+    <div className="w-screen h-screen bg-[#FAF9F6] flex flex-col justify-start pt-[16vh] relative overflow-hidden shrink-0" id="feature-flow-section">
+      {/* Applying scale to fit screen and ensure it clears the top nav */}
+      <div className="max-w-4xl mx-auto px-6 w-full flex flex-col items-center scale-[0.85] origin-top">
+        
+        {/* Top Icons Row */}
+        <div className="flex justify-between w-full max-w-3xl mb-8 relative z-10">
+          
+          {/* Master SVG overlay for all connecting lines */}
+          <div className="absolute top-[80px] left-0 w-full h-[80px] pointer-events-none -z-10 hidden md:block">
+            <style>
+              {`
+                @keyframes dashFlow {
+                  from { stroke-dashoffset: 100; }
+                  to { stroke-dashoffset: 0; }
+                }
+                .animate-flow {
+                  animation: dashFlow 1.2s linear infinite;
+                }
+              `}
+            </style>
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+              {topIcons.map((_, index) => {
+                const startX = 3.125 + index * 13.39;
+                
+                // Calculate number of dashes based on path length (distance from center)
+                const distFromCenter = Math.abs(index - 3.5);
+                const numDashes = distFromCenter > 1.5 ? 5 : 3; 
+                
+                // pathLength="100" normalizes the total length to 100
+                const patternLength = 100 / numDashes;
+                const dashLength = 4; // Length of the blue dash
+                const gapLength = patternLength - dashLength;
+                
+                return (
+                  <React.Fragment key={index}>
+                    {/* Background track line */}
+                    <path 
+                      d={`M ${startX} 0 C ${startX} 50, 50 60, 50 100`} 
+                      stroke="#E5E3DB" strokeWidth="1.5" fill="none"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    {/* Animated flowing dashed line */}
+                    <path 
+                      d={`M ${startX} 0 C ${startX} 50, 50 60, 50 100`} 
+                      stroke="#5C9EAD" strokeWidth="3" strokeDasharray={`${dashLength} ${gapLength}`} fill="none"
+                      vectorEffect="non-scaling-stroke"
+                      pathLength="100"
+                      className="animate-flow"
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </svg>
+          </div>
+
+          {topIcons.map((item, index) => (
+            <div key={index} className="w-[84px] h-[84px] border-[1.5px] border-gray-400/80 bg-transparent flex flex-col items-center justify-center gap-2 group hover:border-[#5C9EAD] transition-colors relative z-20 cursor-default">
+              <item.icon size={28} strokeWidth={1.5} className="text-gray-500 group-hover:text-[#5C9EAD] transition-colors" />
+              <span className="text-[12px] font-medium text-gray-700 capitalize group-hover:text-[#5C9EAD] transition-colors">{item.name}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Central CTA Button */}
+        <div className="relative z-20 mb-8">
+          <Link to="/signup" className="group block">
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-gradient-to-r from-[#4A8594] to-[#5C9EAD] px-10 py-4 rounded-2xl shadow-[0_8px_30px_rgba(92,158,173,0.3)] flex flex-col items-center border border-white/20"
+            >
+              <h3 className="text-white text-3xl font-bold tracking-tight mb-1 flex items-center gap-3">
+                LOCKEDIN
+              </h3>
+              <p className="text-white/80 text-sm font-medium tracking-wide">Your Productivity Engine</p>
+            </motion.div>
+          </Link>
+          {/* SVG line down from CTA */}
+          <div className="absolute left-1/2 top-full w-px h-8 bg-transparent -translate-x-1/2">
+             <svg width="2" height="32" className="absolute top-0 left-0">
+               <line x1="1" y1="0" x2="1" y2="32" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
+             </svg>
+             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
+          </div>
+        </div>
+
+        {/* Vertical Feature Flow */}
+        <div className="flex flex-col gap-3 w-full max-w-2xl relative z-10">
+          {features.map((feature, index) => (
+            <div key={index} className="relative">
+              {/* Connector from previous box */}
+              {index > 0 && (
+                <div className="absolute left-1/2 -top-3 w-px h-3 bg-transparent -translate-x-1/2">
+                  <svg width="2" height="12" className="absolute top-0 left-0">
+                    <line x1="1" y1="0" x2="1" y2="12" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
+                  </svg>
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
+                </div>
+              )}
+              
+              <div className="bg-white border border-[#E5E3DB] rounded-xl p-4 shadow-sm flex items-center gap-5 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
+                <div className="w-12 h-12 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#5C9EAD]">
+                  <feature.icon size={24} />
+                </div>
+                
+                <div className="flex-grow">
+                  <h4 className="font-serif-elegant italic text-2xl text-[#1F2937] mb-1">{feature.title}</h4>
+                  <p className="text-zinc-500 text-sm">{feature.desc}</p>
+                </div>
+                
+                <div className="w-8 h-8 rounded-full bg-[#5C9EAD] flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 size={16} className="text-white" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default FeatureFlowSection;
