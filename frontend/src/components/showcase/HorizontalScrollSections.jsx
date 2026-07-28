@@ -60,7 +60,7 @@ const HorizontalScrollSections = () => {
         <motion.div style={{ x, y }} className="absolute top-0 left-0 w-[300vw] h-[250vh]">
           
           {/* Step 1: Architecture */}
-          <div className="absolute top-0 left-0 w-screen h-screen flex flex-col justify-center z-10">
+          <div className="absolute top-0 left-0 w-screen h-screen flex flex-col justify-start z-10">
             <ArchitectureSection />
           </div>
 
@@ -70,7 +70,7 @@ const HorizontalScrollSections = () => {
           </svg>
 
           {/* Step 2: Progress */}
-          <div className="absolute top-[50vh] left-[100vw] w-screen h-screen flex flex-col justify-center z-20">
+          <div className="absolute top-[50vh] left-[100vw] w-screen h-screen flex flex-col justify-start z-20">
             <ProgressSection />
           </div>
 
@@ -81,7 +81,7 @@ const HorizontalScrollSections = () => {
           </svg>
 
           {/* Step 3: Feature Flow */}
-          <div className="absolute top-[150vh] left-[200vw] w-screen h-screen flex flex-col justify-center z-30">
+          <div className="absolute top-[150vh] left-[200vw] w-screen h-screen flex flex-col justify-start z-30">
             <FeatureFlowSection />
           </div>
 

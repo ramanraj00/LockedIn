@@ -54,4 +54,28 @@ router.get("/follow-data/:id", authMiddleware, authController.getFollowData);
 router.get("/notifications", authMiddleware, authController.getNotifications);
 router.put("/notifications/read", authMiddleware, authController.markNotificationsRead);
 
+// 🌐 PUBLIC: Landing page real stats (no auth required)
+router.get("/public-stats", async (req, res) => {
+  try {
+    const User = require("../models/users");
+    const Session = require("../models/studysession");
+
+    const [totalUsers, totalSessions] = await Promise.all([
+      User.countDocuments(),
+      Session.countDocuments()
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        totalSessions
+      }
+    });
+  } catch (err) {
+    console.error("Public stats error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch stats" });
+  }
+});
+
 module.exports = router;

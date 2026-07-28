@@ -4,6 +4,7 @@ import Navbar from "../components/common/Navbar";
 import AppDemoWindow from "../components/showcase/AppDemoWindow";
 import HorizontalScrollSections from "../components/showcase/HorizontalScrollSections";
 import LiveFocusSection from "../components/showcase/LiveFocusSection";
+import CtaSection from "../components/showcase/CtaSection";
 
 function Landing() {
   return (
@@ -26,6 +27,8 @@ function Landing() {
       <HorizontalScrollSections />
       
       <LiveFocusSection />
+      
+      <CtaSection />
     </div>
   );
 }
