@@ -6,6 +6,8 @@ body {
   background-color: #000000;
   color: #ffffff;
 }
+
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

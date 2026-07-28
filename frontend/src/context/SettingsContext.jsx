@@ -13,43 +13,32 @@ export const SettingsProvider = ({ children }) => {
         localStorage.setItem('app_fontSize', fontSizeMultiplier);
         localStorage.setItem('app_textBrightness', textBrightness);
 
-        // Map fonts
+                // Map fonts for the entire App (All 10 unique styles)
         const fontMap = {
             'Inter': "'Inter', sans-serif",
-            'Outfit': "'Outfit', sans-serif",
-            'Pixeloid': "'Pixeloid', sans-serif",
-            'Instrument Sans': "'Instrument Sans', sans-serif"
+            'Playfair': "'Playfair Display', serif",
+            'SpaceMono': "'Space Mono', monospace",
+            'Righteous': "'Righteous', cursive",
+            'Cinzel': "'Cinzel', serif",
+            'Bangers': "'Bangers', cursive",
+            'Caveat': "'Caveat', cursive",
+            'ChakraPetch': "'Chakra Petch', sans-serif",
+            'Milkshake': "'Milkshake', cursive",
+            'Pixeloid': "'Pixeloid', sans-serif"
         };
+        
         const selectedFont = fontMap[fontFamily] || fontMap['Inter'];
 
-        // 🔥 INJECT GLOBAL STYLES AGGRESSIVELY SO IT APPLIES EVERYWHERE
-        let styleTag = document.getElementById('global-settings-style');
-        if (!styleTag) {
-            styleTag = document.createElement('style');
-            styleTag.id = 'global-settings-style';
-            document.head.appendChild(styleTag);
-        }
+        // 🔥 FIX: Direct DOM updates instead of injecting <style> tags (100x Faster)
+        
+        // 1. Set font globally
+        document.body.style.fontFamily = selectedFont;
+        
+        // 2. Scale UI smoothly
+        document.body.style.zoom = fontSizeMultiplier;
 
-        // Calculate a text-shadow or opacity trick for brightness without affecting layout
-        // For size, we use CSS 'zoom' on the body, or transform on root, or just set html font-size
-        styleTag.innerHTML = `
-            /* 1. FORCE FONT ACROSS ALL TEXT ELEMENTS */
-            * {
-                font-family: ${selectedFont} !important;
-            }
-            
-            /* 2. SCALE OVERALL UI / TEXT SIZE */
-            /* Note: Zoom works great in Chrome/Safari to scale everything proportionally */
-            body {
-                zoom: ${fontSizeMultiplier};
-            }
-
-            /* 3. TEXT BRIGHTNESS CONTROL */
-            /* We target common text tags to lower their opacity (brightness) */
-            h1, h2, h3, h4, h5, h6, p, span, a, label, button, input {
-                opacity: ${textBrightness} !important;
-            }
-        `;
+        // 3. Brightness via CSS Filter (GPU Accelerated, prevents lag)
+        document.body.style.filter = `brightness(${textBrightness})`;
 
     }, [fontFamily, fontSizeMultiplier, textBrightness]);
 

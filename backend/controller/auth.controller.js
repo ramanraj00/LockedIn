@@ -294,7 +294,6 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error", error: error.message });
     }
 };
-
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;
@@ -314,6 +313,7 @@ exports.updateProfile = async (req, res) => {
                 "/avatars/henry.png"
             ];
             
+            // Ye condition check karti hai ki avatar valid hai
             if (ALLOWED_AVATARS.includes(avatar) || avatar.startsWith('http') || avatar.includes('avatars/avatar')) {
                 updateData.imageUrl = avatar;
                 updateData.avatar = avatar;
@@ -323,8 +323,12 @@ exports.updateProfile = async (req, res) => {
         const user = await usermodel.findByIdAndUpdate(
             userId, 
             { $set: updateData }, 
-            { new: true } 
+            { new: true, runValidators: true } 
         ).select("-password");
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
 
         res.status(200).json({ 
             success: true, 
@@ -334,6 +338,12 @@ exports.updateProfile = async (req, res) => {
         
     } catch (error) {
         console.error("Profile Update Error:", error);
+        
+        // Agar email pehle se kisi aur ne liya ho
+        if (error.code === 11000) {
+            return res.status(400).json({ success: false, message: "This email is already registered." });
+        }
+        
         res.status(500).json({ success: false, message: "Error updating profile" });
     }
 };

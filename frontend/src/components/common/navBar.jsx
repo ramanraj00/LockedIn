@@ -71,25 +71,25 @@ function Navbar() {
         
         {/* Desktop Navigation links */}
         <div
-          className={`hidden md:flex items-center gap-16 text-zinc-400 transition-all duration-300 ${
+          className={`hidden md:flex items-center gap-10 px-8 py-3 rounded-full bg-blue-600/20 border border-blue-400/40 backdrop-blur-md shadow-[0_0_30px_rgba(37,99,235,0.3)] text-slate-200 transition-all duration-300 ${
             scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
           }`}
         >
           <span
             onClick={() => handleScroll("hero-section")}
-            className="cursor-pointer font-medium hover:text-white transition-colors duration-200"
+            className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             Home
           </span>
           <span
             onClick={() => handleScroll("dashboard-section")}
-            className="cursor-pointer font-medium hover:text-white transition-colors duration-200"
+            className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             Features
           </span>
           <span
             onClick={() => handleScroll("leaderboard-section")}
-            className="cursor-pointer font-medium hover:text-white transition-colors duration-200"
+            className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             More
           </span>
