@@ -5,6 +5,8 @@ import AppDemoWindow from "../components/showcase/AppDemoWindow";
 import HorizontalScrollSections from "../components/showcase/HorizontalScrollSections";
 import LiveFocusSection from "../components/showcase/LiveFocusSection";
 import CtaSection from "../components/showcase/CtaSection";
+import SponsorSection from "../components/showcase/SponsorSection";
+import Footer from "../components/showcase/Footer";
 
 function Landing() {
   return (
@@ -12,7 +14,7 @@ function Landing() {
       <Navbar />
       
       {/* Dark Hero Section */}
-      <div className="bg-[#020617] w-full">
+      <div id="hero-section" className="bg-[#020617] w-full">
         <Hero />
       </div>
 
@@ -24,11 +26,19 @@ function Landing() {
         </div>
       </div>
 
-      <HorizontalScrollSections />
+      <div id="dashboard-section">
+        <HorizontalScrollSections />
+      </div>
       
-      <LiveFocusSection />
+      <div id="leaderboard-section">
+        <LiveFocusSection />
+      </div>
       
       <CtaSection />
+
+      <SponsorSection />
+
+      <Footer />
     </div>
   );
 }

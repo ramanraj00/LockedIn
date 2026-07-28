@@ -42,7 +42,7 @@ const features = [
 
 const FeatureFlowSection = () => {
   return (
-    <div className="w-screen min-h-screen bg-[#FAF9F6] flex flex-col justify-start pt-[22vh] pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
+    <div className="w-screen min-h-screen bg-[#FAF9F6] flex flex-col justify-start pt-[14vh] pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
       {/* Applying scale to fit screen and ensure it clears the top nav */}
       <div className="max-w-4xl mx-auto px-6 w-full flex flex-col items-center scale-[0.85] origin-top">
         

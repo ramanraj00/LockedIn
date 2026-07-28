@@ -23,8 +23,8 @@ const HorizontalScrollSections = () => {
   // 0.5 -> 1: move camera right again (content slides left)
   const x = useTransform(smoothProgress, [0, 0.5, 1], ["0vw", "-100vw", "-200vw"]);
   
-  // y moves down continuously to create massive vertical gaps between sections
-  const y = useTransform(smoothProgress, [0, 0.5, 1], ["0vh", "-50vh", "-150vh"]);
+  // y moves down continuously to create gaps between sections
+  const y = useTransform(smoothProgress, [0, 0.5, 1], ["0vh", "-50vh", "-100vh"]);
 
   // Progress bar animation
   const indicatorX = useTransform(smoothProgress, [0, 0.5, 1], ["0%", "100%", "200%"]);
@@ -57,7 +57,7 @@ const HorizontalScrollSections = () => {
         </div>
 
         {/* The moving diagonal canvas */}
-        <motion.div style={{ x, y }} className="absolute top-0 left-0 w-[300vw] h-[250vh]">
+        <motion.div style={{ x, y }} className="absolute top-0 left-0 w-[300vw] h-[200vh]">
           
           {/* Step 1: Architecture */}
           <div className="absolute top-0 left-0 w-screen h-screen flex flex-col justify-start z-10">
@@ -75,13 +75,13 @@ const HorizontalScrollSections = () => {
           </div>
 
           {/* Connecting Line 2 (Step 2 -> Step 3) */}
-          {/* S2 center: 150vw, 100vh. S3 center: 250vw, 200vh. */}
-          <svg className="absolute left-[150vw] top-[100vh] w-[100vw] h-[100vh] pointer-events-none z-0" preserveAspectRatio="none">
+          {/* S2 center: 150vw, 100vh. S3 center: 250vw, 150vh. */}
+          <svg className="absolute left-[150vw] top-[100vh] w-[100vw] h-[50vh] pointer-events-none z-0" preserveAspectRatio="none">
              <line x1="0" y1="0" x2="100%" y2="100%" stroke="#d4d4d8" strokeWidth="1.5" strokeDasharray="6 6" />
           </svg>
 
           {/* Step 3: Feature Flow */}
-          <div className="absolute top-[150vh] left-[200vw] w-screen h-screen flex flex-col justify-start z-30">
+          <div className="absolute top-[100vh] left-[200vw] w-screen h-screen flex flex-col justify-start z-30">
             <FeatureFlowSection />
           </div>
 
