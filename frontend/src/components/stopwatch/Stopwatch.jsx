@@ -585,12 +585,9 @@ const Stopwatch = () => {
                 }
             `}</style>
 
-            <div className="h-screen w-full relative font-sans text-white selection:bg-white/20 flex overflow-hidden" style={{ backgroundColor: COLORS.bg }}>
-                <ToastOverlay /> 
-                {/* ... baaki sab same rahega ... */}
-                
-                {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA 🔥 */}
-                <Sidebar activePage="Stopwatch" />
+            <div className="min-h-screen w-full relative overflow-x-hidden font-mono" style={{ backgroundColor: COLORS.bg, color: COLORS.textPrimary }}>
+                <div className="w-full mx-auto min-h-screen flex flex-col relative z-10"
+                     style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)' }}>
                 
                 <MainContainer>
                     <div className="w-full max-w-5xl mx-auto flex flex-col justify-start md:justify-center h-full max-h-full">
@@ -601,6 +598,7 @@ const Stopwatch = () => {
                         </div>
                     </div>
                 </MainContainer>
+                </div>
             </div>
         </>
     );

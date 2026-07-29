@@ -305,13 +305,12 @@ const Profile = () => {
         }
     };
 
-    if (loading) return <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]"><Sidebar activePage="Profile" /><div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" /></div>;
+    if (loading) return <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]"><div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" /></div>;
 
     // 🔥 Fallback UI / Broken Link Fix (Blue Screen Hatane Ke Liye)
     if (!loading && !user) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg, color: COLORS.textPrimary }}>
-                <Sidebar activePage="Profile" />
                 <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>User Not Found</h2>
                 <p style={{ color: COLORS.textMuted, marginTop: '8px' }}>This profile does not exist or the link is broken.</p>
                 <button onClick={() => navigate('/')} style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: '#3B82F6', borderRadius: '12px', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}>Go Back</button>
@@ -383,8 +382,6 @@ const Profile = () => {
                         ✓ Profile link copied!
                     </div>
                 )}
-
-                {!isPublicView && <Sidebar activePage="Profile" />}
 
                 {/* MODAL POPUP FOR FOLLOWERS/FOLLOWING */}
                 {followModalData.isOpen && (

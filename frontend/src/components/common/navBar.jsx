@@ -158,14 +158,12 @@ function Navbar() {
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 md:hidden pointer-events-auto"
             />
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween", duration: 0.28, ease: "easeOut" }}
-              className="fixed top-0 right-0 bottom-0 w-[290px] sm:w-[320px] bg-white/[0.01] backdrop-blur-2xl border-l border-white/[0.04] rounded-l-3xl p-6 z-50 md:hidden flex flex-col justify-between shadow-[0_0_60px_rgba(0,0,0,0.4)] overflow-hidden pointer-events-auto"
+              initial={{ opacity: 0, scale: 0.95, y: -15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -15 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="fixed top-20 right-4 h-fit w-[200px] sm:w-[220px] bg-[#0a0a0a]/80 backdrop-blur-3xl border border-white/[0.15] rounded-[32px] p-5 z-50 md:hidden flex flex-col gap-6 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto origin-top-right"
             >
-              <div className="absolute top-0 left-0 bottom-0 w-[1px] bg-gradient-to-b from-white/0 via-white/25 via-white/10 to-white/0 pointer-events-none z-20" />
-              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-white/25 to-white/0 pointer-events-none z-20" />
               
               <div 
                 className="absolute inset-0 pointer-events-none opacity-[0.038] mix-blend-overlay z-0"
@@ -174,9 +172,7 @@ function Navbar() {
                 }}
               />
               
-              <div className="absolute inset-0 bg-gradient-to-b from-[#141633]/80 via-[#0a0c1f]/90 to-[#050614]/98 pointer-events-none z-0" />
-              
-              <div className="flex flex-col gap-8 relative z-10">
+              <div className="flex flex-col gap-6 relative z-10">
                 <div className="flex items-center justify-between">
                   <div
                     style={{ fontFamily: "'Instrument Sans', sans-serif" }}

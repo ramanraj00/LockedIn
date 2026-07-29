@@ -14,6 +14,57 @@ const SIDEBAR_ITEMS = [
     { name: 'Settings', icon: Settings2 }
 ];
 
+const SidebarItem = React.memo(({ item, isActive, isHovered, setHoveredItem, navigate }) => {
+    const Icon = item.icon;
+    return (
+        <button 
+            onClick={() => navigate(`/${item.name.toLowerCase()}`)} 
+            onMouseEnter={() => setHoveredItem(item.name)}
+            style={{ 
+                position: 'relative', width: '100%', padding: '14px 40px', borderRadius: 0, fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s ease',
+                border: 'none', outline: 'none',
+                backgroundColor: 'transparent', 
+                color: isActive || isHovered ? '#FFFFFF' : '#9CA3AF' 
+            }}
+            className="group"
+        >
+            {/* 🔥 MAGIC SLIDING BACKGROUND */}
+            {isHovered && (
+                <motion.div
+                    layoutId="sidebar-hover-pill"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: 'rgba(255,255,255,0.04)', // Subtle highlight
+                        borderTop: '1px solid rgba(255,255,255,0.03)',
+                        borderBottom: '1px solid rgba(255,255,255,0.03)',
+                        borderRadius: 0, // 🔥 Sharp edges (No round)
+                        zIndex: 0
+                    }}
+                />
+            )}
+
+            {/* 🔥 Blue Line Indicator */}
+            {isActive && (
+                <motion.div
+                    layoutId="active-indicator"
+                    style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: '#3B82F6', zIndex: 10 }}
+                />
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative', zIndex: 10 }}>
+                <Icon size={18} className={`transition-transform duration-300 ${isActive || isHovered ? 'scale-110' : ''}`} />
+                <span>{item.name}</span>
+            </div>
+        </button>
+    );
+});
+
+
 const CustomSidebarIcon = () => (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="6" y1="5" x2="6" y2="19" />
@@ -34,19 +85,51 @@ const getRandomAvatar = (name) => {
 
 let globalSidebarOpen = false;
 
+const SidebarMenu = React.memo(({ activePage, navigate }) => {
+    const [hoveredItem, setHoveredItem] = useState(activePage);
+
+    useEffect(() => {
+        setHoveredItem(activePage);
+    }, [activePage]);
+
+    return (
+        <div 
+            style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', margin: '0 -24px' }} 
+            onMouseLeave={() => setHoveredItem(activePage)} 
+        >
+            {SIDEBAR_ITEMS.map((item) => {
+                const isActive = item.name === activePage;
+                const isHovered = item.name === hoveredItem;
+                return (
+                    <React.Fragment key={item.name}>
+                        <SidebarItem 
+                            item={item} 
+                            isActive={isActive} 
+                            isHovered={isHovered} 
+                            setHoveredItem={setHoveredItem} 
+                            navigate={navigate} 
+                        />
+                        {item.name === 'Stopwatch' && (
+                            <div style={{ padding: '0 24px', margin: '8px 0' }}>
+                                <hr style={{ 
+                                    border: 'none', 
+                                    borderTop: '2px solid rgba(255,255,255,0.08)', 
+                                    borderRadius: '4px' 
+                                }} />
+                            </div>
+                        )}
+                    </React.Fragment>
+                );
+            })}
+        </div>
+    );
+});
+
 const Sidebar = ({ activePage }) => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(globalSidebarOpen);
     const sidebarRef = useRef(null);
     const [profile, setProfile] = useState(null);
-    
-    // 🔥 SLIDING HOVER STATE: By default active page pe rahega
-    const [hoveredItem, setHoveredItem] = useState(activePage);
-
-    // Jab bhi page change ho, slider active page par reset ho jaye
-    useEffect(() => {
-        setHoveredItem(activePage);
-    }, [activePage]);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -148,77 +231,7 @@ const Sidebar = ({ activePage }) => {
                     </button>
                 </div>
                 
-                              {/* 🔥 MENUS WALA CONTAINER (End-to-End Full Bleed) */}
-                <div 
-                    style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', margin: '0 -24px' }} 
-                    onMouseLeave={() => setHoveredItem(activePage)} 
-                >
-                    {SIDEBAR_ITEMS.map((item) => {
-                        const isActive = item.name === activePage;
-                        const isHovered = item.name === hoveredItem;
-                        const Icon = item.icon;
-
-                        return (
-                            <React.Fragment key={item.name}>
-                                <button 
-                                    onClick={() => navigate(`/${item.name.toLowerCase()}`)} 
-                                    onMouseEnter={() => setHoveredItem(item.name)}
-                                    style={{ 
-                                        position: 'relative', width: '100%', padding: '14px 40px', borderRadius: 0, fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s ease',
-                                        border: 'none', outline: 'none',
-                                        backgroundColor: 'transparent', 
-                                        color: isActive || isHovered ? '#FFFFFF' : '#9CA3AF' 
-                                    }}
-                                    className="group"
-                                >
-                                    {/* 🔥 MAGIC SLIDING BACKGROUND */}
-                                    {isHovered && (
-                                        <motion.div
-                                            layoutId="sidebar-hover-pill"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                            style={{
-                                                position: 'absolute',
-                                                inset: 0,
-                                                backgroundColor: 'rgba(255,255,255,0.04)', // Subtle highlight
-                                                borderTop: '1px solid rgba(255,255,255,0.03)',
-                                                borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                                borderRadius: 0, // 🔥 Sharp edges (No round)
-                                                zIndex: 0
-                                            }}
-                                        />
-                                    )}
-
-                                    {/* 🔥 Blue Line Indicator */}
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="active-indicator"
-                                            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: '#3B82F6', zIndex: 10 }}
-                                        />
-                                    )}
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative', zIndex: 10 }}>
-                                        <Icon size={18} className={`transition-transform duration-300 ${isActive || isHovered ? 'scale-110' : ''}`} />
-                                        <span>{item.name}</span>
-                                    </div>
-                                </button>
-                                
-                                {/* 🔥 Line after Stopwatch */}
-                                {item.name === 'Stopwatch' && (
-                                    <div style={{ padding: '0 24px', margin: '8px 0' }}>
-                                        <hr style={{ 
-                                            border: 'none', 
-                                            borderTop: '2px solid rgba(255,255,255,0.08)', 
-                                            borderRadius: '4px' 
-                                        }} />
-                                    </div>
-                                )}
-                            </React.Fragment>
-                        );
-                    })}
-                </div>
+                <SidebarMenu activePage={activePage} navigate={navigate} />
 
                 {/* PREMIUM BOTTOM WIDGET (Profile Pill) */}
                 <div style={{ marginTop: 'auto', paddingTop: 24 }}>
@@ -274,4 +287,4 @@ const Sidebar = ({ activePage }) => {
     );
 };
 
-export default Sidebar;
+export default React.memo(Sidebar);

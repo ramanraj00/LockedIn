@@ -256,9 +256,10 @@ const Analytics = () => {
     };
     if (loading) {
         return (
-            <div className="min-h-screen w-full flex items-center justify-center bg-[#000000]">
-                <Sidebar activePage="Analytics" /> {/* 🔥 Ye add kiya! */}
-                <div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" />
+            <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#000000', color: '#F4F4F5', fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                    <div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" />
+                </div>
             </div>
         );
     }
@@ -268,7 +269,7 @@ const Analytics = () => {
     const totalFocusDays = heatmapData.filter(d => (d.intensity > 0 || d.hours > 0)).length;
 
     return (
-        <div className="min-h-screen w-full bg-[#000000] text-zinc-100 font-sans selection:bg-blue-500/30 overflow-x-hidden pb-0">
+        <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#000000', color: '#F4F4F5', fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
             <style>{`
                 @font-face {
                     font-family: 'Pixeloid';
@@ -286,7 +287,7 @@ const Analytics = () => {
                 }
             `}</style>
 
-            <Sidebar activePage="Analytics" />
+            <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
             {/* RIGHT WIDGET TRIGGER */}
             <button 
@@ -727,6 +728,7 @@ const Analytics = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            </div>
         </div>
     );
 };

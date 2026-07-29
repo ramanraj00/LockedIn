@@ -1,4 +1,4 @@
- import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar/Sidebar'; 
 import { Trophy, Crown, Lock } from 'lucide-react'; 
@@ -27,13 +27,11 @@ const COLORS = {
 };
 
 const formatXP = (seconds) => {
-    if (!seconds || seconds <= 0) return "0s";
+    if (!seconds || seconds <= 0) return "0m";
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    if (h > 0) return `${h}h ${m}m ${s}s`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`; 
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`; 
 };
 
 // 🔥 Helper function for Name-based Background Colors

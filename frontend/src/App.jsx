@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom"; 
+import { Routes, Route, useLocation } from "react-router-dom"; 
 
 import Landing from "../src/pages/landing.jsx"; 
 import Signup  from "./components/loginpages/signinCode.jsx";
@@ -26,9 +26,29 @@ import Leaderboard from './pages/Leaderboard';
 // 🔥 SETTINGS PAGE IMPORT
 import Settings from './pages/Settings'; 
 
+// 🔥 GLOBAL SIDEBAR IMPORT
+import Sidebar from './components/Sidebar/Sidebar.jsx';
+
 function App() {
+  const location = useLocation();
+  const path = location.pathname;
+  
+  // 🔥 Check if the current route is a public page where Sidebar should NOT be shown
+  const isPublicPage = path === '/' || 
+                       path === '/login' || 
+                       path === '/signup' || 
+                       path === '/forgot-password' || 
+                       path.startsWith('/reset-password');
+
+  // 🔥 Extract active page name for the Sidebar (e.g. '/workspace' -> 'Workspace')
+  const pathPart = path.split('/')[1];
+  const activePage = pathPart ? pathPart.charAt(0).toUpperCase() + pathPart.slice(1) : '';
+
   return (
-    <Routes>
+    <>
+      {/* 🚀 TRUE SPA EXPERIENCE: Sidebar is now outside Routes, so it never unmounts/re-renders on navigation! */}
+      {!isPublicPage && <Sidebar activePage={activePage} />}
+      <Routes>
       {/* 🟢 PUBLIC ROUTES */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
@@ -79,6 +99,7 @@ function App() {
         element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
     </Routes>
+    </>
   );
 }
 

@@ -348,7 +348,7 @@ const Login = () => {
                     </div>
 
                     {/* RIGHT PANEL */}
-                    <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none h-[88dvh] md:h-auto bg-transparent">
+                    <div className="w-full md:w-[55%] mt-[12dvh] md:mt-0 p-5 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 rounded-t-[2.5rem] md:rounded-none bg-transparent">
                         <div className="w-full max-w-[400px] mx-auto z-10 relative flex flex-col justify-center">
                             
                             <div className="hidden md:block text-center mb-5">

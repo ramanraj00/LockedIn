@@ -22,6 +22,33 @@ const formatTime = (seconds) => {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
+const LiveTimerDisplay = React.memo(({ sessions, localStartTime }) => {
+    const [now, setNow] = useState(Date.now());
+    
+    useEffect(() => {
+        const isRunning = sessions.some(s => s.status === 'running');
+        if (!isRunning) return;
+        const interval = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(interval);
+    }, [sessions]);
+
+    let totalSeconds = 0;
+    sessions.forEach(s => {
+        if (s.status === 'completed' || s.status === 'paused') totalSeconds += (s.duration || 0);
+        else if (s.status === 'running') {
+            const startTimeToUse = localStartTime || new Date(s.startTime).getTime();
+            const elapsed = Math.max(0, Math.floor((now - startTimeToUse) / 1000));
+            totalSeconds += elapsed;
+        }
+    });
+
+    return (
+        <span style={{ fontFamily: "'Courier New', monospace", fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, letterSpacing: '0.1em', marginRight: 4 }}>
+            {formatTime(totalSeconds)}
+        </span>
+    );
+});
+
 const Workspace = () => {
     const navigate = useNavigate();
     const { dek, isLocked, encryptData, decryptData } = useCrypto();
@@ -48,7 +75,6 @@ const Workspace = () => {
     const [deleteBoxWarning, setDeleteBoxWarning] = useState(null);
     
     const [localStartTimes, setLocalStartTimes] = useState({});
-    const [now, setNow] = useState(Date.now());
     const [decryptedTexts, setDecryptedTexts] = useState({});
     const dropdownRef = useRef(null);
     const [confirmAction, setConfirmAction] = useState(null);
@@ -59,11 +85,6 @@ const Workspace = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        const interval = setInterval(() => setNow(Date.now()), 100);
-        return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
@@ -372,20 +393,6 @@ const Workspace = () => {
         fetchTimers(dayId);
     };
 
-    const getCalculatedTime = (dayId) => {
-        const sessions = timersByDay[dayId] || [];
-        let totalSeconds = 0;
-        sessions.forEach(s => {
-            if (s.status === 'completed' || s.status === 'paused') totalSeconds += (s.duration || 0);
-            else if (s.status === 'running') {
-                const startTimeToUse = localStartTimes[dayId] || new Date(s.startTime).getTime();
-                const elapsed = Math.max(0, Math.floor((now - startTimeToUse) / 1000));
-                totalSeconds += elapsed;
-            }
-        });
-        return totalSeconds;
-    };
-
     const getRunningSession = (dayId) => (timersByDay[dayId] || []).find(s => s.status === 'running');
     const getPausedSession = (dayId) => [...(timersByDay[dayId] || [])].reverse().find(s => s.status === 'paused');
     const getDeadlineStatus = (day) => {
@@ -398,8 +405,8 @@ const Workspace = () => {
     const isValidBox = (day) => {
         if (isToday(day.date)) return true;
         const tasks = tasksByDay[day._id] || [];
-        const time = getCalculatedTime(day._id);
-        return tasks.length > 0 || time > 0;
+        const sessions = timersByDay[day._id] || [];
+        return tasks.length > 0 || sessions.length > 0;
     };
 
     const getGroupedHistory = () => {
@@ -448,63 +455,69 @@ const Workspace = () => {
         const isExpanded = expandedBoxes[day._id] === true; 
         const isEditing = editingDayId === day._id;
         const tasks = tasksByDay[day._id] || [];
+        const sessions = timersByDay[day._id] || [];
         const runningSession = getRunningSession(day._id);
         const pausedSession = getPausedSession(day._id);
-        const timeStr = formatTime(getCalculatedTime(day._id));
         const statusLabel = getDeadlineStatus(day);
         const isDayCompleted = day.status === 'completed';
         const isConfirming = confirmAction?.dayId === day._id;
         
         return (
-            <div key={day._id} style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
-                <div style={{ flex: '1 1 100%', border: `1px solid ${COLORS.border}`, borderRadius: 8, backgroundColor: COLORS.card, padding: 24, transition: 'all 0.3s ease-in-out' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: isExpanded ? 16 : 0, borderBottom: isExpanded ? `1px solid ${COLORS.border}` : 'none', transition: 'all 0.3s ease' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div key={day._id} style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
+                <div className="day-box" style={{ width: '100%', border: `1px solid ${COLORS.border}`, borderRadius: 8, backgroundColor: COLORS.card, padding: 24, transition: 'all 0.3s ease-in-out' }}>
+                    {/* 🔥 UI Layout fixed to gracefully stack on mobile using flexWrap and smart margins */}
+                    <div className="day-box-header" style={{ display: 'flex', gap: 24, justifyContent: 'space-between', alignItems: 'center', paddingBottom: isExpanded ? 16 : 0, borderBottom: isExpanded ? `1px solid ${COLORS.border}` : 'none', transition: 'all 0.3s ease' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                 <span style={{ fontSize: 20, fontWeight: 400 }}>{new Date(day.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                <span style={{ fontSize: 11, color: statusLabel === 'completed' ? '#34D399' : statusLabel === 'pending' ? '#FBBF24' : COLORS.textMuted, border: `1px solid ${statusLabel === 'completed' ? 'rgba(52,211,153,0.3)' : statusLabel === 'pending' ? 'rgba(251,191,36,0.3)' : COLORS.border}`, padding: '2px 8px', borderRadius: 12, marginLeft: 16 }}>{statusLabel}</span>
-                                {!isExpanded && tasks.length > 0 && <span style={{ fontSize: 11, color: COLORS.textPrimary, backgroundColor: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 12, marginLeft: 8 }}>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</span>}
+                                <span style={{ fontSize: 11, color: statusLabel === 'completed' ? '#34D399' : statusLabel === 'pending' ? '#FBBF24' : COLORS.textMuted, border: `1px solid ${statusLabel === 'completed' ? 'rgba(52,211,153,0.3)' : statusLabel === 'pending' ? 'rgba(251,191,36,0.3)' : COLORS.border}`, padding: '2px 8px', borderRadius: 12 }}>{statusLabel}</span>
+                                {!isExpanded && tasks.length > 0 && <span style={{ fontSize: 11, color: COLORS.textPrimary, backgroundColor: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 12 }}>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</span>}
                             </div>
                             {day.deadline && <span style={{ fontSize: 12, color: COLORS.textMuted }}>deadline: {new Date(day.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
                         </div>
-                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.02)', padding: '6px 16px', borderRadius: 12, border: `1px solid ${COLORS.border}` }}>
-                                <span style={{ fontFamily: "'Courier New', monospace", fontSize: 22, fontWeight: 700, color: COLORS.textPrimary, letterSpacing: '0.1em', marginRight: 4 }}>{timeStr}</span>
-                                <div style={{ height: 20, width: 1, backgroundColor: COLORS.borderHover, margin: '0 4px' }}></div>
-                                {isConfirming ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <span style={{ fontSize: 12, color: COLORS.textMuted, whiteSpace: 'nowrap' }}>{confirmAction.type === 'save' ? 'end day?' : 'reset timer?'}</span>
-                                        <button onClick={() => { if (confirmAction.type === 'save') handleCompleteDay(day._id); else handleResetTimer(day._id); setConfirmAction(null); }} className="timer-text-btn save-btn">yes</button>
-                                        <button onClick={() => setConfirmAction(null)} className="timer-text-btn reset-btn">no</button>
-                                    </div>
-                                ) : isDayCompleted ? (
-                                    <button onClick={() => handleReopenDay(day._id)} className="timer-text-btn start-btn">Reopen</button>
-                                ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        {!runningSession ? (
-                                            <button onClick={() => pausedSession ? handleResumeTimer(day._id, pausedSession._id) : handleStartTimer(day._id)} className="timer-text-btn start-btn">{pausedSession ? "Resume" : "Start"}</button>
-                                        ) : (
-                                            <>
-                                                <button onClick={() => handlePauseTimer(day._id)} className="timer-text-btn pause-btn">Pause</button>
-                                                <button onClick={() => setConfirmAction({ type: 'reset', dayId: day._id })} className="timer-text-btn reset-btn">Reset</button>
-                                                <button onClick={() => setConfirmAction({ type: 'save', dayId: day._id })} className="timer-text-btn save-btn">Save</button>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
+                        {isExpanded && (
+                            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
+                                <div className="timer-container" style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.02)', padding: '6px 16px', borderRadius: 12, border: `1px solid ${COLORS.border}` }}>
+                                    {/* 🔥 ATOM LEVEL OPTIMIZATION: Sirf timer component update hoga, pura Workspace nahi */}
+                                    <LiveTimerDisplay sessions={sessions} localStartTime={localStartTimes[day._id]} />
+                                    <div className="timer-divider" style={{ height: 20, width: 1, backgroundColor: COLORS.borderHover, margin: '0 4px' }}></div>
+                                    {isConfirming ? (
+                                        <div className="timer-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontSize: 12, color: COLORS.textMuted, whiteSpace: 'nowrap' }}>{confirmAction.type === 'save' ? 'end day?' : 'reset timer?'}</span>
+                                            <button onClick={() => { if (confirmAction.type === 'save') handleCompleteDay(day._id); else handleResetTimer(day._id); setConfirmAction(null); }} className="timer-text-btn save-btn">yes</button>
+                                            <button onClick={() => setConfirmAction(null)} className="timer-text-btn reset-btn">no</button>
+                                        </div>
+                                    ) : isDayCompleted ? (
+                                        <button onClick={() => handleReopenDay(day._id)} className="timer-text-btn start-btn">Reopen</button>
+                                    ) : (
+                                        <div className="timer-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            {!runningSession ? (
+                                                <button onClick={() => pausedSession ? handleResumeTimer(day._id, pausedSession._id) : handleStartTimer(day._id)} className="timer-text-btn start-btn">{pausedSession ? "Resume" : "Start"}</button>
+                                            ) : (
+                                                <>
+                                                    <button onClick={() => handlePauseTimer(day._id)} className="timer-text-btn pause-btn">Pause</button>
+                                                    <button onClick={() => setConfirmAction({ type: 'reset', dayId: day._id })} className="timer-text-btn reset-btn">Reset</button>
+                                                    <button onClick={() => setConfirmAction({ type: 'save', dayId: day._id })} className="timer-text-btn save-btn">Save</button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 16, border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: '6px 16px' }}>
-                                <button onClick={() => { setAddingTaskDayId(day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn" title="Add New Task"><Plus size={16} /></button>
+                        )}
+                        <div className="day-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, flex: isExpanded ? 1 : 0, minWidth: 0 }}>
+                            <div className="day-actions-inner" style={{ display: 'flex', alignItems: 'center', gap: 16, border: isExpanded ? `1px solid ${COLORS.border}` : 'none', borderRadius: 6, padding: isExpanded ? '6px 16px' : '0' }}>
+                                {isExpanded && <button onClick={() => { setAddingTaskDayId(day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn" title="Add New Task"><Plus size={16} /></button>}
                                 <button onClick={() => setExpandedBoxes(p => ({ ...p, [day._id]: !isExpanded }))} className="header-btn" title={isExpanded ? "Collapse" : "Expand"}>
                                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
-                                <button onClick={() => { setEditingDayId(isEditing ? null : day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn">{isEditing ? 'done' : 'edit'}</button>
-                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                    <button className="header-btn" onClick={(e) => { const input = e.currentTarget.nextSibling; try { input.showPicker(); } catch { input.focus(); } }}>Deadline</button>
-                                    <input type="date" style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} onChange={(e) => { if (e.target.value) handleUpdateDaySession(day._id, day.title, e.target.value); }} />
-                                </div>
+                                {isExpanded && <button onClick={() => { setEditingDayId(isEditing ? null : day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn">{isEditing ? 'done' : 'edit'}</button>}
+                                {isExpanded && (
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <button className="header-btn" onClick={(e) => { const input = e.currentTarget.nextSibling; try { input.showPicker(); } catch { input.focus(); } }}>Deadline</button>
+                                        <input type="date" style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} onChange={(e) => { if (e.target.value) handleUpdateDaySession(day._id, day.title, e.target.value); }} />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -521,17 +534,17 @@ const Workspace = () => {
                                 </div>
                             )}
                             {tasks.map((task, idx) => (
-                                <div key={task._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${COLORS.border}`, opacity: task.status ? 0.3 : 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1 }}>
+                                <div key={task._id} className="task-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${COLORS.border}`, opacity: task.status ? 0.3 : 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
                                         <span style={{ color: COLORS.textMuted, fontSize: 14, width: 20 }}>{idx + 1}.</span>
                                         {isEditing ? (
                                             <input type="text" className="edit-input" defaultValue={decryptedTexts[task._id] || task.encryptedDescription} />
                                         ) : (
-                                            <span style={{ color: COLORS.textPrimary, fontSize: 14, textDecoration: task.status ? 'line-through' : 'none' }}>{decryptedTexts[task._id] || task.encryptedDescription}</span>
+                                            <span className="task-text" style={{ color: COLORS.textPrimary, fontSize: 14, textDecoration: task.status ? 'line-through' : 'none' }}>{decryptedTexts[task._id] || task.encryptedDescription}</span>
                                         )}
                                     </div>
                                     
-                                    <div style={{ display: 'flex', gap: 16 }}>
+                                    <div className="task-actions" style={{ display: 'flex', gap: 16 }}>
                                         <button onClick={() => handleToggleTask(task._id, task.status, day._id)} className="action-btn">{task.status ? 'undo' : 'done'}</button>
                                         <button onClick={() => handleDeleteTask(task._id, day._id)} className="action-btn">delete</button>
                                     </div>
@@ -588,19 +601,38 @@ const Workspace = () => {
                     from { opacity: 0; transform: translate(-50%, -15px); }
                     to { opacity: 1; transform: translate(-50%, 0); }
                 }
+                .task-text { max-width: 100%; word-wrap: break-word; }
+                
+                .workspace-toast { top: 32px; }
+                @media (max-width: 768px) {
+                    .workspace-toast { top: 84px !important; }
+                }
+
+                /* Mobile Layout Fixes */
+                @media (max-width: 768px) {
+                    .workspace-main-container { padding-left: 16px !important; padding-right: 16px !important; padding-top: 48px !important; }
+                    .day-box { padding: 16px !important; }
+                    .workspace-header { flex-direction: row !important; align-items: flex-start !important; gap: 12px !important; }
+                    .day-box-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; flex-wrap: nowrap !important; }
+                    .day-box-header > div { width: 100% !important; justify-content: space-between !important; }
+                    .timer-container { flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; padding: 12px 16px !important; gap: 12px !important; }
+                    .timer-divider { display: none !important; }
+                    .timer-actions { justify-content: center !important; flex-wrap: wrap !important; }
+                    .day-actions { justify-content: space-between !important; width: 100% !important; overflow-x: visible !important; }
+                    .day-actions-inner { width: 100% !important; justify-content: space-between !important; }
+                    .task-row { flex-direction: row !important; align-items: center !important; gap: 12px !important; }
+                    .task-actions { width: auto !important; justify-content: flex-end !important; }
+                }
             `}</style>
             
             <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
-                
-                <Sidebar activePage="Workspace" />
-
                 <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
                     
                     {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>{globalError}</div>}
                     
                     {toastMessage && (
-                        <div style={{ 
-                            position: 'fixed', top: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, 
+                        <div className="workspace-toast" style={{ 
+                            position: 'fixed', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, 
                             padding: '12px 24px', 
                             border: '1px solid rgba(255,255,255,0.1)', 
                             backgroundColor: '#0A0A0A', 
@@ -652,57 +684,59 @@ const Workspace = () => {
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            <h1 style={{ fontSize: 24, fontWeight: 400 }}>
-                                {viewMode === 'main' ? 'workspace' : 'history'}
-                            </h1>
-                            {viewMode === 'history' && (
-                                <span style={{ color: COLORS.textMuted, fontSize: 14 }}>
-                                    / last {historyRange.replace('months', ' months').replace('year', ' year').replace('month', ' month')}
-                                </span>
-                            )}
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            {viewMode === 'history' ? (
-                                <button onClick={() => setViewMode('main')} style={{ background: 'none', border: `1px solid ${COLORS.border}`, color: COLORS.textPrimary, padding: '8px 16px', borderRadius: 4, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <ArrowLeft size={14} /> Back
-                                </button>
-                            ) : (
-                                <>
-                                    <div style={{ position: 'relative' }} ref={dropdownRef}>
-                                        <button onClick={() => setHistoryDropdownOpen(!historyDropdownOpen)} style={{ background: 'none', border: `1px solid ${COLORS.border}`, color: COLORS.textPrimary, padding: '8px 16px', borderRadius: 4, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <History size={14} /> History
-                                        </button>
-                                        
-                                        {historyDropdownOpen && (
-                                            <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 12, background: '#FFFFFF', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', width: 220, zIndex: 100, overflow: 'hidden', animation: 'fadeIn 0.2s ease' }}>
-                                                {[
-                                                    { id: 'month', label: 'Last 1 Month' },
-                                                    { id: '3months', label: 'Last 3 Months' },
-                                                    { id: '6months', label: 'Last 6 Months' },
-                                                    { id: 'year', label: 'Last 1 Year' }
-                                                ].map((option, idx) => (
-                                                    <button key={option.id} onClick={() => { setHistoryRange(option.id); setViewMode('history'); setHistoryDropdownOpen(false); }}
-                                                        style={{ width: '100%', textAlign: 'left', padding: '14px 20px', background: 'transparent', border: 'none', borderBottom: idx !== 3 ? '1px solid #F3F4F6' : 'none', color: '#111827', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'background 0.2s' }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
-                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                    >
-                                                        {option.label}
-                                                        <ChevronRight size={16} color="#9CA3AF" />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <button onClick={handleCreateDaySession} disabled={isCreatingBox} style={{ background: 'none', border: `1px solid ${COLORS.border}`, color: COLORS.textPrimary, padding: '8px 16px', borderRadius: 4, fontSize: 13, cursor: 'pointer' }}>
-                                        {isCreatingBox ? 'creating...' : '+ new box'}
+                    {React.useMemo(() => (
+                        <div className="workspace-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <h1 style={{ fontSize: 24, fontWeight: 400 }}>
+                                    {viewMode === 'main' ? 'workspace' : 'history'}
+                                </h1>
+                                {viewMode === 'history' && (
+                                    <span style={{ color: COLORS.textMuted, fontSize: 14 }}>
+                                        / last {historyRange.replace('months', ' months').replace('year', ' year').replace('month', ' month')}
+                                    </span>
+                                )}
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                {viewMode === 'history' ? (
+                                    <button onClick={() => setViewMode('main')} style={{ background: 'none', border: `1px solid ${COLORS.border}`, color: COLORS.textPrimary, padding: '8px 16px', borderRadius: 4, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <ArrowLeft size={14} /> Back
                                     </button>
-                                </>
-                            )}
+                                ) : (
+                                    <>
+                                        <div style={{ position: 'relative' }} ref={dropdownRef}>
+                                            <button onClick={() => setHistoryDropdownOpen(!historyDropdownOpen)} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.1)`, color: '#F4F4F5', padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', fontWeight: 500 }} className="hover:bg-white/10 hover:border-white/20">
+                                                <History size={14} /> History
+                                            </button>
+                                            
+                                            {historyDropdownOpen && (
+                                                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 12, background: '#FFFFFF', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', width: 220, zIndex: 100, overflow: 'hidden', animation: 'fadeIn 0.2s ease' }}>
+                                                    {[
+                                                        { id: 'month', label: 'Last 1 Month' },
+                                                        { id: '3months', label: 'Last 3 Months' },
+                                                        { id: '6months', label: 'Last 6 Months' },
+                                                        { id: 'year', label: 'Last 1 Year' }
+                                                    ].map((option, idx) => (
+                                                        <button key={option.id} onClick={() => { setHistoryRange(option.id); setViewMode('history'); setHistoryDropdownOpen(false); }}
+                                                            style={{ width: '100%', textAlign: 'left', padding: '14px 20px', background: 'transparent', border: 'none', borderBottom: idx !== 3 ? '1px solid #F3F4F6' : 'none', color: '#111827', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'background 0.2s' }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F9FAFB'}
+                                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                        >
+                                                            {option.label}
+                                                            <ChevronRight size={16} color="#9CA3AF" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button onClick={handleCreateDaySession} disabled={isCreatingBox} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.1)`, color: '#F4F4F5', padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s', fontWeight: 500, whiteSpace: 'nowrap' }} className="hover:bg-white/10 hover:border-white/20">
+                                            <Plus size={16} /> {isCreatingBox ? 'creating...' : 'New Box'}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    ), [viewMode, historyRange, historyDropdownOpen, isCreatingBox])}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
                         {viewMode === 'main' ? (

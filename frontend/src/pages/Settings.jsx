@@ -518,7 +518,8 @@ const Settings = () => {
     const formatPercent = useCallback((v) => `${Math.round(v * 100)}%`, []);
 
     return (
-        <div style={{ display: 'flex', height: '100vh', backgroundColor: THEME.bg, overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ minHeight: '100vh', width: '100%', backgroundColor: THEME.bg, color: THEME.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
+            <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
             
             <style>{SETTINGS_CSS}</style>
 
@@ -534,8 +535,6 @@ const Settings = () => {
                     {toast}
                 </div>
             )}
-
-            <Sidebar activePage="Settings" />
 
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                 
@@ -691,6 +690,7 @@ const Settings = () => {
                     </SettingBlock>
 
                 </div>
+            </div>
             </div>
         </div>
     );
