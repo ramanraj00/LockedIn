@@ -1,5 +1,0 @@
-
-// ├── ProfileCard
-// ├── StatsCards
-// ├── WeeklyChart
-// └── Heatmap

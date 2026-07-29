@@ -17,30 +17,50 @@ router.get("/", async (req, res) => {
         const endOfDay = new Date();
         endOfDay.setHours(23, 59, 59, 999);
 
-        const leaderboardData = [];
+        const userIds = users.map(u => u._id);
+        const userIdsStr = users.map(u => u._id.toString());
 
-        for (const user of users) {
-            // 🔥 FIX 2: Range query lagayenge taki agar Date me thoda bhi timestamp difference ho, tab bhi box mil jaye!
-            const todaySession = await dailysessionmodel.findOne({ 
-                userId: user._id, 
-                date: { $gte: startOfDay, $lte: endOfDay } 
-            });
+        // 1. Bulk Fetch Today's Sessions
+        const todaySessions = await dailysessionmodel.find({ 
+            userId: { $in: userIds }, 
+            date: { $gte: startOfDay, $lte: endOfDay } 
+        }).lean();
+        
+        const xpByUserId = {};
+        todaySessions.forEach(s => {
+            const uid = s.userId.toString();
+            xpByUserId[uid] = (xpByUserId[uid] || 0) + (s.totalDaytime || 0);
+        });
+
+        // 2. Bulk Fetch Tasks to get active daySessionIds
+        const tasks = await taskmodel.find({ userId: { $in: userIds } }, 'daySessionId userId').lean();
+        const tasksSessionIdsByUserId = {};
+        tasks.forEach(t => {
+            const uid = t.userId.toString();
+            if(!tasksSessionIdsByUserId[uid]) tasksSessionIdsByUserId[uid] = new Set();
+            if(t.daySessionId) tasksSessionIdsByUserId[uid].add(t.daySessionId.toString());
+        });
+
+        // 3. Bulk Fetch ALL Study Days for Streak Calculation
+        const allStudyDays = await dailysessionmodel.find({ userId: { $in: userIds } }).sort({ date: 1 }).lean();
+        const studyDaysByUserId = {};
+        
+        allStudyDays.forEach(s => {
+            const uid = s.userId.toString();
+            if (!studyDaysByUserId[uid]) studyDaysByUserId[uid] = [];
             
-            // Ab pakka tumhara 18 min wala data yahan load hoga!
-            const xp = todaySession ? (todaySession.totalDaytime || 0) : 0;
+            const hasTask = tasksSessionIdsByUserId[uid] && tasksSessionIdsByUserId[uid].has(s._id.toString());
+            if ((s.totalDaytime > 0) || hasTask) {
+                studyDaysByUserId[uid].push(s);
+            }
+        });
 
-            // 2. Gather Data for Streaks
-            const daySessionsWithTasks = await taskmodel.distinct("daySessionId", { userId: user._id });
-            const studyDays = await dailysessionmodel
-              .find({ 
-                userId: user._id, 
-                $or: [
-                  { totalDaytime: { $gt: 0 } },
-                  { _id: { $in: daySessionsWithTasks } }
-                ]
-              })
-              .sort({ date: 1 });
-
+        // 4. Calculate everything in memory synchronously
+        const leaderboardData = users.map(user => {
+            const uid = user._id.toString();
+            const xp = xpByUserId[uid] || 0;
+            const studyDays = studyDaysByUserId[uid] || [];
+            
             let longestStreak = 0;
             let currentStreak = 0;
 
@@ -49,11 +69,9 @@ router.get("/", async (req, res) => {
 
               // A. Calculate Longest Streak
               for (let i = 0; i < studyDays.length; i++) {
-                const session = studyDays[i];
-
                 if (i > 0) {
                   const prev = new Date(studyDays[i - 1].date);
-                  const curr = new Date(session.date);
+                  const curr = new Date(studyDays[i].date);
                   const diffDays = Math.floor((curr - prev) / (1000 * 60 * 60 * 24));
 
                   if (diffDays === 1) {
@@ -83,28 +101,23 @@ router.get("/", async (req, res) => {
               const lastStudyDate = new Date(studyDays[studyDays.length - 1].date);
               lastStudyDate.setHours(0, 0, 0, 0);
               
-              // startOfDay se diff compare karenge purane logic ke bajaye (Zada accurate)
               const diffFromToday = Math.floor((startOfDay - lastStudyDate) / (1000 * 60 * 60 * 24));
               if (diffFromToday > 1) {
                 currentStreak = 0;
               }
             }
 
-            const userBadges = user.badges || [];
-
-            // 🔥 Store all data temporarily for advanced sorting
-            leaderboardData.push({
+            return {
                 id: user._id,
                 name: user.name,
                 avatar: user.imageUrl || null,
                 xp: xp,
                 currentStreak: currentStreak,
                 longestStreak: longestStreak, 
-                badges: userBadges,
-                // MongoDB ki ID ke andar timestamp chhupa hota hai!
+                badges: user.badges || [],
                 createdAt: user.createdAt ? new Date(user.createdAt).getTime() : user._id.getTimestamp().getTime()
-            });
-        }
+            };
+        });
 
         // ==========================================
         // 3. 🔥 ULTIMATE TIE-BREAKER SORTING LOGIC 🔥

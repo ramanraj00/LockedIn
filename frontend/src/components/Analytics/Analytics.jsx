@@ -136,11 +136,11 @@ const BarChartSkeleton = () => {
     );
 };
 
-const Footer = () => {
+const Footer = ({ isMobile }) => {
     return (
         <footer className="relative w-full mt-24 pt-12 overflow-hidden flex flex-col items-center border-t border-white/10">
             <DitherGradient from="blue" direction="down" />
-            <div className="relative z-10 w-full px-6 md:px-12 flex flex-col sm:flex-row justify-between items-center gap-6 mb-8 md:mb-12">
+            <div className="relative z-10 w-full flex flex-col sm:flex-row justify-between items-center gap-6 mb-8 md:mb-12" style={{ paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)' }}>
                 <p className="text-white text-sm font-bold tracking-wide text-center sm:text-left drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     © {new Date().getFullYear()} LockedIn. All rights reserved.
                 </p>
@@ -158,7 +158,7 @@ const Footer = () => {
                 </div>
             </div>
             <div className="relative z-10 w-full flex justify-center items-end select-none pointer-events-none mt-auto overflow-hidden" style={{ WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0.5) 85%, rgba(0,0,0,0) 100%)", maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0.5) 85%, rgba(0,0,0,0) 100%)" }}>
-                <h1 className="font-eurostile text-transparent bg-clip-text w-full text-center uppercase" style={{ backgroundImage: "linear-gradient(180deg, #94A3B8 0%, #475569 55%, #0F172A 95%)", fontSize: "clamp(60px, 18.5vw, 400px)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: "0.75", marginBottom: "-3.5%", WebkitFontSmoothing: "antialiased", filter: "drop-shadow(0px -4px 20px rgba(0,0,0,0.3))" }}>LOCKEDIN</h1>
+                <h1 className="font-eurostile text-transparent bg-clip-text w-full text-center uppercase" style={{ backgroundImage: "linear-gradient(180deg, #94A3B8 0%, #475569 55%, #0F172A 95%)", fontSize: "clamp(60px, 18.5vw, 400px)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: "0.75", marginBottom: "-3.5%", paddingTop: "0.08em", WebkitFontSmoothing: "antialiased", filter: "drop-shadow(0px -4px 20px rgba(0,0,0,0.3))" }}>LOCKEDIN</h1>
             </div>
         </footer>
     );
@@ -287,7 +287,7 @@ const Analytics = () => {
                 }
             `}</style>
 
-            <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ paddingTop: isMobile ? 84 : 32, paddingBottom: 0, width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
             {/* RIGHT WIDGET TRIGGER */}
             <button 
@@ -300,8 +300,8 @@ const Analytics = () => {
                 </div>
             </button>
 
-            {/* 🔥 FIX 1: pt-24 md:pt-8 (was pt-28 md:pt-16) */}
-            <div className="w-full max-w-[1800px] mx-auto pl-6 md:pl-[100px] pr-6 md:pr-10 pt-24 md:pt-8 flex flex-col gap-8 relative z-10">
+            {/* 🔥 FIX 1: pt-0 to align with icons */}
+            <div className="w-full pt-0 flex flex-col gap-6 md:gap-8 relative z-10" style={{ paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)' }}>
                 
                 {/* 🔥 FIX 4: gap-2 pb-0 (was gap-4 pb-2) */}
                 <header className="w-full flex flex-col gap-2 pb-0 relative z-10">
@@ -349,7 +349,7 @@ const Analytics = () => {
 
                     <motion.section 
                         variants={itemVariants}
-                        className="w-full rounded-2xl border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm relative group transition-colors duration-500 hover:bg-[#0D0D0D]"
+                        className="w-full rounded-none border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm relative group transition-colors duration-500 hover:bg-[#0D0D0D]"
                     >
                         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                             <div className="flex flex-col gap-1">
@@ -402,7 +402,7 @@ const Analytics = () => {
                                         <Bar 
                                             dataKey="hours" 
                                             variant="dotted" 
-                                            barSize={48} 
+                                            barSize={isMobile ? 28 : 48} 
                                             radius={[6, 6, 0, 0]}
                                             isAnimationActive={false} 
                                         />
@@ -426,7 +426,7 @@ const Analytics = () => {
 
                     <motion.section 
                         variants={itemVariants}
-                        className="w-full rounded-2xl border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm transition-colors duration-500 hover:bg-[#0D0D0D] mt-2 md:mt-4"
+                        className="w-full rounded-none border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden shadow-sm transition-colors duration-500 hover:bg-[#0D0D0D] mt-2 md:mt-4"
                     >
                         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
                             <div className="flex flex-col gap-1">
@@ -441,7 +441,7 @@ const Analytics = () => {
                             <div className="w-full px-6 pt-8 pb-4">
                                 {(() => {
                                     const totalPadding = isMobile ? 48 : 140; 
-                                    const sectionInnerWidth = Math.min(windowWidth, 1800) - totalPadding;
+                                    const sectionInnerWidth = windowWidth - totalPadding;
                                     const contentWidth = sectionInnerWidth - 48; 
                                     
                                     let targetYear = new Date().getFullYear();
@@ -648,7 +648,7 @@ const Analytics = () => {
                 </motion.main>
             </div>
 
-            <Footer />
+            <Footer isMobile={isMobile} />
 
             {/* FLOATING WIDGET CARD */}
             <AnimatePresence>

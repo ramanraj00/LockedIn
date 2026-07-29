@@ -34,6 +34,9 @@ function Navbar() {
   };
 
   const handleScroll = (id) => {
+    if (id === "features") {
+      id = window.innerWidth >= 768 ? "features-desktop-anchor" : "features-mobile-anchor";
+    }
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "auto" });
@@ -82,7 +85,7 @@ function Navbar() {
             Home
           </span>
           <span
-            onClick={() => handleScroll("dashboard-section")}
+            onClick={() => handleScroll("features")}
             className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             Features
@@ -197,7 +200,7 @@ function Navbar() {
                     Home
                   </span>
                   <span
-                    onClick={() => handleScroll("dashboard-section")}
+                    onClick={() => handleScroll("features")}
                     style={{ fontFamily: "'Instrument Sans', sans-serif" }}
                     className="cursor-pointer text-sm font-medium text-zinc-300 hover:text-white bg-white/[0.02] border border-white/[0.05] rounded-xl px-4 py-3.5 transition-all duration-200 block shadow-inner"
                   >

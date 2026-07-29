@@ -482,7 +482,7 @@ const Workspace = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                 <span style={{ fontSize: 20, fontWeight: 400 }}>{new Date(day.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                <span style={{ fontSize: 11, color: statusLabel === 'completed' ? '#34D399' : statusLabel === 'pending' ? '#FBBF24' : COLORS.textMuted, border: `1px solid ${statusLabel === 'completed' ? 'rgba(52,211,153,0.3)' : statusLabel === 'pending' ? 'rgba(251,191,36,0.3)' : COLORS.border}`, padding: '2px 8px', borderRadius: 12 }}>{statusLabel}</span>
+                                <span style={{ fontSize: 11, color: '#E4E4E7', border: '1px solid rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: 12 }}>{statusLabel}</span>
                                 {!isExpanded && tasks.length > 0 && <span style={{ fontSize: 11, color: COLORS.textPrimary, backgroundColor: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 12 }}>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</span>}
                             </div>
                             {day.deadline && <span style={{ fontSize: 12, color: COLORS.textMuted }}>deadline: {new Date(day.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}

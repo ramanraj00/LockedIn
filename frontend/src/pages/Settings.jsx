@@ -204,49 +204,24 @@ const Kbd = memo(({ children }) => (
 ));
 
 const SettingBlock = memo(({ title, description, children }) => (
-    <div style={{
-        display: 'flex',
-        border: `1px solid ${THEME.border}`,
-        borderRadius: '12px',
-        backgroundColor: THEME.sectionBg,
-        marginBottom: '24px',
-        width: '100%',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-    }}>
-        <div style={{ 
-            width: '280px', 
-            padding: '32px 24px', 
-            flexShrink: 0,
-            borderRight: `1px solid ${THEME.border}` 
-        }}>
-            <h3 style={{ color: THEME.textPrimary, fontSize: '15px', fontWeight: 600, margin: '0 0 8px 0' }}>{title}</h3>
-            <p style={{ color: THEME.textSecondary, fontSize: '13px', lineHeight: '1.5', margin: 0 }}>{description}</p>
+    <div className="flex flex-col md:flex-row w-full mb-6 rounded-xl shadow-lg border border-[#2A2A2A] bg-[#151515]">
+        <div className="w-full md:w-[280px] shrink-0 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#2A2A2A]">
+            <h3 className="text-[#F0F0F0] text-[15px] font-semibold mb-2">{title}</h3>
+            <p className="text-[#8A8A8A] text-[13px] leading-relaxed m-0">{description}</p>
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div className="flex-1 flex flex-col">
             {children}
         </div>
     </div>
 ));
 
 const SettingRow = memo(({ title, description, children, isLast = false }) => (
-    <div 
-        style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px 32px', 
-            borderBottom: isLast ? 'none' : `1px solid ${THEME.border}`,
-            gap: '24px',
-            transition: 'background-color 0.2s ease',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-    >
-        <div style={{ flex: 1 }}>
-            <h4 style={{ color: THEME.textPrimary, fontSize: '14px', fontWeight: 500, margin: '0 0 4px 0' }}>{title}</h4>
-            {description && <p style={{ color: THEME.textSecondary, fontSize: '12px', margin: 0 }}>{description}</p>}
+    <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 md:p-8 gap-4 md:gap-6 transition-colors duration-200 hover:bg-white/5 ${isLast ? '' : 'border-b border-[#2A2A2A]'}`}>
+        <div className="flex-1">
+            <h4 className="text-[#F0F0F0] text-[14px] font-medium mb-1">{title}</h4>
+            {description && <p className="text-[#8A8A8A] text-[12px] m-0">{description}</p>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-start sm:justify-end shrink-0">
             {children}
         </div>
     </div>
@@ -255,11 +230,9 @@ const SettingRow = memo(({ title, description, children, isLast = false }) => (
 // 🔥 10 PREVIEWS MAPPED PERFECTLY
 const FontCard = memo(({ selected, onClick, font }) => (
     <div 
-        className={`premium-card ${selected ? 'selected' : ''}`}
+        className={`premium-card w-full aspect-square md:w-[160px] md:h-[160px] ${selected ? 'selected' : ''}`}
         onClick={onClick}
         style={{
-            width: '160px', 
-            height: '160px', 
             border: `1px solid ${selected ? '#FFFFFF' : THEME.border}`,
             borderRadius: '12px',
             padding: '16px',
@@ -307,7 +280,7 @@ const TextInput = memo(({ value, onChange, placeholder, type = "text" }) => (
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="premium-input"
+        className="premium-input w-full md:w-[280px]"
     />
 ));
 
@@ -381,6 +354,14 @@ const Settings = () => {
         fontSizeMultiplier, setFontSizeMultiplier, 
         textBrightness, setTextBrightness 
     } = useSettings();
+
+    const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    const isMobile = windowWidth < 768;
 
     const [profile, setProfile] = useState({ name: '', email: '', avatar: AVATARS[0] });
     const [isSaving, setIsSaving] = useState(false);
@@ -519,7 +500,7 @@ const Settings = () => {
 
     return (
         <div style={{ minHeight: '100vh', width: '100%', backgroundColor: THEME.bg, color: THEME.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
-            <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+            <div style={{ paddingTop: isMobile ? 84 : 32, paddingBottom: 48, paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
             
             <style>{SETTINGS_CSS}</style>
 
@@ -538,7 +519,7 @@ const Settings = () => {
 
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                 
-                <div style={{ width: '100%', padding: '80px 64px' }}>
+                <div className="w-full" style={{ padding: isMobile ? '24px 0' : '0' }}>
                     
                     <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <h1 style={{ color: THEME.textPrimary, fontSize: '32px', fontWeight: 700, margin: 0, letterSpacing: '0.5px' }}>Settings</h1>
@@ -548,7 +529,7 @@ const Settings = () => {
                         title="Typography" 
                         description="Choose the primary font family for the application."
                     >
-                        <div style={{ padding: '32px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-5 p-6 md:p-8">
                             {FONTS.map(font => (
                                 <FontCard 
                                     key={font.id}
@@ -683,7 +664,7 @@ const Settings = () => {
                         </SettingRow>
 
                         <SettingRow title="Sign Out" isLast={true}>
-                            <ActionButton onClick={handleLogout} disabled={isLoggingOut} danger={true}>
+                            <ActionButton onClick={handleLogout} disabled={isLoggingOut}>
                                 {isLoggingOut ? 'Signing out...' : 'Log Out'}
                             </ActionButton>
                         </SettingRow>

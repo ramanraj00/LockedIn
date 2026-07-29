@@ -30,15 +30,19 @@ function Landing() {
       </div>
 
       {/* Desktop Horizontal Scroll */}
-      <div id="dashboard-section" className="hidden md:block">
+      <div id="dashboard-section" className="hidden md:block relative">
         <HorizontalScrollSections />
+        {/* Anchor to scroll exactly to the Features step (end of the 350vh scroll) */}
+        <div id="features-desktop-anchor" className="absolute bottom-0 h-screen w-full pointer-events-none" />
       </div>
 
       {/* Mobile Vertical Stack */}
       <div id="dashboard-section-mobile" className="md:hidden flex flex-col w-full overflow-hidden bg-[#FAF9F6]">
         <ArchitectureSection />
         <ProgressSection />
-        <FeatureFlowSection />
+        <div id="features-mobile-anchor">
+          <FeatureFlowSection />
+        </div>
       </div>
       
       <div id="leaderboard-section">

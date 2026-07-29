@@ -359,10 +359,29 @@ const Profile = () => {
     .badge-card.unlocked { background: rgba(20, 24, 54, 0.5); box-shadow: 8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2); }
     .badge-card.locked { background: rgba(20, 24, 54, 0.2); box-shadow: 8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2); }
     .badge-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 8px 16px 40px rgba(0, 0, 0, 0.4), inset 1px 1px 2px rgba(255, 255, 255, 0.15), inset -1px -1px 4px rgba(0, 0, 0, 0.2); }
-    .badge-shine { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: 20px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
-    .badge-card:hover .badge-shine { opacity: 1; }
-    .badge-shine-inner { position: absolute; top: 0; left: 0; width: 60%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), rgba(255,255,255,0.15), rgba(255,255,255,0.08), transparent); transform: translateX(-100%) translateY(-100%) rotate(25deg); }
-    .badge-card:hover .badge-shine-inner { animation: diagonalShine 1.5s ease-out forwards; }
+
+    /* 🔥 Hover Top-to-Bottom Shine Effect 🔥 */
+    .badge-card::before {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0;
+    }
+    .badge-card:hover::before {
+        animation: card-hover-shine-down 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    @keyframes card-hover-shine-down {
+        0% { top: -100%; opacity: 0; }
+        10% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { top: 150%; opacity: 0; }
+    }
     .badge-img { width: 88px; height: 88px; object-fit: contain; transition: transform 0.3s ease; filter: none; }
     .badge-card.unlocked:hover .badge-img { transform: scale(1.15); }
     .badge-locked-overlay { position: absolute; inset: 0; border-radius: 20px; background-color: rgba(10, 12, 30, 0.75); backdrop-filter: blur(6px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 10; border: 1px solid rgba(255,255,255,0.08); opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; }
@@ -602,14 +621,12 @@ const Profile = () => {
                                 
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 20 }}>
                                    {ALL_BADGES.map((badge) => {
-                                        const isUnlocked = activeDays >= badge.requiredDays;
+                                        const isUnlocked = badge.id === 'feather' 
+                                            ? ((user.totalFocusTimeAllTime || user.xp || 0) >= 36000) 
+                                            : (activeDays >= badge.requiredDays);
                                         return (
                                             <div key={badge.id} className={`badge-card ${isUnlocked ? 'unlocked' : 'locked'}`}>
                                                 
-                                                <div className="badge-shine">
-                                                    <div className="badge-shine-inner"></div>
-                                                </div>
-
                                                 <div style={{ position: 'relative', width: 88, height: 88, zIndex: 2 }}>
                                                     <img src={badge.imageUrl} alt={badge.name} className="badge-img" style={{ dropShadow: isUnlocked ? 'drop-shadow(0 4px 12px rgba(99,102,241,0.3))' : 'none' }} />
                                                     {!isUnlocked && (
@@ -633,7 +650,7 @@ const Profile = () => {
                                                         <span style={{ fontSize: 16, fontWeight: 800, color: '#E5E7EB', letterSpacing: '0.2em', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>LOCKED</span>
                                                         <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 600, textAlign: 'center', padding: '0 16px', lineHeight: 1.4, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{badge.requirement}</span>
                                                         <div style={{ width: '60%', height: 4, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: 4 }}>
-                                                            <div style={{ width: `${Math.min((activeDays / badge.requiredDays) * 100, 100)}%`, height: '100%', borderRadius: 4, background: 'linear-gradient(90deg, #6366F1, #818CF8)' }}></div>
+                                                            <div style={{ width: `${badge.id === 'feather' ? Math.min(((user.totalFocusTimeAllTime || user.xp || 0) / 36000) * 100, 100) : Math.min((activeDays / badge.requiredDays) * 100, 100)}%`, height: '100%', borderRadius: 4, background: 'linear-gradient(90deg, #6366F1, #818CF8)' }}></div>
                                                         </div>
                                                     </div>
                                                 )}

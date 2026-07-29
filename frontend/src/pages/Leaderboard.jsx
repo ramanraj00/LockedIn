@@ -208,6 +208,39 @@ const ALL_BADGES = [
 // 🔥 COMPONENT: Floating 3D Dialer Carousel
 // =======================================================
 const BadgeCarousel = memo(() => {
+    const [badgeData, setBadgeData] = useState({ activeDays: 0, totalFocusTime: 0 });
+
+    useEffect(() => {
+        let mounted = true;
+        const loadStats = async () => {
+            try {
+                const [authRes, heatmapRes] = await Promise.allSettled([
+                    fetch("http://localhost:3000/api/auth/me", { credentials: "include" }),
+                    fetch("http://localhost:3000/api/dashboard/dashboard/heatmap", { credentials: "include" })
+                ]);
+                
+                let focusTime = 0;
+                let activeD = 0;
+                
+                if (authRes.status === 'fulfilled' && authRes.value.ok) {
+                    const data = await authRes.value.json();
+                    if (data?.user) focusTime = Number(data.user.totalFocusTimeAllTime || data.user.xp || 0);
+                }
+                
+                if (heatmapRes.status === 'fulfilled' && heatmapRes.value.ok) {
+                    const data = await heatmapRes.value.json();
+                    if (data?.heatmapData) {
+                        activeD = data.heatmapData.filter(d => d.intensity > 0 || d.hours > 0).length;
+                    }
+                }
+                
+                if (mounted) setBadgeData({ activeDays: activeD, totalFocusTime: focusTime });
+            } catch (error) { console.error("Error loading badge stats", error); }
+        };
+        loadStats();
+        return () => { mounted = false; };
+    }, []);
+
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '16px' }}>
@@ -227,6 +260,7 @@ const BadgeCarousel = memo(() => {
 
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1200px' }}>
                 <Swiper
+                    key={`swiper-${badgeData.activeDays}-${badgeData.totalFocusTime}`}
                     effect={'coverflow'} grabCursor={true} centeredSlides={true} slidesPerView={3} loop={true} slideToClickedSlide={true} 
                     coverflowEffect={{ rotate: 0, stretch: 250, depth: 300, modifier: 1, slideShadows: false }}
                     modules={[EffectCoverflow]} style={{ width: '100%', maxWidth: '550px', height: '160px' }} 
@@ -235,6 +269,10 @@ const BadgeCarousel = memo(() => {
                         <SwiperSlide key={badge.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
                             {({ isActive, isPrev, isNext }) => {
                                 const showBadge = isActive || isPrev || isNext;
+                                const isUnlocked = badge.id === 'feather' 
+                                    ? (badgeData.totalFocusTime >= 36000) 
+                                    : (badgeData.activeDays >= badge.requiredDays);
+                                    
                                 return (
                                     <div style={{ 
                                         display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -245,13 +283,15 @@ const BadgeCarousel = memo(() => {
                                     }}>
                                         <div style={{ position: 'relative', width: '90px', height: '90px' }}>
                                             <img src={badge.imageUrl} alt={badge.name} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'none' }} />
-                                            <div style={{
-                                                position: 'absolute', bottom: '4px', right: '4px', width: '24px', height: '24px',
-                                                borderRadius: '50%', backgroundColor: '#111218', border: '2px solid #2A2C38', 
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.6)', zIndex: 10
-                                            }}>
-                                                <Lock size={11} color="#8A8F9E" strokeWidth={2.5} />
-                                            </div>
+                                            {!isUnlocked && (
+                                                <div style={{
+                                                    position: 'absolute', bottom: '4px', right: '4px', width: '24px', height: '24px',
+                                                    borderRadius: '50%', backgroundColor: '#111218', border: '2px solid #2A2C38', 
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.6)', zIndex: 10
+                                                }}>
+                                                    <Lock size={11} color="#8A8F9E" strokeWidth={2.5} />
+                                                </div>
+                                            )}
                                             {isActive && (
                                                 <div className="badge-shimmer-overlay" style={{
                                                     position: 'absolute', inset: 0, zIndex: 2,
@@ -343,6 +383,7 @@ const Leaderboard = () => {
         } catch (e) { }
 
         const fetchData = async (isBackground = false) => {
+            const startTime = Date.now();
             if (!isBackground && users.length === 0) setIsLoading(true);
             try {
                 const [leaderboardRes, authRes] = await Promise.allSettled([
@@ -415,7 +456,11 @@ const Leaderboard = () => {
             } catch (error) { 
                 console.error("Error fetching data:", error); 
             } finally { 
-                setIsLoading(false); 
+                const elapsed = Date.now() - startTime;
+                const delay = Math.max(0, 1500 - elapsed);
+                setTimeout(() => {
+                    setIsLoading(false); 
+                }, delay);
             }
         };
 
@@ -552,7 +597,7 @@ const Leaderboard = () => {
                 .top3-wrapper:hover .top3-card { transform: translate3d(0, -12px, 0) scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); border-color: #27272A !important; }
 
                 @media (max-width: 1024px) {
-                    .main-content-wrapper { padding: 56px 20px 20px 20px !important; }
+                    .main-content-wrapper { padding: 56px 20px 20px 20px !important; overflow-y: auto !important; }
                     .leaderboard-header { margin-left: 0 !important; flex-direction: column !important; align-items: flex-start !important; gap: 12px; margin-bottom: 24px !important; }
                     .main-grid { display: flex !important; flex-direction: column !important; gap: 32px; height: auto !important; }
                     .left-col, .right-col { height: auto !important; min-height: auto !important; }

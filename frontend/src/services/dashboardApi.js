@@ -1,3 +1,0 @@
-//  getProfile()
-//     getWeeklyChart()
-//     getHeatmap()

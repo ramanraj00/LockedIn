@@ -120,31 +120,31 @@ const FeatureFlowSection = () => {
             </motion.div>
           </Link>
           {/* SVG line down from CTA */}
-          <div className="absolute left-1/2 top-full w-px h-8 bg-transparent -translate-x-1/2">
-             <svg width="2" height="32" className="absolute top-0 left-0">
-               <line x1="1" y1="0" x2="1" y2="32" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
+          <div className="absolute left-1/2 top-full w-px h-12 bg-transparent -translate-x-1/2">
+             <svg width="2" height="48" className="absolute top-0 left-0">
+               <line x1="1" y1="0" x2="1" y2="48" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
              </svg>
              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
           </div>
         </div>
 
         {/* Vertical Feature Flow */}
-        <div className="flex flex-col gap-3 w-full max-w-2xl relative z-10">
+        <div className="flex flex-col gap-12 w-full max-w-2xl relative z-10">
           {features.map((feature, index) => (
             <div key={index} className="relative">
               {/* Connector from previous box */}
               {index > 0 && (
-                <div className="absolute left-1/2 -top-3 w-px h-3 bg-transparent -translate-x-1/2">
-                  <svg width="2" height="12" className="absolute top-0 left-0">
-                    <line x1="1" y1="0" x2="1" y2="12" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
+                <div className="absolute left-1/2 -top-12 w-px h-12 bg-transparent -translate-x-1/2">
+                  <svg width="2" height="48" className="absolute top-0 left-0">
+                    <line x1="1" y1="0" x2="1" y2="48" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
                   </svg>
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
                 </div>
               )}
               
-              <div className="bg-white border border-[#E5E3DB] rounded-xl p-4 shadow-sm flex items-center gap-5 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
-                <div className="w-12 h-12 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#5C9EAD]">
-                  <feature.icon size={24} />
+              <div className="bg-white border border-[#E5E3DB] rounded-xl p-5 md:p-6 shadow-sm flex items-center gap-5 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
+                <div className="w-14 h-14 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#5C9EAD]">
+                  <feature.icon size={26} />
                 </div>
                 
                 <div className="flex-grow">
