@@ -23,9 +23,11 @@ html, body {
   font-style: normal;
 }
 
-
-
-
+@layer utilities {
+  .font-serif-elegant {
+    font-family: 'Playfair Display', Georgia, serif !important;
+  }
+}
 
 html, body {
   /* 1. Ye command Mac/Safari ko page bounce (slide) karne se strictly rok degi */

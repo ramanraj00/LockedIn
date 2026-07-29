@@ -42,12 +42,12 @@ const features = [
 
 const FeatureFlowSection = () => {
   return (
-    <div className="w-screen min-h-screen bg-[#FAF9F6] flex flex-col justify-start pt-[14vh] pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
+    <div className="w-screen min-h-screen md:h-screen bg-[#FAF9F6] flex flex-col justify-start pt-20 md:pt-[14vh] pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
       {/* Applying scale to fit screen and ensure it clears the top nav */}
-      <div className="max-w-4xl mx-auto px-6 w-full flex flex-col items-center scale-[0.85] origin-top">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full flex flex-col items-center scale-90 md:scale-[0.85] origin-top">
         
         {/* Top Icons Row */}
-        <div className="flex justify-between w-full max-w-3xl mb-8 relative z-10">
+        <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-between gap-3 md:gap-0 w-full max-w-3xl mb-8 relative z-10">
           
           {/* Master SVG overlay for all connecting lines */}
           <div className="absolute top-[80px] left-0 w-full h-[80px] pointer-events-none -z-10 hidden md:block">

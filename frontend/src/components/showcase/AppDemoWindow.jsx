@@ -486,7 +486,7 @@ const QuickStats = memo(() => {
 
     return (
         <div className="w-full flex flex-row gap-3 md:gap-4 flex-shrink-0">
-            <div className="w-1/2 rounded-[20px] md:rounded-[28px] p-4 md:p-5 flex flex-col justify-between" style={heavyCardStyle}>
+            <div className="w-full md:w-1/2 rounded-[20px] md:rounded-[28px] p-4 md:p-5 flex flex-col justify-between" style={heavyCardStyle}>
                 <div className="flex items-center">
                     <h3 className="text-[10px] md:text-[12px] font-bold tracking-[0.15em] text-[#E0E0E0] uppercase" style={capsuleStyle}>
                         Today's Progress
@@ -504,7 +504,7 @@ const QuickStats = memo(() => {
                 </div>
             </div>
             
-            <div className="w-1/2 rounded-[20px] md:rounded-[28px] p-4 md:p-5 flex flex-col justify-between" style={heavyCardStyle}>
+            <div className="hidden md:flex w-1/2 rounded-[28px] p-5 flex-col justify-between" style={heavyCardStyle}>
                 <div className="flex items-center mb-2">
                     <h3 className="text-[10px] md:text-[12px] font-bold tracking-[0.15em] text-[#E0E0E0] uppercase" style={capsuleStyle}>
                         Quick Guide
@@ -1899,45 +1899,45 @@ const renderMiniMonth = (year, monthIndex) => {
         <div className="w-full p-4 md:p-5 bg-[#FAF9F6] rounded-[32px] md:rounded-[40px] shadow-2xl border border-white/50">
           
           {/* Main Window Container */}
-          <div className="w-full h-[700px] bg-[#1e1e1e] rounded-[24px] border border-black/50 flex overflow-hidden shadow-inner">
+          <div className="w-full h-[600px] md:h-[700px] bg-[#1e1e1e] rounded-[20px] md:rounded-[24px] border border-black/50 flex flex-col md:flex-row overflow-hidden shadow-inner relative">
             
             {/* Sidebar (Mocked for Demo) */}
-            <div className="w-64 h-full bg-[#1e1e1e] border-r border-white/5 flex flex-col pt-8 pb-6 px-4 shrink-0">
-              <div className="px-4 mb-10">
+            <div className="w-full md:w-64 h-auto md:h-full bg-[#1e1e1e] border-b md:border-b-0 md:border-r border-white/5 flex flex-col pt-4 md:pt-8 pb-2 md:pb-6 px-3 md:px-4 shrink-0 z-20">
+              <div className="px-4 mb-4 md:mb-10 hidden md:block">
                 <h2 className="text-xl font-bold text-white tracking-tight">LockedIn</h2>
               </div>
-              <div className="flex flex-col gap-2 flex-1">
+              <div className="flex flex-row md:flex-col gap-2 overflow-x-auto hide-scrollbar pb-2 md:pb-0 w-full items-center md:items-stretch">
                 <button 
                   onClick={() => setActiveTab('profile')}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${activeTab === 'profile' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+                  className={`flex-shrink-0 whitespace-nowrap flex items-center gap-2 md:gap-3 px-4 py-2.5 md:py-3 rounded-xl font-medium text-[13px] md:text-sm transition-colors ${activeTab === 'profile' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
                   <User size={16} /> Profile
                 </button>
                 <button 
                   onClick={() => setActiveTab('workspace')}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${activeTab === 'workspace' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+                  className={`hidden md:flex flex-shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 py-2.5 md:py-3 rounded-xl font-medium text-[13px] md:text-sm transition-colors ${activeTab === 'workspace' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
                   <Clock size={16} /> Workspace
                 </button>
                 
                 <button 
                   onClick={() => setActiveTab('calendar')}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${activeTab === 'calendar' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+                  className={`flex-shrink-0 whitespace-nowrap flex items-center gap-2 md:gap-3 px-4 py-2.5 md:py-3 rounded-xl font-medium text-[13px] md:text-sm transition-colors ${activeTab === 'calendar' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
                   <CalendarIcon size={16} /> Calendar
                 </button>
                 
                 <button onClick={() => setActiveTab('stopwatch')}
- className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${activeTab === 'stopwatch' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+ className={`flex-shrink-0 whitespace-nowrap flex items-center gap-2 md:gap-3 px-4 py-2.5 md:py-3 rounded-xl font-medium text-[13px] md:text-sm transition-colors ${activeTab === 'stopwatch' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
                   <Timer size={16} /> Stopwatch
                 </button>
                 <button 
                   onClick={() => setActiveTab('analytics')}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${activeTab === 'analytics' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+                  className={`flex-shrink-0 whitespace-nowrap flex items-center gap-2 md:gap-3 px-4 py-2.5 md:py-3 rounded-xl font-medium text-[13px] md:text-sm transition-colors ${activeTab === 'analytics' ? 'bg-white/10 text-white border border-white/10 shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'}`}>
                   <BarChart2 size={16} /> Analytics
                 </button>
               </div>
             </div>
 
             {/* MAIN CONTENT AREA */}
-            <div className="flex-1 h-full overflow-y-auto" style={{ backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', system-ui, sans-serif" }}>
+            <div className="flex-1 h-full overflow-y-auto relative z-10" style={{ backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', system-ui, sans-serif" }}>
               {activeTab === 'profile' && renderProfile()}
               {activeTab === 'workspace' && renderWorkspace()}
               {activeTab === 'calendar' && renderCalendar()}

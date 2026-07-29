@@ -72,11 +72,17 @@ const ResetPassword = () => {
                 }
             }
 
+            const encoder = new TextEncoder();
+            const encodedData = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', encodedData);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const authPasswordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
             const response = await fetch(`http://localhost:3000/api/auth/reset-password/${token}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
-                    password: password,
+                    password: authPasswordHash,
                     encryptedDEK_pwd: newEncryptedDEK_pwd, 
                     userSalt: newUserSalt,
                     pbkdf2Iterations: NEW_ITERATIONS,

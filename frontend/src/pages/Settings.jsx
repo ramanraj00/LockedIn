@@ -279,7 +279,7 @@ const FontCard = memo(({ selected, onClick, font }) => (
             </div>
         </div>
         
-        <div style={{ 
+        <div className="keep-font" style={{ 
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', 
             fontSize: '52px', color: selected ? '#FFFFFF' : THEME.textPrimary,
             fontFamily: font.id === 'Inter' ? 'Inter, sans-serif' : 
@@ -388,6 +388,10 @@ const Settings = () => {
     const [toast, setToast] = useState(null);
     const toastTimerRef = useRef(null);
 
+    // Password setup for OAuth users changing email
+    const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+
     const showToast = useCallback((message) => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         setToast(message);
@@ -438,23 +442,53 @@ const Settings = () => {
     }, []);
 
     const handleProfileUpdate = useCallback(async () => {
+        // Strict Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(profile.email)) {
+            showToast("Please enter a valid email address!");
+            return;
+        }
+        
         setIsSaving(true);
         try {
+            const bodyData = { name: profile.name, email: profile.email, avatar: profile.avatar };
+            if (newPassword) {
+                // Hashing the password client-side to match the login/signup flow
+                const encoder = new TextEncoder();
+                const encodedData = encoder.encode(newPassword);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', encodedData);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashedPass = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                bodyData.newPassword = hashedPass;
+            }
+
             const res = await fetch('http://localhost:3000/api/auth/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ name: profile.name, email: profile.email, avatar: profile.avatar })
+                body: JSON.stringify(bodyData)
             });
+            
+            const data = await res.json();
+            
             if (res.ok) {
                 showToast("Profile Updated Successfully!");
+                setShowPasswordPrompt(false);
+                setNewPassword('');
+            } else {
+                if (res.status === 400 && data.requirePasswordSetup) {
+                    setShowPasswordPrompt(true);
+                } else {
+                    showToast(data.message || "Failed to update profile.");
+                }
             }
         } catch (err) {
             console.error(err);
+            showToast("Network error occurred.");
         } finally {
             setIsSaving(false);
         }
-    }, [profile, showToast]);
+    }, [profile, newPassword, showToast]);
 
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true);
@@ -467,6 +501,13 @@ const Settings = () => {
             setIsLoggingOut(false);
         }
     }, [navigate]);
+
+    const handleResetLayout = useCallback(() => {
+        setFontFamily('Inter');
+        setFontSizeMultiplier(1);
+        setTextBrightness(1);
+        showToast("Layout reset to default!");
+    }, [setFontFamily, setFontSizeMultiplier, setTextBrightness, showToast]);
 
     const handleNameChange = useCallback((e) => setProfile(p => ({ ...p, name: e.target.value })), []);
     const handleEmailChange = useCallback((e) => setProfile(p => ({ ...p, email: e.target.value })), []);
@@ -590,7 +631,39 @@ const Settings = () => {
                         </SettingRow>
 
                         <SettingRow title="Email Address" isLast={true}>
-                            <TextInput value={profile.email} onChange={handleEmailChange} placeholder="Enter your email" type="email" />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
+                                <TextInput value={profile.email} onChange={handleEmailChange} placeholder="Enter your email" type="email" />
+                                {showPasswordPrompt && (
+                                    <div style={{ 
+                                        marginTop: '12px', 
+                                        padding: '16px', 
+                                        backgroundColor: '#FFFFFF', 
+                                        borderRadius: '8px',
+                                        width: '280px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    }}>
+                                        <p style={{ color: '#000000', fontSize: '12px', margin: '0 0 12px 0', lineHeight: 1.4, fontWeight: 500 }}>
+                                            Since you signed up with Google, please set a password to change your email.
+                                        </p>
+                                        <input 
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="Enter a new password"
+                                            style={{ 
+                                                width: '100%',
+                                                backgroundColor: 'rgba(0,0,0,0.05)',
+                                                border: '1px solid rgba(0,0,0,0.1)',
+                                                color: '#000000',
+                                                padding: '10px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '13px',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </SettingRow>
                     </SettingBlock>
 
@@ -601,6 +674,12 @@ const Settings = () => {
                         <SettingRow title="Save Changes">
                             <ActionButton onClick={handleProfileUpdate} disabled={isSaving}>
                                 {isSaving ? 'Saving...' : 'Save Profile'}
+                            </ActionButton>
+                        </SettingRow>
+
+                        <SettingRow title="Reset Layout" description="Restore default font, scale, and brightness.">
+                            <ActionButton onClick={handleResetLayout}>
+                                Reset Layout
                             </ActionButton>
                         </SettingRow>
 

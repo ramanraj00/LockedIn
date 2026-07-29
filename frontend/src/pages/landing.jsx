@@ -3,6 +3,9 @@ import Hero from "../components/hero/hero";
 import Navbar from "../components/common/Navbar";
 import AppDemoWindow from "../components/showcase/AppDemoWindow";
 import HorizontalScrollSections from "../components/showcase/HorizontalScrollSections";
+import ArchitectureSection from "../components/showcase/ArchitectureSection";
+import ProgressSection from "../components/showcase/ProgressSection";
+import FeatureFlowSection from "../components/showcase/FeatureFlowSection";
 import LiveFocusSection from "../components/showcase/LiveFocusSection";
 import CtaSection from "../components/showcase/CtaSection";
 import SponsorSection from "../components/showcase/SponsorSection";
@@ -26,8 +29,16 @@ function Landing() {
         </div>
       </div>
 
-      <div id="dashboard-section">
+      {/* Desktop Horizontal Scroll */}
+      <div id="dashboard-section" className="hidden md:block">
         <HorizontalScrollSections />
+      </div>
+
+      {/* Mobile Vertical Stack */}
+      <div id="dashboard-section-mobile" className="md:hidden flex flex-col w-full overflow-hidden bg-[#FAF9F6]">
+        <ArchitectureSection />
+        <ProgressSection />
+        <FeatureFlowSection />
       </div>
       
       <div id="leaderboard-section">

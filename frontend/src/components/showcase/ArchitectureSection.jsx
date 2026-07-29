@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const ArchitectureSection = () => {
   return (
-    <div className="w-screen h-screen bg-[#FAF9F6] flex flex-col justify-center relative overflow-hidden shrink-0" id="architecture-section">
+    <div className="w-screen min-h-screen md:h-screen bg-[#FAF9F6] flex flex-col justify-center relative overflow-hidden shrink-0 py-20 md:py-0" id="architecture-section">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap');
         

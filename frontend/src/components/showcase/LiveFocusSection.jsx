@@ -156,6 +156,10 @@ const Top3Stack = memo(({ top3Users, navigate }) => {
                 .top3-wrapper:hover .top3-card { transform: translate3d(0, -12px, 0) scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); border-color: #27272A !important; }
                 
                 @media (max-width: 768px) {
+                    .top3-stack-container {
+                        transform: scale(0.75);
+                        height: 200px !important;
+                    }
                     .top3-stack-container:hover .top3-wrapper[data-rank="2"] { transform: translate3d(-90%, 0, 0) rotate(0deg); }
                     .top3-stack-container:hover .top3-wrapper[data-rank="3"] { transform: translate3d(90%, 0, 0) rotate(0deg); }
                     .top3-stack-container:hover .fake-l1, .top3-stack-container:hover .fake-l2, .top3-stack-container:hover .fake-l3 { transform: translate3d(-90%, 0, 0) scale(0.9); }

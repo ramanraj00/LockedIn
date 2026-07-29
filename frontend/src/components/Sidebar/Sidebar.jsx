@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 // 🔥 Framer Motion import kiya sliding effect ke liye
 import { motion } from 'framer-motion';
-import { LogOut, X, UserCircle, Command, CalendarDays, Timer, BarChart2, Award, Settings2 } from 'lucide-react';
+import { LogOut, X, UserCircle, Command, CalendarDays, Timer, BarChart2, Award, Settings2, ChevronsUpDown } from 'lucide-react';
 
 const SIDEBAR_ITEMS = [
     { name: 'Profile', icon: UserCircle },
@@ -130,7 +130,7 @@ const Sidebar = ({ activePage }) => {
                 ref={sidebarRef} 
                 onMouseLeave={() => setIsOpen(false)} 
                 style={{ 
-                    position: 'fixed', top: 0, left: 0, height: '100%', width: 280, 
+                    position: 'fixed', top: 0, left: 0, height: '100vh', width: 280, 
                     backgroundColor: 'rgba(15, 15, 15, 0.45)', 
                     backdropFilter: 'blur(40px) saturate(150%)', 
                     WebkitBackdropFilter: 'blur(40px) saturate(150%)',
@@ -159,101 +159,115 @@ const Sidebar = ({ activePage }) => {
                         const Icon = item.icon;
 
                         return (
-                            <button 
-                                key={item.name} 
-                                onClick={() => navigate(`/${item.name.toLowerCase()}`)} 
-                                onMouseEnter={() => setHoveredItem(item.name)}
-                                style={{ 
-                                    position: 'relative', width: '100%', padding: '14px 40px', borderRadius: 0, fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s ease',
-                                    border: 'none', outline: 'none',
-                                    backgroundColor: 'transparent', 
-                                    color: isActive || isHovered ? '#FFFFFF' : '#9CA3AF' 
-                                }}
-                                className="group"
-                            >
-                                {/* 🔥 MAGIC SLIDING BACKGROUND */}
-                                {isHovered && (
-                                    <motion.div
-                                        layoutId="sidebar-hover-pill"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                        style={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            backgroundColor: 'rgba(255,255,255,0.04)', // Subtle highlight
-                                            borderTop: '1px solid rgba(255,255,255,0.03)',
-                                            borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                            borderRadius: 0, // 🔥 Sharp edges (No round)
-                                            zIndex: 0
-                                        }}
-                                    />
-                                )}
+                            <React.Fragment key={item.name}>
+                                <button 
+                                    onClick={() => navigate(`/${item.name.toLowerCase()}`)} 
+                                    onMouseEnter={() => setHoveredItem(item.name)}
+                                    style={{ 
+                                        position: 'relative', width: '100%', padding: '14px 40px', borderRadius: 0, fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s ease',
+                                        border: 'none', outline: 'none',
+                                        backgroundColor: 'transparent', 
+                                        color: isActive || isHovered ? '#FFFFFF' : '#9CA3AF' 
+                                    }}
+                                    className="group"
+                                >
+                                    {/* 🔥 MAGIC SLIDING BACKGROUND */}
+                                    {isHovered && (
+                                        <motion.div
+                                            layoutId="sidebar-hover-pill"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                            style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                backgroundColor: 'rgba(255,255,255,0.04)', // Subtle highlight
+                                                borderTop: '1px solid rgba(255,255,255,0.03)',
+                                                borderBottom: '1px solid rgba(255,255,255,0.03)',
+                                                borderRadius: 0, // 🔥 Sharp edges (No round)
+                                                zIndex: 0
+                                            }}
+                                        />
+                                    )}
 
-                                {/* 🔥 Blue Line Indicator */}
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="active-indicator"
-                                        style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: '#3B82F6', zIndex: 10 }}
-                                    />
-                                )}
+                                    {/* 🔥 Blue Line Indicator */}
+                                    {isActive && (
+                                        <motion.div
+                                            layoutId="active-indicator"
+                                            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: '#3B82F6', zIndex: 10 }}
+                                        />
+                                    )}
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative', zIndex: 10 }}>
-                                    <Icon size={18} className={`transition-transform duration-300 ${isActive || isHovered ? 'scale-110' : ''}`} />
-                                    <span>{item.name}</span>
-                                </div>
-                            </button>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative', zIndex: 10 }}>
+                                        <Icon size={18} className={`transition-transform duration-300 ${isActive || isHovered ? 'scale-110' : ''}`} />
+                                        <span>{item.name}</span>
+                                    </div>
+                                </button>
+                                
+                                {/* 🔥 Line after Stopwatch */}
+                                {item.name === 'Stopwatch' && (
+                                    <div style={{ padding: '0 24px', margin: '8px 0' }}>
+                                        <hr style={{ 
+                                            border: 'none', 
+                                            borderTop: '2px solid rgba(255,255,255,0.08)', 
+                                            borderRadius: '4px' 
+                                        }} />
+                                    </div>
+                                )}
+                            </React.Fragment>
                         );
                     })}
                 </div>
 
-                {/* PREMIUM BOTTOM WIDGET */}
-                <div style={{ paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 'auto' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* PREMIUM BOTTOM WIDGET (Profile Pill) */}
+                <div style={{ marginTop: 'auto', paddingTop: 24 }}>
+                    <button 
+                        onClick={handleLogout}
+                        title="Click to logout"
+                        style={{ 
+                            width: '100%',
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between', 
+                            padding: '10px 14px', 
+                            borderRadius: 16, 
+                            backgroundColor: 'rgba(255, 255, 255, 0.04)', 
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            textAlign: 'left'
+                        }}
+                        className="hover:bg-white/10 group"
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}>
                             {imgUrl ? (
                                 <img 
                                     src={imgUrl} 
                                     alt="User" 
-                                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} 
+                                    style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} 
                                     onError={(e) => { 
                                         e.target.style.display = 'none'; 
                                         e.target.nextSibling.style.display = 'flex'; 
                                     }} 
                                 />
                             ) : null}
-                            <div style={{ display: imgUrl ? 'none' : 'flex', width: 36, height: 36, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB', fontWeight: 600, fontSize: 14, border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: imgUrl ? 'none' : 'flex', width: 40, height: 40, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB', fontWeight: 600, fontSize: 15, flexShrink: 0 }}>
                                 {profile?.name ? profile.name.charAt(0).toUpperCase() : 'U'}
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
-                                    {profile?.name ? profile.name.split(' ')[0] : 'Hustler'}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', overflow: 'hidden' }}>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#F3F4F6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130, fontFamily: "'Inter', sans-serif" }}>
+                                    {profile?.name || 'User Name'}
                                 </span>
-                                <span style={{ fontSize: 11, color: '#9CA3AF' }}>LockedIn</span>
+                                <span style={{ fontSize: 12, color: '#9CA3AF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130, fontFamily: "'Inter', sans-serif" }}>
+                                    {profile?.email || 'user@example.com'}
+                                </span>
                             </div>
                         </div>
-                        {/* Premium Minimal Logout Button */}
-                        <button 
-                            onClick={handleLogout} 
-                            title="Logout"
-                            style={{ 
-                                padding: 8, 
-                                color: '#9CA3AF', 
-                                backgroundColor: 'transparent', 
-                                border: 'none', 
-                                borderRadius: 8, 
-                                cursor: 'pointer', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                transition: 'all 0.2s ease' 
-                            }} 
-                            className="hover:bg-white/10 hover:text-white" 
-                        >
-                            <LogOut size={18} />
-                        </button>
-                    </div>
+                        <div style={{ color: '#6B7280', flexShrink: 0, paddingRight: 2 }} className="group-hover:text-white transition-colors">
+                            <ChevronsUpDown size={18} strokeWidth={2.5} />
+                        </div>
+                    </button>
                 </div>
             </div>
         </>

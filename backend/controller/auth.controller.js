@@ -90,6 +90,10 @@ exports.signin = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    if (!user.password) {
+      return res.status(400).json({ message: "This account was created via Google. Please log in with Google, or reset your password to create one." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -297,13 +301,34 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;
-        const { about, name, email, avatar } = req.body;
+        const { about, name, email, avatar, newPassword } = req.body;
         
         const updateData = {};
+        const existingUser = await usermodel.findById(userId).select("+password");
+        if (!existingUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
         
         if (about !== undefined) updateData.about = about;
         if (name) updateData.name = name;
-        if (email) updateData.email = email.toLowerCase();
+        
+        // If email is changing
+        if (email && email.toLowerCase() !== existingUser.email) {
+            // Check if user has no password (OAuth user)
+            if (!existingUser.password) {
+                if (!newPassword) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        requirePasswordSetup: true, 
+                        message: "Since you signed up with Google, please set a password to change your email." 
+                    });
+                }
+                // Hash and set new password
+                const salt = await bcrypt.genSalt(10);
+                updateData.password = await bcrypt.hash(newPassword, salt);
+            }
+            updateData.email = email.toLowerCase();
+        }
         
         if (avatar) {
             const ALLOWED_AVATARS = [
