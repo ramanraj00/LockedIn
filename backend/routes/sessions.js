@@ -21,6 +21,7 @@ router.post("/session/start", async function (req, res) {
       userId,
       startTime: new Date(),
       status: "running",
+      source: "workspace"
     });
 
     res.status(201).json({ message: "Session started", session });
@@ -91,6 +92,7 @@ router.post("/session/:id/resume", async (req, res) => {
       userId,
       startTime: new Date(),
       status: "running",
+      source: "workspace"
     });
 
     res.status(201).json({ message: "Session resumed", session: newSession });
@@ -269,9 +271,16 @@ router.post("/stopwatch/start", async (req, res) => {
     const runningSessions = await timermodel.find({ userId, status: "running" });
     for (let r of runningSessions) {
         const d = Math.floor((new Date() - r.startTime) / 1000);
+        
+        // 🔥 FIX: Only add to stopwatchTime if this session was created by Stopwatch!
+        const incQuery = { totalDaytime: d };
+        if (r.source === "stopwatch") {
+            incQuery.stopwatchTime = d;
+        }
+
         await dailysessionmodel.updateOne(
             { _id: r.daySessionId }, 
-            { $inc: { totalDaytime: d, stopwatchTime: d } } 
+            { $inc: incQuery } 
         );
         await timermodel.deleteOne({ _id: r._id });
     }
@@ -280,7 +289,8 @@ router.post("/stopwatch/start", async (req, res) => {
       daySessionId: daySession._id,
       userId,
       startTime: new Date(), 
-      status: "running"
+      status: "running",
+      source: "stopwatch"
     });
 
     res.status(201).json({ success: true, sessionId: session._id });
@@ -325,14 +335,13 @@ router.post("/stopwatch/stop", async (req, res) => {
 
     let totalDurationToSave = currentDuration;
     if (isFinalSave) {
-        const pausedSessions = await timermodel.find({ userId, status: "paused" });
+        const pausedSessions = await timermodel.find({ userId, status: "paused", source: "stopwatch" });
         for (let p of pausedSessions) {
             totalDurationToSave += (p.duration || 0);
             await timermodel.deleteOne({ _id: p._id }); 
         }
 
         if (totalDurationToSave > 0) {
-            // Yeh hamesha `$inc` karta hai!
             await dailysessionmodel.updateOne(
                 { _id: daySession._id }, 
                 { 

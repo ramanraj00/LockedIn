@@ -41,6 +41,11 @@ const sessionSchema = new Schema(
       enum: ["running", "paused", "completed"],
       default: "running",
     },
+
+    source: {
+      type: String,
+      default: "workspace",
+    },
   },
   { timestamps: true },
 );
