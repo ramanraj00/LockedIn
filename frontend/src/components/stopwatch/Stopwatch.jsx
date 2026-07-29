@@ -110,8 +110,8 @@ const ToastOverlay = memo(() => {
 });
 
 const Header = memo(() => (
-    <div className="w-full mb-4 md:mb-8 mt-12 md:mt-2 flex-shrink-0">
-        <h1 className="text-2xl md:text-[34px] font-bold tracking-tight text-[#E0E0E0]">Focus Session</h1>
+    <div className="w-full mb-4 md:mb-8 mt-2 flex-shrink-0">
+        <h1 className="text-2xl md:text-[34px] font-bold tracking-tight text-[#E0E0E0] leading-none">Focus Session</h1>
         <p className="hidden sm:block text-[15px] md:text-[17px] text-[#A3A3A3] mt-2 font-medium">Track and save your deep work intervals.</p>
     </div>
 ));
@@ -518,7 +518,7 @@ const FocusCard = memo(() => {
 
 const MainContainer = memo(({ children }) => {
     return (
-        <main className="w-full h-[100dvh] overflow-y-auto md:overflow-hidden flex flex-col justify-start md:justify-center items-center px-4 sm:px-6 md:px-8 py-4 md:py-8 pt-16 transition-all duration-300 relative z-10">
+        <main className="w-full h-full overflow-hidden flex flex-col justify-start md:justify-center items-center transition-all duration-300 relative z-10">
             {children}
         </main>
     );
@@ -585,12 +585,12 @@ const Stopwatch = () => {
                 }
             `}</style>
 
-            <div className="min-h-screen w-full relative overflow-x-hidden font-mono" style={{ backgroundColor: COLORS.bg, color: COLORS.textPrimary }}>
-                <div className="w-full mx-auto min-h-screen flex flex-col relative z-10"
-                     style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)' }}>
+            <div className="h-screen w-full relative overflow-hidden font-mono flex flex-col" style={{ backgroundColor: COLORS.bg, color: COLORS.textPrimary }}>
+                <div className="w-full h-full flex flex-col relative z-10"
+                     style={{ paddingTop: 32, paddingBottom: 24, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)' }}>
                 
                 <MainContainer>
-                    <div className="w-full max-w-5xl mx-auto flex flex-col justify-start md:justify-center h-full max-h-full">
+                    <div className="w-full max-w-5xl mx-auto flex flex-col justify-center h-full max-h-full">
                         <Header />
                         <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-4 md:pb-0">
                             <FocusCard />

@@ -190,9 +190,20 @@ const Workspace = () => {
             }
             else {
                 const errData = await res.json().catch(() => ({}));
-                setGlobalError(errData.error || errData.message || "Failed to create box");
+                const errMsg = errData.error || errData.message || "Failed to create box";
+                if (errMsg.includes("E11000") || errMsg.includes("duplicate key")) {
+                    setToastMessage("Today's workspace box already exists.");
+                } else {
+                    setGlobalError(errMsg);
+                }
             }
-        } catch (err) { setGlobalError(err.message); }
+        } catch (err) { 
+            if (err.message && (err.message.includes("E11000") || err.message.includes("duplicate key"))) {
+                setToastMessage("Today's workspace box already exists.");
+            } else {
+                setGlobalError(err.message); 
+            }
+        }
         finally { setIsCreatingBox(false); }
     };
 
@@ -461,6 +472,7 @@ const Workspace = () => {
         const statusLabel = getDeadlineStatus(day);
         const isDayCompleted = day.status === 'completed';
         const isConfirming = confirmAction?.dayId === day._id;
+        const isLatestBox = day._id === daySessions[0]?._id;
         
         return (
             <div key={day._id} style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
@@ -488,7 +500,9 @@ const Workspace = () => {
                                             <button onClick={() => setConfirmAction(null)} className="timer-text-btn reset-btn">no</button>
                                         </div>
                                     ) : isDayCompleted ? (
-                                        <button onClick={() => handleReopenDay(day._id)} className="timer-text-btn start-btn">Reopen</button>
+                                        isLatestBox ? <button onClick={() => handleReopenDay(day._id)} className="timer-text-btn start-btn">Reopen</button> : <span style={{ fontSize: 11, color: COLORS.textMuted, padding: '4px 10px', letterSpacing: '0.05em', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>ARCHIVED</span>
+                                    ) : !isLatestBox && !runningSession ? (
+                                        <span style={{ fontSize: 11, color: COLORS.textMuted, padding: '4px 10px', letterSpacing: '0.05em', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>ARCHIVED</span>
                                     ) : (
                                         <div className="timer-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             {!runningSession ? (
@@ -508,7 +522,7 @@ const Workspace = () => {
                         <div className="day-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, flex: isExpanded ? 1 : 0, minWidth: 0 }}>
                             <div className="day-actions-inner" style={{ display: 'flex', alignItems: 'center', gap: 16, border: isExpanded ? `1px solid ${COLORS.border}` : 'none', borderRadius: 6, padding: isExpanded ? '6px 16px' : '0' }}>
                                 {isExpanded && <button onClick={() => { setAddingTaskDayId(day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn" title="Add New Task"><Plus size={16} /></button>}
-                                <button onClick={() => setExpandedBoxes(p => ({ ...p, [day._id]: !isExpanded }))} className="header-btn" title={isExpanded ? "Collapse" : "Expand"}>
+                                <button onClick={() => setExpandedBoxes(p => ({ ...p, [day._id]: !isExpanded }))} className="header-btn" title={isExpanded ? "Collapse" : "Expand"} style={{ marginLeft: !isExpanded ? 'auto' : 0 }}>
                                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
                                 {isExpanded && <button onClick={() => { setEditingDayId(isEditing ? null : day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn">{isEditing ? 'done' : 'edit'}</button>}
@@ -582,15 +596,9 @@ const Workspace = () => {
                 .white-btn { background: #FFFFFF; color: #000000; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; }
                 .white-btn:hover { opacity: 0.8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
 
-                .timer-text-btn { font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 6px; border: 1px solid transparent; outline: none; }
-                .start-btn { background: #E5E7EB; color: #000; }
-                .start-btn:hover { background: #FFFFFF; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
-                .pause-btn { background: rgba(239,68,68,0.15); color: #F87171; border-color: rgba(239,68,68,0.3); }
-                .pause-btn:hover { background: rgba(239,68,68,0.25); }
-                .reset-btn { background: transparent; color: #A1A1AA; border-color: rgba(255,255,255,0.15); }
-                .reset-btn:hover { background: rgba(255,255,255,0.05); color: #FFFFFF; }
-                .save-btn { background: rgba(16,185,129,0.15); color: #34D399; border-color: rgba(16,185,129,0.3); }
-                .save-btn:hover { background: rgba(16,185,129,0.25); }
+                .timer-text-btn { font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.1em; padding: 8px 18px; border-radius: 12px; border: 1px solid #1A1A1A; outline: none; background: #262626; color: #F5F5F5; box-shadow: inset 0 1.5px 2px rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.4); }
+                .timer-text-btn:hover { background: #2C2C2C; }
+                .timer-text-btn:active { transform: translateY(1px); box-shadow: inset 0 3px 6px rgba(0,0,0,0.5); }
                 .action-btn { background: none; border: none; color: ${COLORS.textMuted}; font-size: 13px; font-weight: 400; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
                 .action-btn:hover { color: ${COLORS.textPrimary} !important; }
                 .edit-input { background: transparent; border: 1px solid ${COLORS.border}; color: ${COLORS.textPrimary}; font-size: 14px; padding: 4px 8px; border-radius: 4px; outline: none; width: 100%; }
@@ -604,15 +612,27 @@ const Workspace = () => {
                 .task-text { max-width: 100%; word-wrap: break-word; }
                 
                 .workspace-toast { top: 32px; }
+                @keyframes slideRight {
+                    from { opacity: 0; transform: translateX(-15px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
                 @media (max-width: 768px) {
-                    .workspace-toast { top: 84px !important; }
+                    .workspace-toast { 
+                        top: 24px !important; 
+                        left: 72px !important; 
+                        transform: none !important; 
+                        animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                        padding: 8px 14px !important;
+                        font-size: 12px !important;
+                    }
                 }
 
                 /* Mobile Layout Fixes */
                 @media (max-width: 768px) {
                     .workspace-main-container { padding-left: 16px !important; padding-right: 16px !important; padding-top: 48px !important; }
                     .day-box { padding: 16px !important; }
-                    .workspace-header { flex-direction: row !important; align-items: flex-start !important; gap: 12px !important; }
+                    .workspace-header { flex-direction: column !important; align-items: flex-start !important; gap: 20px !important; }
+                    .workspace-header > div:last-child { width: 100% !important; justify-content: flex-start !important; }
                     .day-box-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; flex-wrap: nowrap !important; }
                     .day-box-header > div { width: 100% !important; justify-content: space-between !important; }
                     .timer-container { flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; padding: 12px 16px !important; gap: 12px !important; }
@@ -622,73 +642,77 @@ const Workspace = () => {
                     .day-actions-inner { width: 100% !important; justify-content: space-between !important; }
                     .task-row { flex-direction: row !important; align-items: center !important; gap: 12px !important; }
                     .task-actions { width: auto !important; justify-content: flex-end !important; }
+                    .delete-warning-box { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; width: 92vw !important; padding: 20px !important; }
+                    .delete-warning-content { width: 100% !important; align-items: flex-start !important; }
+                    .delete-warning-actions { width: 100% !important; justify-content: flex-end !important; margin-left: 0 !important; }
+                    .history-dropdown { right: auto !important; left: 0 !important; }
                 }
             `}</style>
             
             <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
                 <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
                     
-                    {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>{globalError}</div>}
+                    {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', maxWidth: '90vw', wordWrap: 'break-word' }}>{globalError}</div>}
                     
                     {toastMessage && (
                         <div className="workspace-toast" style={{ 
                             position: 'fixed', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, 
-                            padding: '12px 24px', 
-                            border: '1px solid rgba(255,255,255,0.1)', 
-                            backgroundColor: '#0A0A0A', 
-                            color: '#F4F4F5', 
-                            fontSize: 14, 
+                            color: '#FFFFFF', 
+                            fontSize: 13, 
                             fontFamily: "'Inter', sans-serif",
-                            fontWeight: 500,
-                            letterSpacing: '0.01em',
-                            borderRadius: 8, 
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                            fontWeight: 600,
+                            letterSpacing: '0.02em',
                             animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)', 
                             whiteSpace: 'nowrap',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 10
+                            gap: 6
                         }}>
-                            <Info size={18} color="#9CA3AF" />
+                            <Info size={16} color="#FFFFFF" />
                             {toastMessage}
                         </div>
                     )}
 
-                    {/* 🔥 UPDATED: Velvet Red Bold Warning & White Buttons */}
+                            {/* 🔥 UPDATED: Premium Delete Warning Modal */}
                     {deleteBoxWarning && (
-                        <div style={{
-                            position: 'fixed', top: 32, left: '50%', transform: 'translateX(-50%)',
-                            zIndex: 9999,
-                            backgroundColor: '#0A0A0A',
-                            border: '1px solid rgba(255, 255, 255, 0.2)', /* 🔥 Clean White/Transparent Border */
-                            borderRadius: 8,
-                            padding: '16px 24px',
-                            boxShadow: '0 12px 32px rgba(0,0,0,0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 24,
-                            animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                                <AlertTriangle size={24} color="#E11D48" /> {/* 🔥 Velvet Red */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <span style={{ fontSize: 14, fontWeight: 700, color: '#E11D48', fontFamily: "'Inter', sans-serif", letterSpacing: '0.01em' }}>Delete Last Task?</span> {/* 🔥 Velvet Red & Bold */}
-                                    <span style={{ fontSize: 13, color: '#A1A1AA', fontFamily: "'Inter', sans-serif" }}>This will permanently delete today's box and all tracked time.</span>
+                        <>
+                            {/* Backdrop Blur Overlay */}
+                            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 9998, animation: 'fadeIn 0.2s ease' }} onClick={() => setDeleteBoxWarning(null)} />
+                            
+                            <div className="delete-warning-box" style={{
+                                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                                zIndex: 9999,
+                                backgroundColor: '#0A0A0A',
+                                border: '1px solid rgba(255, 255, 255, 0.1)', /* Clean White border */
+                                borderRadius: 16,
+                                padding: '24px',
+                                boxShadow: '0 24px 48px rgba(0,0,0,0.9)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 24,
+                                animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                            }}>
+                                <div className="delete-warning-content" style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                                    <div style={{ padding: '8px', backgroundColor: 'rgba(225, 29, 72, 0.1)', borderRadius: '50%', flexShrink: 0 }}>
+                                        <AlertTriangle size={24} color="#E11D48" />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+                                        <span style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F6', fontFamily: "'Inter', sans-serif", letterSpacing: '0.01em' }}>Delete Last Task?</span>
+                                        <span style={{ fontSize: 13, color: '#9CA3AF', fontFamily: "'Inter', sans-serif", lineHeight: 1.4 }}>This will permanently delete today's box and all tracked time. This action cannot be undone.</span>
+                                    </div>
+                                </div>
+                                <div className="delete-warning-actions" style={{ display: 'flex', gap: 12, marginLeft: 16, width: '100%' }}>
+                                    <button onClick={() => setDeleteBoxWarning(null)} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#F3F4F6', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover:bg-white/5">Cancel</button>
+                                    <button onClick={() => confirmDeleteLastTask()} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, backgroundColor: '#E11D48', border: 'none', color: '#FFFFFF', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover:bg-rose-700">Delete</button>
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', gap: 12, marginLeft: 16 }}>
-                                {/* 🔥 White Background Buttons */}
-                                <button onClick={() => confirmDeleteLastTask()} className="white-btn" style={{ fontWeight: 700 }}>Delete Box</button>
-                                <button onClick={() => setDeleteBoxWarning(null)} className="white-btn" style={{ fontWeight: 600 }}>Cancel</button>
-                            </div>
-                        </div>
+                        </>
                     )}
-
                     {React.useMemo(() => (
                         <div className="workspace-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                                <h1 style={{ fontSize: 24, fontWeight: 400 }}>
-                                    {viewMode === 'main' ? 'workspace' : 'history'}
+                                <h1 style={{ fontSize: 32, fontWeight: 700, fontFamily: "'Playfair Display', serif", letterSpacing: '-0.01em', color: '#FFFFFF', margin: 0 }}>
+                                    {viewMode === 'main' ? 'Encrypted Workspace' : 'Encrypted History'}
                                 </h1>
                                 {viewMode === 'history' && (
                                     <span style={{ color: COLORS.textMuted, fontSize: 14 }}>
@@ -710,7 +734,7 @@ const Workspace = () => {
                                             </button>
                                             
                                             {historyDropdownOpen && (
-                                                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 12, background: '#FFFFFF', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', width: 220, zIndex: 100, overflow: 'hidden', animation: 'fadeIn 0.2s ease' }}>
+                                                <div className="history-dropdown" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 12, background: '#FFFFFF', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', width: 220, zIndex: 100, overflow: 'hidden', animation: 'fadeIn 0.2s ease' }}>
                                                     {[
                                                         { id: 'month', label: 'Last 1 Month' },
                                                         { id: '3months', label: 'Last 3 Months' },
