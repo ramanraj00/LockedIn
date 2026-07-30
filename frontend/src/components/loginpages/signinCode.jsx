@@ -130,6 +130,8 @@ const response = await apiFetch("/api/auth/signup", {
             if (!response.ok) {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
+            
+            if (data.token) localStorage.setItem("auth_token", data.token);
 
             // 🔥 LOGIC FIX: Hamesha Session me save hoga (Keep Unlocked Default)
             await setDek(dek, true);

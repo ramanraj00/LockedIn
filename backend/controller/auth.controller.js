@@ -71,7 +71,7 @@ exports.signup = async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.status(201).json({ message: "Account created Successfully" });
+    res.status(201).json({ message: "Account created Successfully", token });
   } catch (err) {
     console.error("Signup Error:", err);
     res.status(500).json({ message: "Error creating account", error: err.message });
@@ -118,7 +118,8 @@ exports.signin = async (req, res) => {
             recoverySalt: user.crypto.recoverySalt,
             pbkdf2Iterations: user.crypto.pbkdf2Iterations,
             kdf: user.crypto.kdf
-        } : null
+        } : null,
+        token
     });
   } catch (err) {
     res.status(500).json({ message: "Login error", error: err.message });
@@ -276,7 +277,8 @@ exports.googleAuth = async (req, res) => {
           recoverySalt: user.crypto.recoverySalt,
           pbkdf2Iterations: user.crypto.pbkdf2Iterations,
           kdf: user.crypto.kdf
-      } : null
+      } : null,
+      token: jwtToken
     });
   } catch (error) {
     console.error("Google Auth Error:", error);
@@ -455,7 +457,7 @@ exports.setupKeys = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
         });
 
-        res.status(200).json({ message: "Workspace keys securely set up!" });
+        res.status(200).json({ message: "Workspace keys securely set up!", token: jwtToken });
     } catch (err) {
         console.error("Setup Keys Error:", err);
         res.status(500).json({ message: "Failed to set up workspace keys", error: err.message });
