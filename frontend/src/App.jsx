@@ -12,7 +12,7 @@ const ForgotPassword = lazy(() => import("./components/loginpages/ForgotPassword
 
 const Dashboard = lazy(() => import("./components/loginpages/Logout.jsx")); 
 const Profile = lazy(() => import("./components/Profile/Profile.jsx")); 
-const Workspace = lazy(() => import("./components/Workspace/Workspace.jsx")); 
+const Workspace = lazy(() => import("./components/workspace/Workspace.jsx")); 
 
 // 🔥 CALENDAR PAGE IMPORT
 const Calendar = lazy(() => import("./components/Calendar/Calendar.jsx")); 
