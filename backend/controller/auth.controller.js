@@ -66,7 +66,7 @@ exports.signup = async (req, res) => {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false,      
+        secure: process.env.NODE_ENV === "production",      
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -104,7 +104,7 @@ exports.signin = async (req, res) => {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -389,11 +389,11 @@ exports.logout = (req, res) => {
       httpOnly: true, 
       expires: new Date(0), 
       sameSite: "lax", 
-      secure: false 
+      secure: process.env.NODE_ENV === "production" 
   });
   
   // 2. Clear cookie fallback
-  res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: false });
+  res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
   
   return res.status(200).json({ message: "Logout Successful" });
 };
@@ -496,7 +496,7 @@ exports.resetVaultKeys = async (req, res) => {
         };
 
         await user.save();
-        res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: false }); 
+        res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" }); 
         res.status(200).json({ message: "Vault reset successfully." });
     } catch (err) {
         console.error("Reset Vault Keys Error:", err);
