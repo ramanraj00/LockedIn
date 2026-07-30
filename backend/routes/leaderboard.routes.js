@@ -110,7 +110,7 @@ router.get("/", async (req, res) => {
             return {
                 id: user._id,
                 name: user.name,
-                avatar: user.imageUrl || null,
+                avatar: user.imageUrl || user.avatar || user.picture || null,
                 xp: xp,
                 currentStreak: currentStreak,
                 longestStreak: longestStreak, 

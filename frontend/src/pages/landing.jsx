@@ -13,7 +13,7 @@ import Footer from "../components/showcase/Footer";
 
 function Landing() {
   return (
-    <div className="w-full relative bg-white overflow-x-hidden">
+    <div className="w-full relative bg-white">
       <Navbar />
       
       {/* Dark Hero Section */}
