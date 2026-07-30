@@ -177,8 +177,8 @@ const Profile = () => {
                 }
 
                 // Get Target Profile Data
-                let url = isPublicView ? `http://localhost:3000/api/auth/profile/${userId}` : "http://localhost:3000/api/auth/me";
-                const response = await fetch(url, { method: "GET", credentials: "include" });
+                let url = isPublicView ? `/api/auth/profile/${userId}` : "/api/auth/me";
+                const response = await apiFetch(url, { method: "GET" });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || "Failed to load profile");
                 
@@ -193,12 +193,12 @@ const Profile = () => {
 
                 const targetId = isPublicView ? userId : data.user._id;
                 try {
-                    let heatmapUrl = "http://localhost:3000/api/dashboard/dashboard/heatmap";
+                    let heatmapUrl = "/api/dashboard/dashboard/heatmap";
                     if (isPublicView) {
-                        heatmapUrl = `http://localhost:3000/api/dashboard/dashboard/heatmap?userId=${targetId}`;
+                        heatmapUrl = `/api/dashboard/dashboard/heatmap?userId=${targetId}`;
                     }
 
-                    const heatmapRes = await fetch(heatmapUrl, { method: "GET", credentials: "include" });
+                    const heatmapRes = await apiFetch(heatmapUrl, { method: "GET" });
                     const heatData = await heatmapRes.json();
                     
                     if (heatmapRes.ok && heatData.heatmapData) {

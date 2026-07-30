@@ -60,13 +60,15 @@ const Avatar = memo(({ src, name, size = 32, style = {} }) => {
     );
 });
 
+import { API_BASE_URL } from '../../apiClient';
+
 const getAvatarUrl = (avatar, name) => {
     if (avatar && avatar !== 'null' && avatar !== 'undefined') {
         if (avatar.startsWith('http://localhost:5173')) return avatar.replace('http://localhost:5173', '');
         if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar;
         if (avatar.includes('avatars/')) return avatar.startsWith('/') ? avatar : `/${avatar}`;
-        if (avatar.includes('uploads/')) return avatar.startsWith('/') ? `http://localhost:3000${avatar}` : `http://localhost:3000/${avatar}`;
-        if (avatar.startsWith('/')) return `http://localhost:3000${avatar}`;
+        if (avatar.includes('uploads/')) return avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : `${API_BASE_URL}/${avatar}`;
+        if (avatar.startsWith('/')) return `${API_BASE_URL}${avatar}`;
         return avatar;
     }
     return null;
