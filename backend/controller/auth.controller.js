@@ -450,8 +450,8 @@ exports.setupKeys = async (req, res) => {
         // 🔥 Nayi cookie bhej do jisse browser reload hone par fail na ho
         res.cookie("token", jwtToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: "lax",
+            sameSite: "none", 
+            secure: true,
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
         });
 
