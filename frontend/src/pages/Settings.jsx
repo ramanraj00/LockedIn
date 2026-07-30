@@ -500,8 +500,8 @@ const Settings = () => {
     const formatPercent = useCallback((v) => `${Math.round(v * 100)}%`, []);
 
     return (
-        <div style={{ minHeight: '100vh', width: '100%', backgroundColor: THEME.bg, color: THEME.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
-            <div style={{ paddingTop: isMobile ? 84 : 32, paddingBottom: 48, paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+        <div style={{ height: '100vh', width: '100%', backgroundColor: THEME.bg, color: THEME.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden', overflowY: 'auto' }}>
+            <div style={{ paddingTop: isMobile ? 84 : 32, paddingBottom: 48, paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', width: '100%', margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
             
             <style>{SETTINGS_CSS}</style>
 

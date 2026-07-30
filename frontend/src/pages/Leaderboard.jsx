@@ -148,11 +148,11 @@ const Top3Stack = memo(({ top3Users, navigate }) => {
                 >
                     <div className="top3-card" style={{ padding: 0 }}>
                         <div style={{ width: '100%', height: '100px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '15px', borderTopRightRadius: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${getAvatarUrl(user.avatar, user.name)})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px) brightness(0.7)', zIndex: 0 }} />
+                            <div style={{ position: 'absolute', inset: -20, backgroundImage: `url(${getAvatarUrl(user.avatar || user.imageUrl || user.picture, user.name)})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px) brightness(0.7)', zIndex: 0 }} />
                             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(24,24,27,0) 20%, #18181B)', zIndex: 0 }} />
                             
                             <div style={{ position: 'relative', zIndex: 2, marginTop: '8px' }}>
-                                <Avatar src={getAvatarUrl(user.avatar, user.name)} name={user.name} size={64} style={{ borderRadius: '12px' }} />
+                                <Avatar src={getAvatarUrl(user.avatar || user.imageUrl || user.picture, user.name)} name={user.name} size={64} style={{ borderRadius: '12px' }} />
                                 <div style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', background: '#18181B', borderRadius: '8px', padding: '2px 10px', border: `1px solid ${user.accent}50`, display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 8px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
                                     {user.rank === 1 ? <Crown color={user.accent} size={11} strokeWidth={2.5} /> : <Trophy color={user.accent} size={11} strokeWidth={2.5} />}
                                     <span style={{ fontSize: '11px', fontWeight: 800, color: user.accent }}>#{user.rank}</span>
@@ -336,7 +336,7 @@ const LeaderboardTable = memo(({ tableUsers, navigate }) => {
                          style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: idx !== arr.length - 1 ? `1px solid ${COLORS.border}` : 'none', cursor: 'pointer' }}>
                         <div style={{ width: '60px', fontSize: '14px', fontWeight: 700, color: COLORS.textSecondary }}>#{idx + 4}</div>
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <Avatar src={getAvatarUrl(user.avatar, user.name)} name={user.name} size={32} />
+                            <Avatar src={getAvatarUrl(user.avatar || user.imageUrl || user.picture, user.name)} name={user.name} size={32} />
                             <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.textPrimary }}>{user.name}</span>
                         </div>
                         <div style={{ width: '140px', fontSize: '14px', color: COLORS.textPrimary, fontWeight: 600 }}>{formatXP(user.xp)}</div>
@@ -766,7 +766,7 @@ const Leaderboard = () => {
                                     
                                     <div style={{
                                         position: 'absolute', inset: -20,
-                                        backgroundImage: `url(${getAvatarUrl(currentUserStats.avatar, currentUserStats.name)})`,
+                                        backgroundImage: `url(${getAvatarUrl(currentUserStats.avatar || currentUserStats.imageUrl || currentUserStats.picture, currentUserStats.name)})`,
                                         backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px) brightness(0.5)',
                                         zIndex: 0, transform: 'translateZ(0)', willChange: 'transform'
                                     }} />
@@ -779,7 +779,7 @@ const Leaderboard = () => {
 
                                     <div className="stats-header" style={{ position: 'relative', zIndex: 1, padding: '36px 32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
                                         <Avatar 
-                                            src={getAvatarUrl(currentUserStats.avatar, currentUserStats.name)} 
+                                            src={getAvatarUrl(currentUserStats.avatar || currentUserStats.imageUrl || currentUserStats.picture, currentUserStats.name)} 
                                             name={currentUserStats.name} 
                                             size={96} 
                                             style={{ border: '2px solid rgba(255,255,255,0.12)', boxShadow: '0 12px 30px rgba(0,0,0,0.5)' }} 

@@ -334,6 +334,10 @@ exports.updateProfile = async (req, res) => {
         
         if (avatar) {
             const ALLOWED_AVATARS = [
+                "/avatars/gwen.webp", 
+                "/avatars/spidey.webp", 
+                "/avatars/buttercup.webp", 
+                "/avatars/henry.webp",
                 "/avatars/gwen.png", 
                 "/avatars/spidey.png", 
                 "/avatars/buttercup.png", 
@@ -341,7 +345,7 @@ exports.updateProfile = async (req, res) => {
             ];
             
             // Ye condition check karti hai ki avatar valid hai
-            if (ALLOWED_AVATARS.includes(avatar) || avatar.startsWith('http') || avatar.includes('avatars/avatar')) {
+            if (ALLOWED_AVATARS.includes(avatar) || avatar.startsWith('http') || avatar.includes('/avatars/')) {
                 updateData.imageUrl = avatar;
                 updateData.avatar = avatar;
             }
