@@ -6,44 +6,34 @@ import FeatureFlowSection from './FeatureFlowSection';
 
 const HorizontalScrollSections = () => {
   const targetRef = useRef(null);
+  
+  // Track scroll within the 300vh section
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end end"]
   });
 
-  // Smooth out the scroll progress to eliminate "jhatka" (jerky scrolling)
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 20,
-    restDelta: 0.001
-  });
-
-  // Diagonal staircase animation: 
-  // 0 -> 0.5: move camera right (content slides left)
-  // 0.5 -> 1: move camera right again (content slides left)
-  const x = useTransform(smoothProgress, [0, 0.5, 1], ["0vw", "-100vw", "-200vw"]);
+  // Use scrollYProgress directly to avoid trackpad inertia conflicting with useSpring
+  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-66.66666%"]);
   
-  // y moves down continuously to create gaps between sections
-  const y = useTransform(smoothProgress, [0, 0.5, 1], ["0vh", "-50vh", "-100vh"]);
-
-  // Progress bar animation
-  const indicatorX = useTransform(smoothProgress, [0, 0.5, 1], ["0%", "100%", "200%"]);
+  // Progress bar animation for the 3 steps
+  const indicatorX = useTransform(scrollYProgress, [0, 0.5, 1], ["0%", "100%", "200%"]);
   
   const [activeStep, setActiveStep] = useState(0);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (latest < 0.3) setActiveStep(0);
-    else if (latest < 0.7) setActiveStep(1);
+    if (latest < 0.33) setActiveStep(0);
+    else if (latest < 0.66) setActiveStep(1);
     else setActiveStep(2);
   });
 
   return (
-    <section ref={targetRef} className="relative h-[350vh] bg-[#FAF9F6]">
-      <div className="sticky top-0 h-screen overflow-hidden">
+    <section ref={targetRef} className="relative h-[300vh] bg-[#FAF9F6]">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col">
         
         {/* Top Progress Navigation */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 flex flex-col items-center pointer-events-none">
-          <div className="flex w-full text-center mb-3 text-[13px] font-bold uppercase tracking-widest">
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 flex flex-col items-center pointer-events-none px-4">
+          <div className="flex w-full text-center mb-3 text-[12px] md:text-[13px] font-bold uppercase tracking-widest">
             <div className={`flex-1 transition-colors duration-500 ${activeStep === 0 ? "text-[#5C9EAD]" : "text-gray-300"}`}>Account</div>
             <div className={`flex-1 transition-colors duration-500 ${activeStep === 1 ? "text-[#5C9EAD]" : "text-gray-300"}`}>Progress</div>
             <div className={`flex-1 transition-colors duration-500 ${activeStep === 2 ? "text-[#5C9EAD]" : "text-gray-300"}`}>Features</div>
@@ -56,35 +46,17 @@ const HorizontalScrollSections = () => {
           </div>
         </div>
 
-        {/* The moving diagonal canvas */}
-        <motion.div style={{ x, y }} className="absolute top-0 left-0 w-[300vw] h-[200vh]">
-          
-          {/* Step 1: Architecture */}
-          <div className="absolute top-0 left-0 w-screen h-screen flex flex-col justify-start z-10">
+        {/* The horizontal sliding canvas */}
+        <motion.div style={{ x }} className="flex h-full w-[300vw]">
+          <div className="w-screen h-full shrink-0 flex items-center justify-center relative">
             <ArchitectureSection />
           </div>
-
-          {/* Connecting Line 1 (Step 1 -> Step 2) */}
-          <svg className="absolute left-[50vw] top-[50vh] w-[100vw] h-[50vh] pointer-events-none z-0" preserveAspectRatio="none">
-             <line x1="0" y1="0" x2="100%" y2="100%" stroke="#d4d4d8" strokeWidth="1.5" strokeDasharray="6 6" />
-          </svg>
-
-          {/* Step 2: Progress */}
-          <div className="absolute top-[50vh] left-[100vw] w-screen h-screen flex flex-col justify-start z-20">
+          <div className="w-screen h-full shrink-0 flex items-center justify-center relative">
             <ProgressSection />
           </div>
-
-          {/* Connecting Line 2 (Step 2 -> Step 3) */}
-          {/* S2 center: 150vw, 100vh. S3 center: 250vw, 150vh. */}
-          <svg className="absolute left-[150vw] top-[100vh] w-[100vw] h-[50vh] pointer-events-none z-0" preserveAspectRatio="none">
-             <line x1="0" y1="0" x2="100%" y2="100%" stroke="#d4d4d8" strokeWidth="1.5" strokeDasharray="6 6" />
-          </svg>
-
-          {/* Step 3: Feature Flow */}
-          <div className="absolute top-[100vh] left-[200vw] w-screen h-screen flex flex-col justify-start z-30">
+          <div className="w-screen h-full shrink-0 flex items-center justify-center relative">
             <FeatureFlowSection />
           </div>
-
         </motion.div>
 
       </div>
