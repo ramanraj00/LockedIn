@@ -141,7 +141,7 @@ exports.forgetPassword = async (req, res) => {
     user.resetToken = token;
     user.resetTokenExpiry = Date.now() + 10 * 60 * 1000;
     await user.save();
-    await sendResetEmail(email, token);
+    sendResetEmail(email, token).catch(err => console.error("Async email error:", err));
 
     return res.json({ message: "If this email exists, reset link has been sent" });
   } catch (error) {
