@@ -22,11 +22,7 @@ const sendResetEmail = async (email, token) => {
       from: '"LockedIn" <servicelockedin@gmail.com>',
       to: email,
       subject: "LockedIn - Reset your password",
-      attachments: [{
-        filename: 'msg.png',
-        path: path.join(__dirname, '../../frontend/public/msg.png'),
-        cid: 'logo'
-      }],
+
       html: `
         <!DOCTYPE html>
         <html>
@@ -48,7 +44,7 @@ const sendResetEmail = async (email, token) => {
         <body>
           <div class="container">
             <div class="header">
-              <img src="cid:logo" alt="LockedIn" style="width: 100%; display: block; object-fit: cover;" />
+              <img src="${frontendUrl}/msg.webp" alt="LockedIn" style="width: 100%; display: block; object-fit: cover;" />
             </div>
             <div class="content-wrapper">
               <div class="content">
