@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Crown, CheckCircle2, Flame, Monitor, Palette, BookOpen, FileText, BarChart2, Clock, AlertCircle } from 'lucide-react';
+import { apiFetch } from '../../apiClient';
 
 const formatXP = (seconds) => {
     if (!seconds || seconds <= 0) return "0s";

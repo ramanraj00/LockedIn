@@ -66,8 +66,8 @@ exports.signup = async (req, res) => {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",      
-        sameSite: "lax",
+        sameSite: "none",
+        secure: true,
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -104,8 +104,8 @@ exports.signin = async (req, res) => {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: "none",
+        secure: true,
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -260,8 +260,8 @@ exports.googleAuth = async (req, res) => {
     // 🔥 FIX 1: maxAge laga diya taaki cookie drop na ho (Same as Email Auth)
     res.cookie("token", jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: "lax",
+      sameSite: "none",
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
     });
 
@@ -388,12 +388,12 @@ exports.logout = (req, res) => {
   res.cookie("token", "", { 
       httpOnly: true, 
       expires: new Date(0), 
-      sameSite: "lax", 
-      secure: process.env.NODE_ENV === "production" 
+      sameSite: "none", 
+      secure: true 
   });
   
   // 2. Clear cookie fallback
-  res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  res.clearCookie("token", { httpOnly: true, sameSite: "none", secure: true });
   
   return res.status(200).json({ message: "Logout Successful" });
 };
@@ -496,7 +496,7 @@ exports.resetVaultKeys = async (req, res) => {
         };
 
         await user.save();
-        res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" }); 
+        res.clearCookie("token", { httpOnly: true, sameSite: "none", secure: true }); 
         res.status(200).json({ message: "Vault reset successfully." });
     } catch (err) {
         console.error("Reset Vault Keys Error:", err);

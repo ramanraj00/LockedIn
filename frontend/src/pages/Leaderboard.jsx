@@ -8,6 +8,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCoverflow } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
+import { apiFetch } from '../apiClient';
 
 // 🔥 Premium, soft metallic accents
 const COLORS = {
@@ -215,8 +216,8 @@ const BadgeCarousel = memo(() => {
         const loadStats = async () => {
             try {
                 const [authRes, heatmapRes] = await Promise.allSettled([
-                    fetch("http://localhost:3000/api/auth/me", { credentials: "include" }),
-                    fetch("http://localhost:3000/api/dashboard/dashboard/heatmap", { credentials: "include" })
+                    apiFetch("/api/auth/me", { credentials: "include" }),
+                    apiFetch("/api/dashboard/dashboard/heatmap", { credentials: "include" })
                 ]);
                 
                 let focusTime = 0;
@@ -387,8 +388,8 @@ const Leaderboard = () => {
             if (!isBackground && users.length === 0) setIsLoading(true);
             try {
                 const [leaderboardRes, authRes] = await Promise.allSettled([
-                    fetch('http://localhost:3000/api/leaderboard', { credentials: 'include' }),
-                    fetch("http://localhost:3000/api/auth/me", { credentials: "include" })
+                    apiFetch('/api/leaderboard', { credentials: 'include' }),
+                    apiFetch("/api/auth/me", { credentials: "include" })
                 ]);
 
                 let leaderboardData = [];

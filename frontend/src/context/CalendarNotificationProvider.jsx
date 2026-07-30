@@ -1,5 +1,6 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { Gift, AlertTriangle, X } from 'lucide-react';
+import { apiFetch } from '../apiClient';
 
 export const CalendarContext = createContext();
 
@@ -10,7 +11,7 @@ export const CalendarNotificationProvider = ({ children }) => {
     // Fetch Events when app loads
     const fetchEvents = async () => {
         try {
-            const res = await fetch("http://localhost:3000/api/calendar", {
+            const res = await apiFetch("/api/calendar", {
                 credentials: "include"
             });
             if (res.ok) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Gift, AlertCircle, Plus, Clock } from 'lucide-react';
 import { CalendarContext } from '../../context/CalendarNotificationProvider'; 
 import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
+import { apiFetch } from '../../apiClient';
 
 const CurrentTimeLine = () => {
     const [now, setNow] = useState(new Date());
@@ -102,7 +103,7 @@ const Calendar = () => {
         setShowModal(false); 
 
         try {
-            const res = await fetch("http://localhost:3000/api/calendar", {
+            const res = await apiFetch("/api/calendar", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },

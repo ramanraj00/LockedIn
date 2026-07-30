@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiFetch } from '../../apiClient';
 
 const CtaSection = () => {
   const [displayValues, setDisplayValues] = useState([0, 0, 365]);
@@ -40,7 +41,7 @@ const CtaSection = () => {
 
     const fetchStats = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/auth/public-stats', {
+        const res = await apiFetch('/api/auth/public-stats', {
           credentials: 'include'
         });
         if (!res.ok) throw new Error('API error');

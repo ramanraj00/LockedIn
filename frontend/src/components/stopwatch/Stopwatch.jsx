@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { DitherButton } from "../dither-kit/button";
 import Sidebar from '../../components/Sidebar/Sidebar'; // 🔥 Import tera naya Sidebar component
+import { apiFetch } from '../../apiClient';
 
 // 🔥 THE ULTIMATE ZERO-RENDER STORE ENGINE (ATOMIC STATE) 🔥
 function createStore(initialState) {
@@ -251,7 +252,7 @@ const TimerDigits = memo(() => (
 
 const fetchTodayStats = async () => {
     try {
-        const res = await fetch("http://localhost:3000/api/session/stopwatch/today-stats", { credentials: "include" });
+        const res = await apiFetch("/api/session/stopwatch/today-stats", { credentials: "include" });
         const data = await res.json();
         if (data.success) {
             statsStore.setState({ totalDaytime: data.totalDaytime, totalSessions: data.totalSessions });
@@ -263,7 +264,7 @@ const fetchTodayStats = async () => {
 
 const handleStartBackend = async (taskName) => {
     try {
-        const res = await fetch("http://localhost:3000/api/session/stopwatch/start", {
+        const res = await apiFetch("/api/session/stopwatch/start", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -280,7 +281,7 @@ const handleStartBackend = async (taskName) => {
 
 const handleStopBackend = async (sessionId, isFinalSave = false) => {
     try {
-        await fetch("http://localhost:3000/api/session/stopwatch/stop", {
+        await apiFetch("/api/session/stopwatch/stop", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -353,7 +354,7 @@ const ResetButton = memo(() => {
         const state = timerStore.getState();
         
         // 🔥 Send isReset: true explicitly to backend
-        fetch("http://localhost:3000/api/session/stopwatch/stop", {
+        apiFetch("/api/session/stopwatch/stop", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",

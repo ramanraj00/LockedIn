@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCrypto } from '../../context/CryptoContext'; 
 import { X, ChevronDown, ChevronUp, ChevronRight, Plus, History, ArrowLeft, Info, AlertTriangle } from 'lucide-react';
 import Sidebar from '../../components/Sidebar/Sidebar';
+import { apiFetch } from '../../apiClient';
 
 const COLORS = {
     bg: '#000000',
@@ -122,7 +123,7 @@ const Workspace = () => {
 
     const fetchWorkspaceData = async () => {
         try {
-            const res = await fetch("http://localhost:3000/api/session/day/all", { credentials: "include" });
+            const res = await apiFetch("/api/session/day/all", { credentials: "include" });
             if (!res.ok) throw new Error(await res.text());
             const data = await res.json();
             if (data.daySessions) {
@@ -140,7 +141,7 @@ const Workspace = () => {
 
     const fetchTasks = async (dayId) => {
         try {
-            const res = await fetch(`http://localhost:3000/api/task/gettask/${dayId}`, { credentials: "include" });
+            const res = await apiFetch(`/api/task/gettask/${dayId}`, { credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
                 setTasksByDay(prev => ({ ...prev, [dayId]: data }));
@@ -150,7 +151,7 @@ const Workspace = () => {
 
     const fetchTimers = async (dayId) => {
         try {
-            const res = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
+            const res = await apiFetch(`/api/session/day/${dayId}/sessions`, { credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
                 setTimersByDay(prev => ({ ...prev, [dayId]: data.sessions || [] }));
@@ -174,7 +175,7 @@ const Workspace = () => {
         setIsCreatingBox(true);
         setGlobalError(null);
         try {
-            const res = await fetch("http://localhost:3000/api/session/day/add", {
+            const res = await apiFetch("/api/session/day/add", {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title: "My Workspace", date: new Date() }),
                 credentials: "include"
@@ -212,7 +213,7 @@ const Workspace = () => {
             const body = {};
             if (title) body.title = title;
             if (deadline) body.deadline = deadline;
-            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+            await apiFetch(`/api/session/day/${dayId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body), credentials: "include"
             });
@@ -231,8 +232,8 @@ const Workspace = () => {
         const tasks = tasksByDay[dayId] || [];
         const taskStatus = tasks.length === 0 ? 'active' : tasks.every(t => t.status === true) ? 'completed' : 'pending';
         try {
-            await fetch(`http://localhost:3000/api/session/day/${dayId}/complete`, { method: "PATCH", credentials: "include" });
-            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+            await apiFetch(`/api/session/day/${dayId}/complete`, { method: "PATCH", credentials: "include" });
+            await apiFetch(`/api/session/day/${dayId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: taskStatus }), credentials: "include"
             });
@@ -242,7 +243,7 @@ const Workspace = () => {
 
     const handleReopenDay = async (dayId) => {
         try {
-            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+            await apiFetch(`/api/session/day/${dayId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "active" }), credentials: "include"
             });
@@ -257,14 +258,14 @@ const Workspace = () => {
         setAddingTaskDayId(null);
         try {
             const encryptedDescription = await encryptData(plaintext);
-            const res = await fetch("http://localhost:3000/api/task/addtask", {
+            const res = await apiFetch("/api/task/addtask", {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ daySessionId: dayId, encryptedDescription, encryptedAESKey: "e2e_v2" }),
                 credentials: "include"
             });
             if (res.ok) {
                 fetchTasks(dayId);
-                await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+                await apiFetch(`/api/session/day/${dayId}`, {
                     method: "PATCH", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ status: "pending" }), credentials: "include"
                 });
@@ -277,11 +278,11 @@ const Workspace = () => {
         setTasksByDay(prev => ({ ...prev, [dayId]: updatedTasks }));
         const newStatus = updatedTasks.length === 0 ? 'active' : updatedTasks.every(t => t.status === true) ? 'completed' : 'pending';
         try {
-            await fetch(`http://localhost:3000/api/task/patchtask/${taskId}`, {
+            await apiFetch(`/api/task/patchtask/${taskId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: !currentStatus }), credentials: "include"
             });
-            await fetch(`http://localhost:3000/api/session/day/${dayId}`, {
+            await apiFetch(`/api/session/day/${dayId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: newStatus }), credentials: "include"
             });
@@ -300,7 +301,7 @@ const Workspace = () => {
         setTasksByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).filter(t => t._id !== taskId) }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         try {
-            await fetch(`http://localhost:3000/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" });
+            await apiFetch(`/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" });
             fetchTasks(dayId);
         } catch (err) {}
     };
@@ -313,7 +314,7 @@ const Workspace = () => {
         setTasksByDay(prev => ({ ...prev, [dayId]: [] }));
         setDecryptedTexts(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         
-        try { await fetch(`http://localhost:3000/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" }); } catch {}
+        try { await apiFetch(`/api/task/deletetask/${taskId}`, { method: "DELETE", credentials: "include" }); } catch {}
         
         handleDeleteDaySession(dayId);
     };
@@ -322,7 +323,7 @@ const Workspace = () => {
         setDaySessions(prev => prev.filter(d => d._id !== dayId));
         setTasksByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         setTimersByDay(prev => { const n = { ...prev }; delete n[dayId]; return n; });
-        try { await fetch(`http://localhost:3000/api/session/day/${dayId}`, { method: "DELETE", credentials: "include" }); } catch {}
+        try { await apiFetch(`/api/session/day/${dayId}`, { method: "DELETE", credentials: "include" }); } catch {}
     };
 
     const handleStartTimer = async (dayId) => {
@@ -331,7 +332,7 @@ const Workspace = () => {
         setLocalStartTimes(prev => ({ ...prev, [dayId]: exactStart }));
         setTimersByDay(prev => ({ ...prev, [dayId]: [...(prev[dayId] || []), { _id: optimisticId, status: 'running', startTime: new Date(exactStart).toISOString(), duration: 0 }] }));
         try {
-            const res = await fetch("http://localhost:3000/api/session/session/start", {
+            const res = await apiFetch("/api/session/session/start", {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ daySessionId: dayId }), credentials: "include"
             });
@@ -361,12 +362,12 @@ const Workspace = () => {
         }
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         try {
-            const sessRes = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
+            const sessRes = await apiFetch(`/api/session/day/${dayId}/sessions`, { credentials: "include" });
             if (!sessRes.ok) return;
             const sessData = await sessRes.json();
             const realRunning = (sessData.sessions || []).find(s => s.status === 'running');
             if (!realRunning) return; 
-            const res = await fetch(`http://localhost:3000/api/session/session/${realRunning._id}/pause`, { method: "PATCH", credentials: "include" });
+            const res = await apiFetch(`/api/session/session/${realRunning._id}/pause`, { method: "PATCH", credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
                 setTimersByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).map(s => (s._id === localRunningId || s._id === realRunning._id) ? data.session : s) }));
@@ -380,7 +381,7 @@ const Workspace = () => {
         setLocalStartTimes(prev => ({ ...prev, [dayId]: exactStart }));
         setTimersByDay(prev => ({ ...prev, [dayId]: [...(prev[dayId] || []), { _id: optimisticId, status: 'running', startTime: new Date(exactStart).toISOString(), duration: 0 }] }));
         try {
-            const res = await fetch(`http://localhost:3000/api/session/session/${sessionId}/resume`, { method: "POST", credentials: "include" });
+            const res = await apiFetch(`/api/session/session/${sessionId}/resume`, { method: "POST", credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
                 setTimersByDay(prev => ({ ...prev, [dayId]: (prev[dayId] || []).map(s => s._id === optimisticId ? data.session : s) }));
@@ -392,13 +393,13 @@ const Workspace = () => {
         setTimersByDay(prev => ({ ...prev, [dayId]: [] }));
         setLocalStartTimes(prev => { const n = { ...prev }; delete n[dayId]; return n; });
         try {
-            const res = await fetch(`http://localhost:3000/api/session/day/${dayId}/sessions`, { credentials: "include" });
+            const res = await apiFetch(`/api/session/day/${dayId}/sessions`, { credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
                 const sessions = data.sessions || [];
                 const running = sessions.find(s => s.status === 'running');
-                if (running) await fetch(`http://localhost:3000/api/session/session/${running._id}/pause`, { method: "PATCH", credentials: "include" });
-                await Promise.all(sessions.map(s => fetch(`http://localhost:3000/api/session/session/${s._id}`, { method: "DELETE", credentials: "include" }).catch(() => {})));
+                if (running) await apiFetch(`/api/session/session/${running._id}/pause`, { method: "PATCH", credentials: "include" });
+                await Promise.all(sessions.map(s => apiFetch(`/api/session/session/${s._id}`, { method: "DELETE", credentials: "include" }).catch(() => {})));
             }
         } catch (err) {}
         fetchTimers(dayId);

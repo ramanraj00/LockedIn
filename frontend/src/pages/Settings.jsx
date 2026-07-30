@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar/Sidebar'; 
 import { useSettings } from '../context/SettingsContext';
 import { Settings as SettingsIcon, CheckCircle2 } from 'lucide-react';
+import { apiFetch } from '../apiClient';
 
 const AVATARS = [
     "/avatars/gwen.webp", 
@@ -406,7 +407,7 @@ const Settings = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch('http://localhost:3000/api/auth/me', { credentials: 'include' });
+                const res = await apiFetch('/api/auth/me', { credentials: 'include' });
                 const data = await res.json();
                 if (data.success && data.user) {
                     setProfile({
@@ -443,7 +444,7 @@ const Settings = () => {
                 bodyData.newPassword = hashedPass;
             }
 
-            const res = await fetch('http://localhost:3000/api/auth/profile', {
+            const res = await apiFetch('/api/auth/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -474,7 +475,7 @@ const Settings = () => {
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true);
         try {
-            await fetch('http://localhost:3000/api/auth/logout', { method: 'POST', credentials: 'include' });
+            await apiFetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
             navigate('/login');
         } catch (err) {
             console.error(err);

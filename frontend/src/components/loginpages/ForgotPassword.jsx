@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ShaderBackground from '../shaderbackground/ShaderBackground';
+import { apiFetch } from '../../apiClient';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
@@ -19,7 +20,7 @@ const ForgotPassword = () => {
         setLoading(true);
         try {
             // Tumhare bheje hue backend route par request ja rahi hai
-            const response = await fetch("http://localhost:3000/api/auth/forgetPassword", {
+            const response = await apiFetch("/api/auth/forgetPassword", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }) 

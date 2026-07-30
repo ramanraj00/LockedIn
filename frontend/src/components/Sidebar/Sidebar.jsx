@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogOut, X, UserCircle, Command, CalendarDays, Timer, BarChart2, Award, Settings2, ChevronsUpDown } from 'lucide-react';
+import { apiFetch } from '../../apiClient';
 
 const useIsMobile = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -166,7 +167,7 @@ const Sidebar = ({ activePage }) => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await fetch("http://localhost:3000/api/auth/me", { credentials: "include" });
+                const res = await apiFetch("/api/auth/me", { credentials: "include" });
                 if (res.ok) {
                     const data = await res.json();
                     setProfile(data.user);
@@ -198,7 +199,7 @@ const Sidebar = ({ activePage }) => {
 
        const handleLogout = async () => {
         try {
-            const res = await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
+            const res = await apiFetch("/api/auth/logout", { method: "POST", credentials: "include" });
             if (res.ok) {
                 localStorage.clear();
                 sessionStorage.clear();

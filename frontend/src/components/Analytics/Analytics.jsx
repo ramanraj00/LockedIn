@@ -16,6 +16,7 @@ import { Legend } from "../dither-kit/legend";
 
 // 🔥 NAYA SIDEBAR IMPORT
 import Sidebar from '../../components/Sidebar/Sidebar';
+import { apiFetch } from '../../apiClient';
 
 const PanelIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -193,10 +194,10 @@ const Analytics = () => {
         const fetchAnalytics = async () => {
             try {
                 const [profileRes, weeklyRes, heatmapRes, daysRes] = await Promise.all([
-                    fetch("http://localhost:3000/api/dashboard/dashboard/profile", { credentials: "include" }),
-                    fetch("http://localhost:3000/api/dashboard/dashboard/weekly-chart", { credentials: "include" }),
-                    fetch("http://localhost:3000/api/dashboard/dashboard/heatmap", { credentials: "include" }),
-                    fetch("http://localhost:3000/api/session/day/all", { credentials: "include" })
+                    apiFetch("/api/dashboard/dashboard/profile", { credentials: "include" }),
+                    apiFetch("/api/dashboard/dashboard/weekly-chart", { credentials: "include" }),
+                    apiFetch("/api/dashboard/dashboard/heatmap", { credentials: "include" }),
+                    apiFetch("/api/session/day/all", { credentials: "include" })
                 ]);
                 
                 setProfile(await profileRes.json());
@@ -211,7 +212,7 @@ const Analytics = () => {
 
                 await Promise.all(days.map(async (day) => {
                     try {
-                        const taskRes = await fetch(`http://localhost:3000/api/task/gettask/${day._id}`, { credentials: "include" });
+                        const taskRes = await apiFetch(`/api/task/gettask/${day._id}`, { credentials: "include" });
                         if (taskRes.ok) {
                             const tasks = await taskRes.json();
                             if (tasks.length > 0) {
@@ -250,7 +251,7 @@ const Analytics = () => {
 
     const handleLogout = async () => {
         try {
-            await fetch("http://localhost:3000/api/auth/logout", { method: "POST", credentials: "include" });
+            await apiFetch("/api/auth/logout", { method: "POST", credentials: "include" });
             navigate("/login");
         } catch (error) { navigate("/login"); }
     };

@@ -1,11 +1,12 @@
 import React from 'react';
+import { apiFetch } from '../../apiClient';
 
 const Logout = () => {
 
     // 🔴 SECURE LOGOUT FUNCTIONALITY (FIXED B-F CACHE ISSUE)
     const handleLogout = async () => {
         try {
-            const response = await fetch("http://localhost:3000/api/auth/logout", {
+            const response = await apiFetch("/api/auth/logout", {
                 method: "POST",
                 credentials: "include" 
             });

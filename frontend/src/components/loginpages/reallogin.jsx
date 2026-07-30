@@ -5,6 +5,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import ShaderBackground from '../shaderbackground/ShaderBackground'; 
 import { deriveKEK, decryptDEK, encryptDEK, generateWorkspaceDEK, generateUserSalt, generateRecoveryKey } from '../../utils/e2eMasterKey';
 import { useCrypto } from '../../context/CryptoContext';
+import { apiFetch } from '../../apiClient';
 
 
 
@@ -77,7 +78,7 @@ const Login = () => {
             // 🔥 NAYI LINE: Raw password ka hash banao
             const authPasswordHash = await getAuthHash(formData.password);
 
-            const response = await fetch("http://localhost:3000/api/auth/signin", {
+            const response = await apiFetch("/api/auth/signin", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -125,7 +126,7 @@ const Login = () => {
         onSuccess: async (tokenResponse) => {
             setError(null); setLoading(true);
             try {
-                const response = await fetch("http://localhost:3000/api/auth/google-auth", {
+                const response = await apiFetch("/api/auth/google-auth", {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
@@ -171,7 +172,7 @@ const Login = () => {
             const encryptedDEK_pwd = await encryptDEK(masterDEK, passwordKEK);
             const encryptedDEK_rec = await encryptDEK(masterDEK, recoveryKEK);
 
-            const setupRes = await fetch("http://localhost:3000/api/auth/setup-keys", {
+            const setupRes = await apiFetch("/api/auth/setup-keys", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", 
@@ -278,7 +279,7 @@ const Login = () => {
             const encryptedDEK_pwd = await encryptDEK(recoveredDEK, passwordKEK);
             const encryptedDEK_rec = await encryptDEK(recoveredDEK, newRecoveryKEK);
 
-            const resetRes = await fetch("http://localhost:3000/api/auth/reset-vault-keys", {
+            const resetRes = await apiFetch("/api/auth/reset-vault-keys", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", 

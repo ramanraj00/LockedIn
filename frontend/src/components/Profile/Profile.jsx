@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock, Search, ChevronLeft, Bell, UserPlus, UserMinus, UserCheck } from 'lucide-react';
 import Sidebar from '../Sidebar/Sidebar';
+import { apiFetch } from '../../apiClient';
 
 const COLORS = {
     bg: '#1A1D21',
@@ -128,7 +129,7 @@ const Profile = () => {
             if (!searchQuery.trim()) { setSearchResults([]); return; }
             setIsSearching(true);
             try {
-                const response = await fetch(`http://localhost:3000/api/auth/search?q=${searchQuery}`, { method: 'GET', credentials: 'include' });
+                const response = await apiFetch(`/api/auth/search?q=${searchQuery}`, { method: 'GET', credentials: 'include' });
                 const data = await response.json();
                 if (data.success) setSearchResults(data.users);
             } catch (err) { console.error(err); } finally { setIsSearching(false); }
@@ -140,7 +141,7 @@ const Profile = () => {
     // Fetch Notifications
     const fetchNotifications = async () => {
         try {
-            const response = await fetch(`http://localhost:3000/api/auth/notifications`, { method: 'GET', credentials: 'include' });
+            const response = await apiFetch(`/api/auth/notifications`, { method: 'GET', credentials: 'include' });
             const data = await response.json();
             if (data.success) {
                 setNotifications(data.notifications);
@@ -155,7 +156,7 @@ const Profile = () => {
         if (!showNotifications && unreadCount > 0) {
             setUnreadCount(0);
             try {
-                await fetch(`http://localhost:3000/api/auth/notifications/read`, { method: 'PUT', credentials: 'include' });
+                await apiFetch(`/api/auth/notifications/read`, { method: 'PUT', credentials: 'include' });
                 setNotifications(prev => prev.map(n => ({ ...n, read: true })));
             } catch (err) { console.error("Error marking read", err); }
         }
@@ -168,7 +169,7 @@ const Profile = () => {
             setIsFetchingProfile(true);
             try {
                 // Get Current Logged In User Data first
-                const meResponse = await fetch("http://localhost:3000/api/auth/me", { method: "GET", credentials: "include" });
+                const meResponse = await apiFetch("/api/auth/me", { method: "GET", credentials: "include" });
                 const meData = await meResponse.json();
                 if (meResponse.ok) {
                     setCurrentUser(meData.user);
@@ -225,7 +226,7 @@ const Profile = () => {
     const handleSaveAbout = async () => {
         setIsSaving(true);
         try {
-            const response = await fetch("http://localhost:3000/api/auth/profile", {
+            const response = await apiFetch("/api/auth/profile", {
                 method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ about: aboutText })
             });
             const data = await response.json();
@@ -239,7 +240,7 @@ const Profile = () => {
         setIsSaving(true);
         try {
             const updatedLinks = [...(user.links || []), { platform: "other", url: newLinkUrl }];
-            const response = await fetch("http://localhost:3000/api/auth/profile/links", {
+            const response = await apiFetch("/api/auth/profile/links", {
                 method: "PUT", credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ links: updatedLinks })
@@ -255,7 +256,7 @@ const Profile = () => {
             const updatedLinks = user.links.filter((_, idx) => idx !== indexToRemove);
             setUser({ ...user, links: updatedLinks }); 
             
-            await fetch("http://localhost:3000/api/auth/profile/links", {
+            await apiFetch("/api/auth/profile/links", {
                 method: "PUT", credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ links: updatedLinks })
@@ -278,7 +279,7 @@ const Profile = () => {
         setFollowersCount(prev => wasFollowing ? prev - 1 : prev + 1);
 
         try {
-            const response = await fetch(`http://localhost:3000/api/auth/follow/${user._id}`, {
+            const response = await apiFetch(`/api/auth/follow/${user._id}`, {
                 method: 'POST', credentials: 'include'
             });
             if (!response.ok) throw new Error("Failed to follow");
@@ -295,7 +296,7 @@ const Profile = () => {
     const openFollowModal = async (type) => {
         setFollowModalData({ isOpen: true, type, users: [], isLoading: true });
         try {
-            const response = await fetch(`http://localhost:3000/api/auth/follow-data/${user._id}`, { method: 'GET', credentials: 'include' });
+            const response = await apiFetch(`/api/auth/follow-data/${user._id}`, { method: 'GET', credentials: 'include' });
             const data = await response.json();
             if (response.ok) {
                 setFollowModalData({ isOpen: true, type, users: data[type] || [], isLoading: false });

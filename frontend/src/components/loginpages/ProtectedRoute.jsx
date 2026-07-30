@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
+import { apiFetch } from '../../apiClient';
 
 const ProtectedRoute = ({ children }) => {
     // 🛡️ 1. FAST SYNCHRONOUS CHECK: Kya Vault Key hai?
@@ -19,7 +20,7 @@ const ProtectedRoute = ({ children }) => {
         const verifyAuth = async () => {
             try {
                 // Backend se pucho user zinda hai ya nahi
-                const response = await fetch('http://localhost:3000/api/auth/me', {
+                const response = await apiFetch('/api/auth/me', {
                     method: 'GET',
                     credentials: 'include' 
                 });

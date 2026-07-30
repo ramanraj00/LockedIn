@@ -5,6 +5,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import ShaderBackground from '../shaderbackground/ShaderBackground'; 
 import { deriveKEK, generateWorkspaceDEK, generateRecoveryKey, generateUserSalt, encryptDEK } from '../../utils/e2eMasterKey';
 import { useCrypto } from '../../context/CryptoContext';
+import { apiFetch } from '../../apiClient';
 
 const AVATARS = [
     "/avatars/gwen.webp", "/avatars/spidey.webp", "/avatars/buttercup.webp", "/avatars/henry.webp"
@@ -42,7 +43,7 @@ const Signup = () => {
         onSuccess: async (tokenResponse) => {
             setError(null); setLoading(true);
             try {
-                const response = await fetch("http://localhost:3000/api/auth/google-auth", {
+                const response = await apiFetch("/api/auth/google-auth", {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
@@ -107,7 +108,7 @@ const Signup = () => {
             // Fetch call se theek pehle password ka hash banao
 const authPasswordHash = await getAuthHash(formData.password);
 
-const response = await fetch("http://localhost:3000/api/auth/signup", {
+const response = await apiFetch("/api/auth/signup", {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

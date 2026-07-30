@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ShaderBackground from '../shaderbackground/ShaderBackground';
 import { deriveKEK, decryptDEK, encryptDEK, generateUserSalt } from '../../utils/e2eMasterKey';
+import { apiFetch } from '../../apiClient';
 
 const ResetPassword = () => {
     const { token } = useParams(); 
@@ -23,7 +24,7 @@ const ResetPassword = () => {
     useEffect(() => {
          const verifyToken = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/auth/verify-reset-token/${token}`);
+                const res = await apiFetch(`/api/auth/verify-reset-token/${token}`);
                 const data = await res.json();
                 if (res.ok && data.encryptedDEK_rec) {
                     setEncryptedDEKRec(data.encryptedDEK_rec);
@@ -78,7 +79,7 @@ const ResetPassword = () => {
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const authPasswordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-            const response = await fetch(`http://localhost:3000/api/auth/reset-password/${token}`, {
+            const response = await apiFetch(`/api/auth/reset-password/${token}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
