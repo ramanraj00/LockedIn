@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Link as LinkIcon, Plus, X, Edit2, Check, Share2, Lock, Search, ChevronLeft, Bell, UserPlus, UserMinus, UserCheck } from 'lucide-react';
 import Sidebar from '../Sidebar/Sidebar';
-import { apiFetch } from '../../apiClient';
+import { apiFetch, API_BASE_URL } from '../../apiClient';
 
 const COLORS = {
     bg: '#1A1D21',
@@ -50,7 +50,15 @@ const getColorFromName = (name) => {
 const Avatar = ({ src, name, size = 32, style = {} }) => {
     const [error, setError] = useState(false);
     const initial = (name || 'U').charAt(0).toUpperCase();
-    const hasValidSrc = src && src.trim() !== '' && src !== 'null' && src !== 'undefined' && !src.includes('default');
+    const getSafeAvatarUrl = (url) => {
+        if (!url) return null;
+        if (url.includes('/avatars/')) return `/avatars/${url.split('/avatars/')[1]}`;
+        if (url.includes('/uploads/')) return `${API_BASE_URL}/uploads/${url.split('/uploads/')[1]}`;
+        return url;
+    };
+    
+    const safeSrc = getSafeAvatarUrl(src);
+    const hasValidSrc = safeSrc && safeSrc.trim() !== '' && safeSrc !== 'null' && safeSrc !== 'undefined' && !safeSrc.includes('default');
 
     if (!hasValidSrc || error) {
         return (
@@ -68,7 +76,7 @@ const Avatar = ({ src, name, size = 32, style = {} }) => {
 
     return (
         <img
-            src={src}
+            src={safeSrc}
             alt={name}
             referrerPolicy="no-referrer"
             onError={() => setError(true)}
@@ -168,48 +176,49 @@ const Profile = () => {
             if (!user) setLoading(true);
             setIsFetchingProfile(true);
             try {
-                // Get Current Logged In User Data first
-                const meResponse = await apiFetch("/api/auth/me", { method: "GET", credentials: "include" });
-                const meData = await meResponse.json();
-                if (meResponse.ok) {
+                // Parallelize fetching
+                let url = isPublicView ? `/api/auth/profile/${userId}` : "/api/auth/me";
+                let heatmapUrl = isPublicView ? `/api/dashboard/dashboard/heatmap?userId=${userId}` : "/api/dashboard/dashboard/heatmap";
+                
+                const [meRes, profileRes, heatmapRes] = await Promise.allSettled([
+                    apiFetch("/api/auth/me", { method: "GET", credentials: "include" }),
+                    apiFetch(url, { method: "GET" }),
+                    apiFetch(heatmapUrl, { method: "GET" })
+                ]);
+                
+                let meData = null;
+                if (meRes.status === 'fulfilled' && meRes.value.ok) {
+                    meData = await meRes.value.json();
                     setCurrentUser(meData.user);
                     fetchNotifications();
                 }
 
-                // Get Target Profile Data
-                let url = isPublicView ? `/api/auth/profile/${userId}` : "/api/auth/me";
-                const response = await apiFetch(url, { method: "GET" });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || "Failed to load profile");
-                
-                setUser(data.user);
-                setAboutText(data.user.about || "");
-                setFollowersCount(data.user.followers?.length || 0);
-                setFollowingCount(data.user.following?.length || 0);
+                if (profileRes.status === 'fulfilled') {
+                    const data = await profileRes.value.json();
+                    if (!profileRes.value.ok) throw new Error(data.message || "Failed to load profile");
+                    
+                    setUser(data.user);
+                    setAboutText(data.user.about || "");
+                    setFollowersCount(data.user.followers?.length || 0);
+                    setFollowingCount(data.user.following?.length || 0);
 
-                if (isPublicView && meData.user && meData.user.following) {
-                    setIsFollowing(meData.user.following.includes(data.user._id));
+                    if (isPublicView && meData?.user?.following) {
+                        setIsFollowing(meData.user.following.includes(data.user._id));
+                    }
+                } else {
+                    throw new Error("Failed to load profile");
                 }
 
-                const targetId = isPublicView ? userId : data.user._id;
-                try {
-                    let heatmapUrl = "/api/dashboard/dashboard/heatmap";
-                    if (isPublicView) {
-                        heatmapUrl = `/api/dashboard/dashboard/heatmap?userId=${targetId}`;
-                    }
-
-                    const heatmapRes = await apiFetch(heatmapUrl, { method: "GET" });
-                    const heatData = await heatmapRes.json();
-                    
-                    if (heatmapRes.ok && heatData.heatmapData) {
+                if (heatmapRes.status === 'fulfilled' && heatmapRes.value.ok) {
+                    const heatData = await heatmapRes.value.json();
+                    if (heatData.heatmapData) {
                         const activeCount = heatData.heatmapData.filter(d => (d.intensity > 0 || d.hours > 0)).length;
                         setActiveDays(activeCount);
                     } else {
                         setActiveDays(0);
                     }
-                } catch (heatErr) { 
-                    console.error("Heatmap Error:", heatErr);
-                    setActiveDays(0); 
+                } else {
+                    setActiveDays(0);
                 }
 
             } catch (err) {

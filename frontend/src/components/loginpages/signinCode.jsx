@@ -180,7 +180,7 @@ const getAuthHash = async (password) => {
             {/* RECOVERY KEY MODAL */}
             {showRecoveryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-all">
-                    <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] max-w-2xl w-full shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] text-center relative overflow-hidden">
+                    <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-2xl w-full shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] text-center relative max-h-[95vh] overflow-y-auto">
                         
                         <h2 className="text-3xl md:text-4xl font-serif-elegant font-semibold text-white mb-3 tracking-tight">Your Secret Recovery Key</h2>
                         <p className="text-slate-300 text-sm md:text-base mb-6 font-light">
@@ -188,7 +188,7 @@ const getAuthHash = async (password) => {
                             <strong className="text-red-400 font-semibold">We do not store this key. If you forget your password and lose this key, your data cannot be recovered.</strong>
                         </p>
                         
-                        <div className="bg-black/30 border border-white/10 p-5 rounded-2xl mb-6 font-mono text-sm sm:text-base md:text-lg text-white tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                        <div className="bg-black/30 border border-white/10 p-4 md:p-5 rounded-2xl mb-6 font-mono text-[12px] sm:text-base md:text-lg text-white tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
                             <span className="whitespace-pre-wrap leading-relaxed">{recoveryKey}</span>
                         </div>
                         

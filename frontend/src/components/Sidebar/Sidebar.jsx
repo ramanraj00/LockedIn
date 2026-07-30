@@ -179,7 +179,12 @@ const Sidebar = ({ activePage }) => {
 
     useEffect(() => {
         globalSidebarOpen = isOpen;
-    }, [isOpen]);
+        if (isOpen && isMobile) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [isOpen, isMobile]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -223,7 +228,7 @@ const Sidebar = ({ activePage }) => {
                 onMouseEnter={() => setIsOpen(true)}
                 onClick={() => setIsOpen(true)}
                 style={{ 
-                    position: 'fixed', top: isMobile ? 8 : 24, left: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, 
+                    position: 'fixed', top: isMobile ? 12 : 24, left: isMobile ? 12 : 24, zIndex: 40, width: isMobile ? 40 : 48, height: isMobile ? 40 : 48, borderRadius: 12, 
                     backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', 
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', 
                     cursor: 'pointer', transition: 'all 0.2s ease',

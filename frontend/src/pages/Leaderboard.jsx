@@ -87,20 +87,13 @@ import { API_BASE_URL } from '../apiClient';
 
 const getAvatarUrl = (avatar, name) => {
     if (avatar && avatar !== 'null' && avatar !== 'undefined') {
-        if (avatar.startsWith('http://localhost:5173')) {
-            return avatar.replace('http://localhost:5173', '');
+        if (avatar.includes('/avatars/')) {
+            const parts = avatar.split('/avatars/');
+            return `/avatars/${parts[1]}`;
         }
-        if (avatar.startsWith('http') || avatar.startsWith('data:')) {
-            return avatar;
-        }
-        if (avatar.includes('avatars/')) {
-            return avatar.startsWith('/') ? avatar : `/${avatar}`;
-        }
-        if (avatar.includes('uploads/')) {
-            return avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : `${API_BASE_URL}/${avatar}`;
-        }
-        if (avatar.startsWith('/')) {
-            return `${API_BASE_URL}${avatar}`;
+        if (avatar.includes('/uploads/')) {
+            const parts = avatar.split('/uploads/');
+            return `${API_BASE_URL}/uploads/${parts[1]}`;
         }
         return avatar;
     }

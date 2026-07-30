@@ -64,11 +64,14 @@ import { API_BASE_URL } from '../../apiClient';
 
 const getAvatarUrl = (avatar, name) => {
     if (avatar && avatar !== 'null' && avatar !== 'undefined') {
-        if (avatar.startsWith('http://localhost:5173')) return avatar.replace('http://localhost:5173', '');
-        if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar;
-        if (avatar.includes('avatars/')) return avatar.startsWith('/') ? avatar : `/${avatar}`;
-        if (avatar.includes('uploads/')) return avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : `${API_BASE_URL}/${avatar}`;
-        if (avatar.startsWith('/')) return `${API_BASE_URL}${avatar}`;
+        if (avatar.includes('/avatars/')) {
+            const parts = avatar.split('/avatars/');
+            return `/avatars/${parts[1]}`;
+        }
+        if (avatar.includes('/uploads/')) {
+            const parts = avatar.split('/uploads/');
+            return `${API_BASE_URL}/uploads/${parts[1]}`;
+        }
         return avatar;
     }
     return null;
@@ -235,7 +238,7 @@ const LeaderboardTable = memo(({ tableUsers }) => {
                             <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[25%]">Task</th>
                             <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[15%]">Duration</th>
                             <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%]">Streak</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[12%]">Time</th>
+                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[12%] hidden md:table-cell">Time</th>
                             <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%] text-right">Status</th>
                         </tr>
                     </thead>
@@ -265,7 +268,7 @@ const LeaderboardTable = memo(({ tableUsers }) => {
                                             <span className="font-bold text-gray-900">{user.streak}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 font-semibold text-gray-400 whitespace-nowrap">{user.time}</td>
+                                    <td className="py-4 px-6 font-semibold text-gray-400 whitespace-nowrap hidden md:table-cell">{user.time}</td>
                                     <td className="py-4 px-6">
                                         <div className="flex justify-end">
                                             <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${

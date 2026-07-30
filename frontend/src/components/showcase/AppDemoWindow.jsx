@@ -1613,7 +1613,7 @@ const renderMiniMonth = (year, monthIndex) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 60 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ color: COLORS.textPrimary, fontSize: 22, fontWeight: 700 }}>Achievement Badges</h3>
-          <span style={{ fontSize: 13, color: COLORS.textMuted, fontWeight: 500 }}>2 active days</span>
+          <span className="text-[13px] text-gray-500 font-medium hidden md:block">2 active days</span>
         </div>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 20 }}>
