@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 // 1. Apne Middlewares Import Karo (Spelling Theek Kar Di Gayi Hai)
-const authMiddleware = require("../middleware/authmiddleware"); 
+const authMiddleware = require("../middleware/authMiddleware");
 const userValidationMiddleware = require("../middleware/uservalidation"); 
 
 // 2. Apna Naya Schema aur Controllers Import Karo
