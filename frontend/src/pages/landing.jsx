@@ -1,6 +1,6 @@
 import React from "react";
 import Hero from "../components/hero/hero";
-import Navbar from "../components/common/Navbar";
+import Navbar from "../components/common/navBar";
 import AppDemoWindow from "../components/showcase/AppDemoWindow";
 import HorizontalScrollSections from "../components/showcase/HorizontalScrollSections";
 import ArchitectureSection from "../components/showcase/ArchitectureSection";
