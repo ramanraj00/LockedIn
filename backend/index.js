@@ -18,7 +18,11 @@ const cookieParser = require("cookie-parser");
 const app = express();   
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: [
+    process.env.FRONTEND_URL || "http://localhost:5173",
+    "http://localhost:5173",
+    "https://locked-in-five-olive.vercel.app"
+  ],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
