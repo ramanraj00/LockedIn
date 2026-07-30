@@ -42,7 +42,6 @@ app.use("/api/session", authMiddleware, sessionRoute);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/dashboard", authMiddleware, dashboardRoute);
 app.use("/api/leaderboard", leaderboardRoutes);
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
