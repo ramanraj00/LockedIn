@@ -205,7 +205,7 @@ const Top3Stack = memo(({ top3Users, navigate }) => {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <span style={{ fontSize: '10px', color: '#8A8A8A', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '4px' }}>STREAK</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <img src="/color-fire.png" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                                    <img src="/color-fire.webp" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} />
                                     <span style={{ fontSize: '15px', color: '#FFF', fontWeight: 800 }}>{user.streak || 0}</span>
                                 </div>
                             </div>
@@ -299,9 +299,9 @@ const LiveFocusSection = () => {
   const handleNavigate = useCallback(() => {}, []);
 
   const top3Users = [
-        { id: '1', name: 'Buttercup', xp: 14200, streak: 45, avatar: '/avatars/buttercup.png', displayTime: '1h 3m' },
-        { id: '2', name: 'Gwen', xp: 12100, streak: 30, avatar: '/avatars/gwen.png', displayTime: '1h' },
-        { id: '3', name: 'Spidey', xp: 11000, streak: 20, avatar: '/avatars/spidey.png', displayTime: '45m' },
+        { id: '1', name: 'Buttercup', xp: 14200, streak: 45, avatar: '/avatars/buttercup.webp', displayTime: '1h 3m' },
+        { id: '2', name: 'Gwen', xp: 12100, streak: 30, avatar: '/avatars/gwen.webp', displayTime: '1h' },
+        { id: '3', name: 'Spidey', xp: 11000, streak: 20, avatar: '/avatars/spidey.webp', displayTime: '45m' },
   ];
   
   // Custom mock data mimicking exactly the screenshot provided by user

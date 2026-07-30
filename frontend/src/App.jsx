@@ -1,33 +1,32 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom"; 
 
-import Landing from "../src/pages/landing.jsx"; 
-import Signup  from "./components/loginpages/signinCode.jsx";
-import Login from "./components/loginpages/reallogin.jsx";
-import ResetPassword from './components/loginpages/ResetPassword.jsx';
-import ForgotPassword from './components/loginpages/ForgotPassword.jsx'; 
-
 import ProtectedRoute from './components/loginpages/ProtectedRoute.jsx'; 
-import Dashboard from './components/loginpages/Logout.jsx'; 
-import Profile from './components/Profile/Profile.jsx'; 
-import Workspace from './components/Workspace/Workspace.jsx'; 
+import Sidebar from './components/Sidebar/Sidebar.jsx';
+
+const Landing = lazy(() => import("./pages/landing.jsx")); 
+const Signup = lazy(() => import("./components/loginpages/signinCode.jsx"));
+const Login = lazy(() => import("./components/loginpages/reallogin.jsx"));
+const ResetPassword = lazy(() => import("./components/loginpages/ResetPassword.jsx"));
+const ForgotPassword = lazy(() => import("./components/loginpages/ForgotPassword.jsx")); 
+
+const Dashboard = lazy(() => import("./components/loginpages/Logout.jsx")); 
+const Profile = lazy(() => import("./components/Profile/Profile.jsx")); 
+const Workspace = lazy(() => import("./components/Workspace/Workspace.jsx")); 
 
 // 🔥 CALENDAR PAGE IMPORT
-import Calendar from './components/Calendar/Calendar.jsx'; 
+const Calendar = lazy(() => import("./components/Calendar/Calendar.jsx")); 
 
 // 🔥 STOPWATCH IMPORT
-import Stopwatch from './components/stopwatch/Stopwatch.jsx';
+const Stopwatch = lazy(() => import("./components/stopwatch/Stopwatch.jsx"));
 
 // 🔥 NAYA ANALYTICS PAGE IMPORT
-import Analytics from './components/Analytics/Analytics.jsx';
+const Analytics = lazy(() => import("./components/Analytics/Analytics.jsx"));
 // Leaderboard
-import Leaderboard from './pages/Leaderboard';
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 
 // 🔥 SETTINGS PAGE IMPORT
-import Settings from './pages/Settings'; 
-
-// 🔥 GLOBAL SIDEBAR IMPORT
-import Sidebar from './components/Sidebar/Sidebar.jsx';
+const Settings = lazy(() => import("./pages/Settings"));
 
 function App() {
   const location = useLocation();
@@ -48,57 +47,59 @@ function App() {
     <>
       {/* 🚀 TRUE SPA EXPERIENCE: Sidebar is now outside Routes, so it never unmounts/re-renders on navigation! */}
       {!isPublicPage && <Sidebar activePage={activePage} />}
-      <Routes>
-      {/* 🟢 PUBLIC ROUTES */}
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-      
-      {/* 🛑 SECURE ROUTES (Log in zaroori hai) */}
-      <Route 
-        path="/dashboard" 
-        element={<ProtectedRoute><Dashboard /></ProtectedRoute>} 
-      />
+      <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#121212', color: '#fff' }}>Loading...</div>}>
+        <Routes>
+        {/* 🟢 PUBLIC ROUTES */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        
+        {/* 🛑 SECURE ROUTES (Log in zaroori hai) */}
+        <Route 
+          path="/dashboard" 
+          element={<ProtectedRoute><Dashboard /></ProtectedRoute>} 
+        />
 
-      <Route 
-        path="/profile" 
-        element={<ProtectedRoute><Profile /></ProtectedRoute>} 
-      />
+        <Route 
+          path="/profile" 
+          element={<ProtectedRoute><Profile /></ProtectedRoute>} 
+        />
 
-      <Route 
-        path="/workspace" 
-        element={<ProtectedRoute><Workspace /></ProtectedRoute>} 
-      />
+        <Route 
+          path="/workspace" 
+          element={<ProtectedRoute><Workspace /></ProtectedRoute>} 
+        />
 
-      <Route 
-        path="/calendar" 
-        element={<ProtectedRoute><Calendar /></ProtectedRoute>} 
-      />
-      
-      <Route 
-        path="/stopwatch" 
-        element={<ProtectedRoute><Stopwatch /></ProtectedRoute>} 
-      />
+        <Route 
+          path="/calendar" 
+          element={<ProtectedRoute><Calendar /></ProtectedRoute>} 
+        />
+        
+        <Route 
+          path="/stopwatch" 
+          element={<ProtectedRoute><Stopwatch /></ProtectedRoute>} 
+        />
 
-      {/* 👇 YEH TERA NAYA ANALYTICS ROUTE HAI */}
-      <Route 
-        path="/analytics" 
-        element={<ProtectedRoute><Analytics /></ProtectedRoute>} 
-      />
-      
-      <Route path="/leaderboard"
-       element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+        {/* 👇 YEH TERA NAYA ANALYTICS ROUTE HAI */}
+        <Route 
+          path="/analytics" 
+          element={<ProtectedRoute><Analytics /></ProtectedRoute>} 
+        />
+        
+        <Route path="/leaderboard"
+         element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
 
-       <Route path="/profile/:userId"
-        element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+         <Route path="/profile/:userId"
+          element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-      {/* 🔥 SETTINGS ROUTE ADD KIYA HAI */}
-      <Route path="/settings"
-        element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        {/* 🔥 SETTINGS ROUTE ADD KIYA HAI */}
+        <Route path="/settings"
+          element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
-    </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

@@ -5,10 +5,10 @@ import { useSettings } from '../context/SettingsContext';
 import { Settings as SettingsIcon, CheckCircle2 } from 'lucide-react';
 
 const AVATARS = [
-    "/avatars/gwen.png", 
-    "/avatars/spidey.png", 
-    "/avatars/buttercup.png", 
-    "/avatars/henry.png"
+    "/avatars/gwen.webp", 
+    "/avatars/spidey.webp", 
+    "/avatars/buttercup.webp", 
+    "/avatars/henry.webp"
 ];
 
 // 🔥 10 COMPLETELY UNIQUE FONTS!

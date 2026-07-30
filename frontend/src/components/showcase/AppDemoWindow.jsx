@@ -1548,7 +1548,7 @@ const renderMiniMonth = (year, monthIndex) => {
       <div style={{ display: 'flex', flexDirection: 'row', gap: 64, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', flexShrink: 0, width: 220 }}>
           <div style={{ width: 180, height: 180, borderRadius: '50%', border: `2px solid ${COLORS.borderHover}`, backgroundColor: COLORS.profileCard, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <img src="/avatars/buttercup.png" alt="Marcel" style={{ width: 180, height: 180, objectFit: 'cover' }} />
+            <img src="/avatars/buttercup.webp" alt="Marcel" style={{ width: 180, height: 180, objectFit: 'cover' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '12px 0', borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}`, width: '100%', justifyContent: 'center' }}>

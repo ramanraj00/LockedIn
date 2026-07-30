@@ -20,7 +20,7 @@ const SponsorSection = () => {
           <div 
             className="absolute inset-0 z-0"
             style={{
-              backgroundImage: 'url(/bheek.png)',
+              backgroundImage: 'url(/bheek.webp)',
               backgroundSize: 'cover',
               backgroundPosition: 'center right',
               opacity: 0.45

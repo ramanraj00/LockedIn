@@ -7,7 +7,7 @@ import { deriveKEK, generateWorkspaceDEK, generateRecoveryKey, generateUserSalt,
 import { useCrypto } from '../../context/CryptoContext';
 
 const AVATARS = [
-    "/avatars/gwen.png", "/avatars/spidey.png", "/avatars/buttercup.png", "/avatars/henry.png"
+    "/avatars/gwen.webp", "/avatars/spidey.webp", "/avatars/buttercup.webp", "/avatars/henry.webp"
 ];
 
 const Signup = () => {
@@ -226,7 +226,7 @@ const getAuthHash = async (password) => {
                     style={{ background: "rgba(20, 24, 54, 0.4)", border: "1px solid rgba(255, 255, 255, 0.05)", borderTop: "1px solid rgba(255, 255, 255, 0.15)", borderLeft: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: `8px 12px 32px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.1), inset -1px -1px 4px rgba(0, 0, 0, 0.2)` }}
                 >
                     <div className="absolute inset-0 md:relative w-full md:w-[45%] flex flex-col overflow-hidden bg-black h-full md:h-auto z-0">
-                        <img src="/lokind.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
+                        <img src="/lokind.webp" alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-80 md:opacity-100" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#01040a]/95 md:hidden pointer-events-none"></div>
                         <div className="relative z-10 flex flex-col h-[12dvh] md:h-auto md:flex-1 p-5 md:p-10 pb-0 md:pb-8 justify-center md:justify-between pointer-events-none">
                             <div className="animate-fade-in pointer-events-auto flex justify-center md:justify-start">

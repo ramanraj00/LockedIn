@@ -178,7 +178,7 @@ const Top3Stack = memo(({ top3Users, navigate }) => {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <span style={{ fontSize: '10px', color: '#8A8A8A', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '4px' }}>STREAK</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <img src="/color-fire.png" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                                    <img src="/color-fire.webp" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} />
                                     <span style={{ fontSize: '15px', color: '#FFF', fontWeight: 800 }}>{user.streak || 0}</span>
                                 </div>
                             </div>
@@ -345,7 +345,7 @@ const LeaderboardTable = memo(({ tableUsers, navigate }) => {
                         </div>
                         <div style={{ width: '140px', fontSize: '14px', color: COLORS.textPrimary, fontWeight: 600 }}>{formatXP(user.xp)}</div>
                         <div style={{ width: '90px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: COLORS.textPrimary }}>
-                            <img src="/color-fire.png" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} /> 
+                            <img src="/color-fire.webp" alt="Streak" style={{ width: 24, height: 24, objectFit: 'contain' }} /> 
                             {user.streak || 0}
                         </div>
                     </div>
@@ -816,7 +816,7 @@ const Leaderboard = () => {
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
                                             <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>STREAK</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <img src="/color-fire.png" alt="Streak" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                                                <img src="/color-fire.webp" alt="Streak" style={{ width: 28, height: 28, objectFit: 'contain' }} />
                                                 <span className="stats-val" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800, letterSpacing: '-0.02em' }}>{currentUserStats.streak}</span>
                                             </div>
                                         </div>
