@@ -13,8 +13,8 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendResetEmail = async (email, token) => {
-  // Use frontend URL from env or fallback to localhost
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  // Hardcoded for production to avoid Gmail spam filters blocking localhost links
+  const frontendUrl = "https://locked-in-five-olive.vercel.app";
   const resetLink = `${frontendUrl}/reset-password/${token}`;
   
   try {
