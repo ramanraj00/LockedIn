@@ -13,8 +13,9 @@ const HorizontalScrollSections = () => {
     offset: ["start start", "end end"]
   });
 
-  // Use scrollYProgress directly to avoid trackpad inertia conflicting with useSpring
-  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-66.66666%"]);
+  // Move horizontally by -200vw (which means sliding 2 screen widths left)
+  // Using vw instead of % gives the browser GPU more precise pixels to work with
+  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-200vw"]);
   
   // Progress bar animation for the 3 steps
   const indicatorX = useTransform(scrollYProgress, [0, 0.5, 1], ["0%", "100%", "200%"]);
@@ -40,14 +41,15 @@ const HorizontalScrollSections = () => {
           </div>
           <div className="w-full h-[3px] bg-gray-200/60 rounded-full relative overflow-hidden">
             <motion.div 
-              className="absolute top-0 left-0 h-full bg-[#5C9EAD] rounded-full w-1/3 shadow-[0_0_10px_rgba(92,158,173,0.8)]"
+              className="absolute top-0 left-0 h-full bg-[#5C9EAD] rounded-full w-1/3 shadow-[0_0_10px_rgba(92,158,173,0.8)] will-change-transform transform-gpu"
               style={{ x: indicatorX }}
             />
           </div>
         </div>
 
         {/* The horizontal sliding canvas */}
-        <motion.div style={{ x }} className="flex h-full w-[300vw]">
+        {/* Added will-change-transform and transform-gpu to force hardware acceleration and eliminate jitter */}
+        <motion.div style={{ x }} className="flex h-full w-[300vw] will-change-transform transform-gpu">
           <div className="w-screen h-full shrink-0 flex items-center justify-center relative">
             <ArchitectureSection />
           </div>
