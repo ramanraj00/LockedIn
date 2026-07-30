@@ -180,38 +180,38 @@ const getAuthHash = async (password) => {
             {/* RECOVERY KEY MODAL */}
             {showRecoveryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-all">
-                    <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-2xl w-full shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] text-center relative max-h-[95vh] overflow-y-auto">
+                    <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-5 md:p-8 rounded-3xl max-w-2xl w-full shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] text-center relative max-h-[85vh] overflow-y-auto flex flex-col justify-center">
                         
-                        <h2 className="text-3xl md:text-4xl font-serif-elegant font-semibold text-white mb-3 tracking-tight">Your Secret Recovery Key</h2>
-                        <p className="text-slate-300 text-sm md:text-base mb-6 font-light">
+                        <h2 className="text-2xl md:text-4xl font-serif-elegant font-semibold text-white mb-2 md:mb-3 tracking-tight">Your Secret Recovery Key</h2>
+                        <p className="text-slate-300 text-[13px] md:text-base mb-4 md:mb-6 font-light">
                             Write this down or save it in a password manager. <br className="hidden md:block" />
                             <strong className="text-red-400 font-semibold">We do not store this key. If you forget your password and lose this key, your data cannot be recovered.</strong>
                         </p>
                         
-                        <div className="bg-black/30 border border-white/10 p-4 md:p-5 rounded-2xl mb-6 font-mono text-[12px] sm:text-base md:text-lg text-white tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                        <div className="bg-black/30 border border-white/10 p-3 md:p-5 rounded-xl mb-4 md:mb-6 font-mono text-[10px] sm:text-base md:text-lg text-white tracking-wider break-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
                             <span className="whitespace-pre-wrap leading-relaxed">{recoveryKey}</span>
                         </div>
                         
-                        <div className="flex gap-4 mb-8">
-                            <button type="button" onClick={() => {navigator.clipboard.writeText(recoveryKey)}} className="flex-1 py-3.5 text-sm font-semibold bg-white text-[#0f172a] rounded-xl hover:bg-gray-100 transition-all shadow-md">Copy Key</button>
+                        <div className="flex gap-3 md:gap-4 mb-6 md:mb-8">
+                            <button type="button" onClick={() => {navigator.clipboard.writeText(recoveryKey)}} className="flex-1 py-2.5 md:py-3.5 text-[13px] md:text-sm font-semibold bg-white text-[#0f172a] rounded-xl hover:bg-gray-100 transition-all shadow-md">Copy Key</button>
                             <button type="button" onClick={() => {
                                 const blob = new Blob([recoveryKey], {type: "text/plain"});
                                 const link = document.createElement("a");
                                 link.href = URL.createObjectURL(blob);
                                 link.download = "LockedIn-Recovery-Key.txt";
                                 link.click();
-                            }} className="flex-1 py-3.5 text-sm font-semibold bg-transparent text-white border border-white/30 rounded-xl hover:bg-white/10 transition-all">Download .TXT</button>
+                            }} className="flex-1 py-2.5 md:py-3.5 text-[13px] md:text-sm font-semibold bg-transparent text-white border border-white/30 rounded-xl hover:bg-white/10 transition-all">Download .TXT</button>
                         </div>
 
-                        <label className="flex items-center justify-center gap-3 text-sm font-medium text-slate-200 cursor-pointer mb-8">
-                            <input type="checkbox" className="w-5 h-5 accent-[#0f172a] rounded border-white/30" checked={recoverySaved} onChange={(e) => setRecoverySaved(e.target.checked)} />
+                        <label className="flex items-center justify-center gap-2 md:gap-3 text-[12px] md:text-sm font-medium text-slate-200 cursor-pointer mb-5 md:mb-8">
+                            <input type="checkbox" className="w-4 h-4 md:w-5 md:h-5 accent-[#0f172a] rounded border-white/30" checked={recoverySaved} onChange={(e) => setRecoverySaved(e.target.checked)} />
                             I have saved my Recovery Key safely.
                         </label>
 
                         <button 
                             disabled={!recoverySaved}
                             onClick={handleAcknowledgeRecoveryKey}
-                            className="w-full bg-[#0f172a] hover:bg-[#1e293b] disabled:opacity-50 disabled:hover:bg-[#0f172a] text-white font-semibold py-4 rounded-xl transition-all shadow-lg text-lg tracking-wide border border-white/10"
+                            className="w-full bg-[#0f172a] hover:bg-[#1e293b] disabled:opacity-50 disabled:hover:bg-[#0f172a] text-white font-semibold py-3 md:py-4 rounded-xl transition-all shadow-lg text-[15px] md:text-lg tracking-wide border border-white/10"
                         >
                             Enter Workspace
                         </button>

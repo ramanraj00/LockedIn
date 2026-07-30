@@ -1544,9 +1544,9 @@ const renderMiniMonth = (year, monthIndex) => {
   };
 
   const renderProfile = () => (
-    <div style={{ padding: '40px 60px', width: '100%', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flexDirection: 'row', gap: 64, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', flexShrink: 0, width: 220 }}>
+    <div className="w-full max-w-[1200px] mx-auto flex flex-col p-4 md:p-[40px_60px]">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center md:items-start flex-wrap">
+        <div className="flex flex-col gap-5 items-center shrink-0 w-full md:w-[220px]">
           <div style={{ width: 180, height: 180, borderRadius: '50%', border: `2px solid ${COLORS.borderHover}`, backgroundColor: COLORS.profileCard, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <img src="/avatars/buttercup.webp" alt="Marcel" style={{ width: 180, height: 180, objectFit: 'cover' }} />
           </div>
@@ -1568,13 +1568,13 @@ const renderMiniMonth = (year, monthIndex) => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 700, flex: 1, paddingTop: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 20 }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h1 style={{ fontSize: '48px', fontWeight: 700, letterSpacing: '-0.02em', color: '#E5E7EB', lineHeight: 1.1 }}>Marcel</h1>
-              <span style={{ color: COLORS.textMuted, fontSize: 16, fontWeight: 500, marginTop: 6 }}>@marcel69</span>
+        <div className="flex flex-col gap-3 max-w-[700px] flex-1 pt-0 md:pt-4 w-full">
+          <div className="flex flex-col md:flex-row items-center md:items-start justify-between w-full flex-wrap gap-5">
+            <div className="flex flex-col items-center md:items-start">
+              <h1 className="text-4xl md:text-[48px] font-bold tracking-tight text-gray-200 leading-tight">Marcel</h1>
+              <span className="text-gray-500 text-base font-medium mt-1">@marcel69</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
+            <div className="flex items-center justify-center gap-4 mt-2 md:mt-2.5 w-full md:w-auto">
               <div className="notif-bell"><Bell size={20} /></div>
               <div style={{ position: 'relative' }}>
                 <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: COLORS.textMuted, pointerEvents: 'none' }}><Search size={16} /></div>

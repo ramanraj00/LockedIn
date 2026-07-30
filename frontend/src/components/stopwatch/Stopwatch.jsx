@@ -111,8 +111,8 @@ const ToastOverlay = memo(() => {
 });
 
 const Header = memo(() => (
-    <div className="w-full mb-4 md:mb-8 mt-2 flex-shrink-0 pl-[52px] md:pl-0">
-        <h1 className="text-2xl md:text-[34px] font-bold tracking-tight text-[#E0E0E0] leading-none">Focus Session</h1>
+    <div className="w-full mb-4 md:mb-8 mt-2 flex-shrink-0 pl-[48px] md:pl-0">
+        <h1 className="text-xl md:text-[34px] font-bold tracking-tight text-[#E0E0E0] leading-none">Focus Session</h1>
         <p className="hidden sm:block text-[15px] md:text-[17px] text-[#A3A3A3] mt-2 font-medium">Track and save your deep work intervals.</p>
     </div>
 ));

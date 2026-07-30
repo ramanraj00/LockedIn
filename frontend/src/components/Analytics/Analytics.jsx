@@ -191,6 +191,17 @@ const Analytics = () => {
     const isMobile = windowWidth < 768;
 
     useEffect(() => {
+        if (drawerOpen && isMobile) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [drawerOpen, isMobile]);
+
+    useEffect(() => {
         const fetchAnalytics = async () => {
             try {
                 const [profileRes, weeklyRes, heatmapRes, daysRes] = await Promise.all([
@@ -659,29 +670,29 @@ const Analytics = () => {
                         animate={{ opacity: 1, x: 0, scale: 1 }}
                         exit={{ opacity: 0, x: 30, scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        className="fixed top-20 sm:top-24 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-[400px] md:w-[420px] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl flex flex-col"
+                        className="fixed top-20 sm:top-24 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-[400px] md:w-[420px] max-h-[85vh] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl flex flex-col overflow-hidden"
                     >
-                        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#000000]/50 rounded-t-2xl">
+                        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#000000]/50 rounded-t-2xl shrink-0">
                             <div className="flex flex-col">
                                 <h2 className="text-[16px] font-bold text-white tracking-tight">Task Performance</h2>
                                 <p className="text-[12px] text-zinc-500 font-medium mt-0.5">Workspace task completion breakdown</p>
                             </div>
                             <button 
                                 onClick={() => setDrawerOpen(false)} 
-                                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
                             >
                                 <X size={16} />
                             </button>
                         </div>
                         
-                        <div className="p-5 sm:p-6 flex flex-col gap-5 sm:gap-6">
+                        <div className="p-5 sm:p-6 flex flex-col gap-5 sm:gap-6 overflow-y-auto flex-1">
                             <div className="w-full bg-[#050505] border border-white/5 rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center relative shadow-inner overflow-hidden">
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] bg-blue-500/10 blur-[60px] rounded-full pointer-events-none" />
 
                                 {taskStats.total === 0 ? (
                                     <div className="text-zinc-500 text-sm py-10 z-10 relative font-medium">No workspace tasks found.</div>
                                 ) : (
-                                    <div className="w-full h-[320px] relative z-10 flex flex-col justify-center mt-2">
+                                    <div className="w-full h-[250px] sm:h-[320px] relative z-10 flex flex-col justify-center mt-2">
                                         <PieChart 
                                             data={[
                                                 { browser: "completed", visitors: taskStats.completed, fill: "blue" },

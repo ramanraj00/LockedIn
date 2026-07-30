@@ -257,7 +257,8 @@ const Sidebar = ({ activePage }) => {
                     display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'stretch',
                     transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', 
                     transform: isOpen ? 'translateX(0)' : 'translateX(-100%)', 
-                    boxShadow: '4px 0 24px rgba(0,0,0,0.5)' 
+                    boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
+                    overflowY: 'auto'
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'space-between', marginTop: 8, marginBottom: 32, width: '100%', padding: isMobile ? '0 12px' : 0 }}>
