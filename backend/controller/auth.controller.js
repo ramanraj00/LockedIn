@@ -145,6 +145,7 @@ exports.forgetPassword = async (req, res) => {
 
     return res.json({ message: "If this email exists, reset link has been sent" });
   } catch (error) {
+    console.error("Forget password error:", error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
