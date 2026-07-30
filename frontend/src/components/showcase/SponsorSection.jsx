@@ -49,7 +49,7 @@ const SponsorSection = () => {
             {/* Right Side - Buttons */}
             <div className="flex flex-col gap-3 w-full md:w-auto min-w-[240px]">
               <a 
-                href="https://github.com/sponsors" 
+                href="https://github.com/sponsors/ramanraj00" 
                 target="_blank" 
                 rel="noopener noreferrer"
               >

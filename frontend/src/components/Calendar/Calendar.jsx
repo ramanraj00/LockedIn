@@ -404,7 +404,7 @@ const Calendar = () => {
             {/* 🔥 NAYA SIDEBAR COMPONENT YAHAN AAGAYA */}
             <Sidebar activePage="Calendar" />
 
-           <div className="flex flex-col md:flex-row items-center justify-between pl-[92px] md:pl-[100px] pr-4 md:pr-8 pt-[30px] pb-4 md:pb-5 shrink-0 bg-[#1E1E1E] gap-4 md:gap-0 z-10 relative min-h-[96px]">
+           <div className="flex flex-col md:flex-row items-center justify-between pl-[92px] md:pl-[100px] pr-8 pt-[30px] pb-4 md:pb-5 shrink-0 bg-[#1E1E1E] gap-4 md:gap-0 z-10 relative min-h-[96px]">
                 <div className="flex items-center justify-between w-full md:w-auto">
                     <h1 className="text-[28px] md:text-[32px] font-bold tracking-tight text-white drop-shadow-sm leading-none flex items-center gap-1">
                         <ChevronLeft className="md:hidden text-[#FF3B30] -ml-2 cursor-pointer shrink-0" size={32} strokeWidth={2.5} onClick={() => changeMonth(-1)} />
@@ -421,13 +421,13 @@ const Calendar = () => {
 
                 <div className="flex items-center justify-between w-full md:w-auto mt-1 md:mt-0">
                     <div className="flex bg-[#121212] rounded-full p-1 border border-white/[0.05] shadow-inner mr-2 md:mr-0">
-                        <button onClick={() => setView('month')} className={`px-4 md:px-7 py-1.5 rounded-full text-[12px] md:text-[13px] font-bold transition-all duration-300 ${view === 'month' ? 'bg-[#3A3A3C] text-white shadow-md' : 'text-[#8E8E93] hover:text-white'}`}>Month</button>
-                        <button onClick={() => setView('year')} className={`px-4 md:px-7 py-1.5 rounded-full text-[12px] md:text-[13px] font-bold transition-all duration-300 ${view === 'year' ? 'bg-[#3A3A3C] text-white shadow-md' : 'text-[#8E8E93] hover:text-white'}`}>Year</button>
+                        <button onClick={() => setView('month')} className={`px-3 md:px-7 py-1.5 rounded-full text-[12px] md:text-[13px] font-bold transition-all duration-300 ${view === 'month' ? 'bg-[#3A3A3C] text-white shadow-md' : 'text-[#8E8E93] hover:text-white'}`}>Month</button>
+                        <button onClick={() => setView('year')} className={`px-3 md:px-7 py-1.5 rounded-full text-[12px] md:text-[13px] font-bold transition-all duration-300 ${view === 'year' ? 'bg-[#3A3A3C] text-white shadow-md' : 'text-[#8E8E93] hover:text-white'}`}>Year</button>
                     </div>
 
                     <div className="flex items-center gap-1 md:gap-3">
                         <button onClick={() => changeMonth(view === 'month' ? -1 : -12)} className="hidden md:block p-1.5 md:p-2.5 rounded-full hover:bg-white/[0.08] transition-colors text-[#8E8E93] hover:text-white"><ChevronLeft size={20} strokeWidth={2.5} /></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-3 md:px-5 py-1.5 rounded-full bg-[#121212] border border-white/[0.05] text-[12px] md:text-[13px] font-bold text-[#EBEBF5] hover:text-white transition-all shadow-sm">Today</button>
+                        <button onClick={() => setCurrentDate(new Date())} className="px-2.5 md:px-5 py-1.5 rounded-full bg-[#121212] border border-white/[0.05] text-[12px] md:text-[13px] font-bold text-[#EBEBF5] hover:text-white transition-all shadow-sm">Today</button>
                         <button onClick={() => changeMonth(view === 'month' ? 1 : 12)} className="p-1.5 md:p-2.5 rounded-full hover:bg-white/[0.08] transition-colors text-[#8E8E93] hover:text-white"><ChevronRight size={20} strokeWidth={2.5} /></button>
                         <button onClick={() => {
                             if (!selectedDate) setSelectedDate(new Date().toLocaleDateString('en-CA'));

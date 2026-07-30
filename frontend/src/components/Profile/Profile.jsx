@@ -14,16 +14,16 @@ const COLORS = {
 };
 
 const ALL_BADGES = [
-    { id: 'feather',   name: 'Feather',   description: 'Beginner',          requirement: 'Complete 24 hours on the app',        requiredDays: 1,   imageUrl: '/badges/firstlevel.png'  },
-    { id: 'shard',     name: 'Shard',     description: 'Growing Stronger',  requirement: 'Complete 10 days on the app',         requiredDays: 10,  imageUrl: '/badges/secondlevel.png' },
-    { id: 'scout',     name: 'Scout',     description: 'Explorer',          requirement: 'Complete 1 month on the app',         requiredDays: 30,  imageUrl: '/badges/thirdlevel.png'  },
-    { id: 'hunter',    name: 'Hunter',    description: 'Focus Achiever',    requirement: 'Complete 2 months on the app',        requiredDays: 60,  imageUrl: '/badges/4thlevel.png'    },
-    { id: 'pacific',   name: 'Pacific',   description: 'Calm Consistency',  requirement: 'Stay consistent for 3 months',       requiredDays: 90,  imageUrl: '/badges/fifthlevel.png'  },
-    { id: 'nova',      name: 'Nova',      description: 'Big Breakthrough',  requirement: 'Stay consistent for 5 months',       requiredDays: 150, imageUrl: '/badges/sixthlevel.png'  },
-    { id: 'phantom',   name: 'Phantom',   description: 'Elite',             requirement: 'Stay consistent for 8 months',       requiredDays: 240, imageUrl: '/badges/seventhlevel.png'},
-    { id: 'monarch',   name: 'Monarch',   description: 'Legendary',         requirement: 'Stay consistent for 10 months',      requiredDays: 300, imageUrl: '/badges/eightlevel.png'  },
-    { id: 'celestial', name: 'Celestial', description: 'Highest Rank',      requirement: 'Stay consistent for 12 months',      requiredDays: 365, imageUrl: '/badges/ninelevel.png'   },
-    { id: 'crowned',   name: 'Crowned',   description: "Honorable", requirement: 'Stay consistent for 12 months and 1 day', requiredDays: 366, imageUrl: '/badges/lastlevel.png' },
+    { id: 'feather',   name: 'Feather',   description: 'Beginner',          requirement: 'Complete 24 hours on the app',        requiredDays: 1,   imageUrl: '/badges/firstlevel.webp'  },
+    { id: 'shard',     name: 'Shard',     description: 'Growing Stronger',  requirement: 'Complete 10 days on the app',         requiredDays: 10,  imageUrl: '/badges/secondlevel.webp' },
+    { id: 'scout',     name: 'Scout',     description: 'Explorer',          requirement: 'Complete 1 month on the app',         requiredDays: 30,  imageUrl: '/badges/thirdlevel.webp'  },
+    { id: 'hunter',    name: 'Hunter',    description: 'Focus Achiever',    requirement: 'Complete 2 months on the app',        requiredDays: 60,  imageUrl: '/badges/4thlevel.webp'    },
+    { id: 'pacific',   name: 'Pacific',   description: 'Calm Consistency',  requirement: 'Stay consistent for 3 months',       requiredDays: 90,  imageUrl: '/badges/fifthlevel.webp'  },
+    { id: 'nova',      name: 'Nova',      description: 'Big Breakthrough',  requirement: 'Stay consistent for 5 months',       requiredDays: 150, imageUrl: '/badges/sixthlevel.webp'  },
+    { id: 'phantom',   name: 'Phantom',   description: 'Elite',             requirement: 'Stay consistent for 8 months',       requiredDays: 240, imageUrl: '/badges/seventhlevel.webp'},
+    { id: 'monarch',   name: 'Monarch',   description: 'Legendary',         requirement: 'Stay consistent for 10 months',      requiredDays: 300, imageUrl: '/badges/eightlevel.webp'  },
+    { id: 'celestial', name: 'Celestial', description: 'Highest Rank',      requirement: 'Stay consistent for 12 months',      requiredDays: 365, imageUrl: '/badges/ninelevel.webp'   },
+    { id: 'crowned',   name: 'Crowned',   description: "Honorable", requirement: 'Stay consistent for 12 months and 1 day', requiredDays: 366, imageUrl: '/badges/lastlevel.webp' },
 ];
 
 // 🔥 Helper function for Name-based Background Colors
@@ -335,6 +335,21 @@ const Profile = () => {
     /* SEARCH & NOTIFICATION CSS */
     .search-input { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 16px 10px 42px; color: #fff; width: 260px; font-size: 14px; outline: none; transition: all 0.2s; }
     .search-input:focus { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); width: 280px; }
+    @media (max-width: 768px) {
+        .search-input { width: 180px; }
+        .search-input:focus { width: 200px; }
+    }
+    @media (max-width: 400px) {
+        .search-input { width: 150px; padding: 8px 12px 8px 36px; }
+        .search-input:focus { width: 165px; }
+    }
+    .search-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 100%; min-width: 260px; background-color: ${COLORS.card}; border: 1px solid ${COLORS.borderHover}; border-radius: 12px; overflow: hidden; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    @media (max-width: 768px) {
+        .search-dropdown { min-width: 200px; }
+    }
+    @media (max-width: 400px) {
+        .search-dropdown { min-width: 165px; }
+    }
     .search-result-item { padding: 12px 16px; display: flex; alignItems: center; gap: 12px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .search-result-item:hover { background: rgba(255,255,255,0.06); }
     .search-result-item:last-child { border-bottom: none; }
@@ -553,7 +568,7 @@ const Profile = () => {
                                                 <input type="text" className="search-input" placeholder="Search users..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }} onFocus={() => setShowDropdown(true)} />
                                                 
                                                 {showDropdown && searchQuery.trim() !== "" && (
-                                                    <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '100%', minWidth: 260, backgroundColor: COLORS.card, border: `1px solid ${COLORS.borderHover}`, borderRadius: 12, overflow: 'hidden', zIndex: 50, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+                                                    <div className="search-dropdown">
                                                         {isSearching ? ( <div style={{ padding: 16, textAlign: 'center', color: COLORS.textMuted, fontSize: 13 }}>Searching...</div>
                                                         ) : searchResults.length > 0 ? (
                                                             searchResults.map(result => (

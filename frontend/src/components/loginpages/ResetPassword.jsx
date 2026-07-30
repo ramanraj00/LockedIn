@@ -132,7 +132,7 @@ const ResetPassword = () => {
 
                     <div className="relative z-10 flex flex-col">
                         <div className="flex justify-center mb-6 mt-2">
-                            <span onClick={() => navigate('/')} className="text-white text-3xl md:text-[32px] tracking-widest drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] select-none cursor-pointer hover:opacity-80 transition-opacity" style={{ fontFamily: "'Pixeloid', sans-serif" }}>LockedIn</span>
+                            <span onClick={() => navigate('/')} className="text-white text-3xl md:text-[32px] font-black tracking-tighter drop-shadow-md select-none cursor-pointer hover:opacity-80 transition-opacity" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>LockedIn</span>
                         </div>
 
                         <div className="text-center mb-6">
@@ -142,11 +142,11 @@ const ResetPassword = () => {
 
                         <div className="h-[46px] w-full mb-3 flex items-center justify-center">
                             {error ? (
-                                <div className="w-full h-full flex items-center gap-3 px-4 rounded-xl bg-[#2a0e12]/80 border border-red-500/20 text-red-400 text-[12px] font-medium transition-all animate-shake shadow-[0_4px_20px_rgba(239,68,68,0.15)] backdrop-blur-md">
+                                <div className="w-full h-full flex items-center gap-3 px-4 rounded-xl bg-white/[0.05] border border-white/[0.1] text-red-500 text-[12px] font-medium transition-all animate-shake shadow-sm backdrop-blur-md">
                                     <span className="leading-snug truncate">{error}</span>
                                 </div>
                             ) : successMsg ? (
-                                <div className="w-full h-full flex items-center gap-3 px-4 rounded-xl bg-[#062417]/80 border border-emerald-500/20 text-emerald-400 text-[12px] font-medium transition-all shadow-[0_4px_20px_rgba(16,185,129,0.15)] backdrop-blur-md">
+                                <div className="w-full h-full flex items-center gap-3 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[12px] font-medium transition-all shadow-[0_4px_20px_rgba(16,185,129,0.15)] backdrop-blur-md">
                                     <span className="leading-snug truncate">{successMsg}</span>
                                 </div>
                             ) : null}
@@ -188,7 +188,7 @@ const ResetPassword = () => {
                                 </div>
                             </div>
 
-                            <button type="submit" disabled={loading || successMsg} className="w-full bg-indigo-500 text-white font-semibold py-3 rounded-xl hover:bg-indigo-400 active:scale-[0.98] transition-all mt-2 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_4px_20px_rgba(99,102,241,0.25)] border border-indigo-400/50">
+                            <button type="submit" disabled={loading || successMsg} className="w-full bg-white text-[#0f172a] font-bold py-3 rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all mt-2 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-md">
                                 {loading ? "Updating..." : "Recover & Update Password"}
                             </button>
                         </form>

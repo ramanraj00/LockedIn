@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Crown, CheckCircle2, Flame, Monitor, Palette, BookOpen, FileText, BarChart2 } from 'lucide-react';
+import { Trophy, Crown, CheckCircle2, Flame, Monitor, Palette, BookOpen, FileText, BarChart2, Clock, AlertCircle } from 'lucide-react';
 
 const formatXP = (seconds) => {
     if (!seconds || seconds <= 0) return "0s";
@@ -265,8 +265,14 @@ const LeaderboardTable = memo(({ tableUsers }) => {
                                     <td className="py-4 px-6 font-semibold text-gray-400 whitespace-nowrap">{user.time}</td>
                                     <td className="py-4 px-6">
                                         <div className="flex justify-end">
-                                            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-[11px] font-bold border border-green-100/50 whitespace-nowrap">
-                                                <CheckCircle2 size={13} strokeWidth={3} /> {user.status}
+                                            <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${
+                                                user.status === 'Completed' 
+                                                ? 'bg-green-50 text-green-600 border-green-100/50' 
+                                                : user.status === 'In Progress' 
+                                                ? 'bg-blue-50 text-blue-600 border-blue-100/50'
+                                                : 'bg-orange-50 text-orange-600 border-orange-100/50'
+                                            }`}>
+                                                {user.status === 'Completed' ? <CheckCircle2 size={13} strokeWidth={3} /> : user.status === 'In Progress' ? <Clock size={13} strokeWidth={3} /> : <AlertCircle size={13} strokeWidth={3} />} {user.status}
                                             </div>
                                         </div>
                                     </td>
@@ -300,10 +306,10 @@ const LiveFocusSection = () => {
   
   // Custom mock data mimicking exactly the screenshot provided by user
   const tableUsers = [
-        { id: '4', name: 'Samiran De', task: 'React Frontend Coding', TaskIcon: Monitor, color: '#A855F7', duration: '45 mins', streak: '14 days', time: '2m ago', status: 'Completed' },
-        { id: '5', name: 'Alex Rivera', task: 'UI/UX Figma Design', TaskIcon: Palette, color: '#3B82F6', duration: '1h 30m', streak: '8 days', time: '12m ago', status: 'Completed' },
-        { id: '6', name: 'Yuki Tanaka', task: 'Japanese Kanji Practice', TaskIcon: BookOpen, color: '#F97316', duration: '25 mins', streak: '32 days', time: '25m ago', status: 'Completed' },
-        { id: '7', name: 'Sarah Jenkins', task: 'Technical Docs Writing', TaskIcon: FileText, color: '#10B981', duration: '2h 10m', streak: '5 days', time: '1h ago', status: 'Completed' },
+        { id: '4', name: 'Butterfly', task: 'Flutter App Development', TaskIcon: Monitor, color: '#A855F7', duration: '2h 15m', streak: '42 days', time: 'Just now', status: 'In Progress' },
+        { id: '5', name: 'grim', task: 'Backend System Architecture', TaskIcon: BarChart2, color: '#3B82F6', duration: '4h 30m', streak: '112 days', time: '10m ago', status: 'Completed' },
+        { id: '6', name: 'Shane Levine', task: 'Reading Philosophy', TaskIcon: BookOpen, color: '#F97316', duration: '1h 45m', streak: '65 days', time: '5m ago', status: 'Paused' },
+        { id: '7', name: 'Christopher Nolan', task: 'Script Writing', TaskIcon: FileText, color: '#10B981', duration: '3h 20m', streak: '88 days', time: '1h 30m ago', status: 'Completed' },
   ];
 
   return (
