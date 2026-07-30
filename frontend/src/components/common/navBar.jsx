@@ -69,7 +69,7 @@ function Navbar() {
               : "opacity-100"
           }`}
         >
-          <span style={{ WebkitTextStroke: "1px black" }}>LockedIn</span>
+          <span>LockedIn</span>
         </div>
         
         {/* Desktop Navigation links */}
@@ -181,7 +181,7 @@ function Navbar() {
                     style={{ fontFamily: "'Instrument Sans', sans-serif" }}
                     className="text-xl font-black text-white tracking-tighter select-none"
                   >
-                    <span style={{ WebkitTextStroke: "1px black" }}>LockedIn</span>
+                    <span>LockedIn</span>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
