@@ -159,12 +159,12 @@ const FeatureFlowSection = () => {
                   {feature.title}
                 </h4>
                 
-                <div className="flex justify-between items-start gap-4">
-                  <p className="text-zinc-500 text-[14px] font-medium leading-relaxed line-clamp-3 w-[60%]">
+                <div className="flex justify-between items-center gap-4 mt-2">
+                  <p className="text-zinc-500 text-[14px] font-medium leading-relaxed line-clamp-3 w-[55%]">
                     {feature.desc}
                   </p>
                   
-                  <div className="w-[35%] max-w-[100px] aspect-video bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                  <div className="w-[40%] max-w-[160px] aspect-video sm:aspect-[4/3] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                     {index === 0 ? (
                       <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
                         <source src="/1st.webm" type="video/webm" />
