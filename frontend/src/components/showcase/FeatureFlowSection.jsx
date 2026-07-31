@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Lottie from 'lottie-react';
 import { motion } from 'framer-motion';
 import { 
   Flame, Clock, Grid, User, Users, Trophy, BarChart2, Settings,
@@ -41,6 +42,15 @@ const features = [
 ];
 
 const FeatureFlowSection = () => {
+  const [lottieData, setLottieData] = useState(null);
+
+  useEffect(() => {
+    fetch('/3rd.json')
+      .then(res => res.json())
+      .then(data => setLottieData(data))
+      .catch(err => console.error("Error loading Lottie animation:", err));
+  }, []);
+
   return (
     <div className="w-screen min-h-screen md:h-screen bg-[#FAF9F6] flex flex-col justify-start pt-20 md:pt-[14vh] pb-0 md:pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
       {/* Applying scale to fit screen and ensure it clears the top nav */}
@@ -129,14 +139,14 @@ const FeatureFlowSection = () => {
         </div>
 
         {/* Vertical Feature Flow */}
-        <div className="flex flex-col gap-12 w-full max-w-2xl relative z-10">
+        <div className="flex flex-col gap-6 w-full max-w-2xl relative z-10">
           {features.map((feature, index) => (
             <div key={index} className="relative">
               {/* Connector from previous box */}
               {index > 0 && (
-                <div className="absolute left-1/2 -top-12 w-px h-12 bg-transparent -translate-x-1/2">
-                  <svg width="2" height="48" className="absolute top-0 left-0">
-                    <line x1="1" y1="0" x2="1" y2="48" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
+                <div className="absolute left-1/2 -top-6 w-px h-6 bg-transparent -translate-x-1/2">
+                  <svg width="2" height="24" className="absolute top-0 left-0">
+                    <line x1="1" y1="0" x2="1" y2="24" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
                   </svg>
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
                 </div>
@@ -153,8 +163,20 @@ const FeatureFlowSection = () => {
                     {feature.desc}
                   </p>
                   
-                  <div className="w-[35%] max-w-[100px] aspect-video bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300">
-                    <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
+                  <div className="w-[35%] max-w-[100px] aspect-video bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                    {index === 0 ? (
+                      <video autoPlay muted loop playsInline className="w-full h-full object-cover">
+                        <source src="/1st.webm" type="video/webm" />
+                      </video>
+                    ) : index === 1 ? (
+                      <video autoPlay muted loop playsInline className="w-full h-full object-cover">
+                        <source src="/2nd.webm" type="video/webm" />
+                      </video>
+                    ) : index === 2 && lottieData ? (
+                      <Lottie animationData={lottieData} loop={true} className="w-full h-full object-cover" />
+                    ) : (
+                      <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
+                    )}
                   </div>
                 </div>
                 
