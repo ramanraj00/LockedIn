@@ -142,19 +142,17 @@ const FeatureFlowSection = () => {
                 </div>
               )}
               
-              <div className="bg-white border border-[#E5E3DB] rounded-xl p-5 md:p-6 shadow-sm flex items-center gap-5 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
-                <div className="w-14 h-14 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#5C9EAD]">
-                  <feature.icon size={26} />
+              <div className="bg-white border border-[#E5E3DB] rounded-[24px] p-6 md:p-8 shadow-sm relative overflow-hidden group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all min-h-[160px] md:min-h-[180px] flex flex-col justify-start">
+                
+                <div className="w-[65%] sm:w-[75%] z-10">
+                  <h4 className="font-bold text-gray-900 text-lg md:text-xl tracking-tight whitespace-nowrap mb-2">{feature.title}</h4>
+                  <p className="text-zinc-500 text-[13px] md:text-sm font-medium line-clamp-3 md:line-clamp-4 leading-relaxed">{feature.desc}</p>
                 </div>
                 
-                <div className="flex-grow">
-                  <h4 className="font-serif-elegant italic text-2xl text-[#1F2937] mb-1">{feature.title}</h4>
-                  <p className="text-zinc-500 text-sm">{feature.desc}</p>
+                <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 w-20 h-16 md:w-24 md:h-20 bg-gradient-to-br from-[#E8F3F5] to-[#D1E6EB] rounded-2xl flex items-center justify-center shadow-sm group-hover:-translate-y-1 group-hover:shadow-md transition-all duration-300">
+                  <feature.icon size={32} className="text-[#5C9EAD]" strokeWidth={2} />
                 </div>
                 
-                <div className="w-8 h-8 rounded-full bg-[#5C9EAD] flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 size={16} className="text-white" />
-                </div>
               </div>
             </div>
           ))}
