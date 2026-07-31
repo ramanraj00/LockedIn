@@ -53,9 +53,9 @@ const LottieWrapper = ({ animationData }) => {
 
 const FeatureFlowSection = () => {
   return (
-    <div className="w-screen min-h-screen md:h-screen bg-[#FAF9F6] flex flex-col justify-start pt-20 md:pt-[14vh] pb-0 md:pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
+    <div className="w-screen min-h-screen bg-[#FAF9F6] flex flex-col justify-start pt-12 md:pt-16 pb-12 relative overflow-visible shrink-0" id="feature-flow-section">
       {/* Applying scale to fit screen and ensure it clears the top nav */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full flex flex-col items-center scale-90 md:scale-[0.85] origin-top">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 w-full flex flex-col items-center origin-top">
         
         {/* Top Icons Row */}
         <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-between gap-3 md:gap-0 w-full max-w-3xl mb-8 relative z-10">
@@ -139,32 +139,23 @@ const FeatureFlowSection = () => {
           </div>
         </div>
 
-        {/* Vertical Feature Flow */}
-        <div className="flex flex-col gap-6 w-full max-w-2xl relative z-10">
+        {/* Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-10">
           {features.map((feature, index) => (
-            <div key={index} className="relative">
-              {/* Connector from previous box */}
-              {index > 0 && (
-                <div className="absolute left-1/2 -top-6 w-px h-6 bg-transparent -translate-x-1/2">
-                  <svg width="2" height="24" className="absolute top-0 left-0">
-                    <line x1="1" y1="0" x2="1" y2="24" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
-                  </svg>
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
-                </div>
-              )}
+            <div key={index} className="relative h-full">
               
-              <div className="bg-white border border-[#E5E3DB] rounded-[24px] p-6 shadow-sm flex flex-col gap-3 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
+              <div className="bg-white border border-[#E5E3DB] rounded-[24px] p-6 shadow-sm flex flex-col justify-between gap-3 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all h-full">
                 
                 <h4 className="font-bold text-black text-[22px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
                   {feature.title}
                 </h4>
                 
-                <div className="flex justify-between items-center gap-6 mt-2">
-                  <p className="text-zinc-500 text-[15px] font-medium leading-relaxed w-[50%]">
+                <div className="flex justify-between items-center gap-4 mt-2 h-full">
+                  <p className="text-zinc-500 text-[14px] md:text-[15px] font-medium leading-relaxed w-[45%]">
                     {feature.desc}
                   </p>
                   
-                  <div className="w-[45%] max-w-[280px] h-[120px] sm:h-[150px] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden shrink-0">
+                  <div className="w-[50%] max-w-[240px] h-[100px] sm:h-[130px] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden shrink-0">
                     {index === 0 ? (
                       <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
                         <source src="/1st.webm" type="video/webm" />
