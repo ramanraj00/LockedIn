@@ -231,15 +231,15 @@ const LeaderboardTable = memo(({ tableUsers }) => {
     return (
         <div className="w-full bg-white rounded-[24px] border border-gray-100 shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse table-fixed min-w-[650px]">
+                <table className="w-full text-left border-collapse md:table-fixed min-w-full md:min-w-[650px]">
                     <thead>
                         <tr className="border-b border-gray-50">
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[22%]">User</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[25%]">Task</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[15%]">Duration</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%]">Streak</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[12%] hidden md:table-cell">Time</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%] text-right">Status</th>
+                            <th className="py-5 px-4 md:px-6 text-[12px] md:text-[13px] font-bold text-gray-500 uppercase tracking-wide w-auto md:w-[22%]">User</th>
+                            <th className="py-5 px-4 md:px-6 text-[12px] md:text-[13px] font-bold text-gray-500 uppercase tracking-wide w-auto md:w-[25%] hidden sm:table-cell">Task</th>
+                            <th className="py-5 px-4 md:px-6 text-[12px] md:text-[13px] font-bold text-gray-500 uppercase tracking-wide w-auto md:w-[15%] hidden md:table-cell">Duration</th>
+                            <th className="py-5 px-4 md:px-6 text-[12px] md:text-[13px] font-bold text-gray-500 uppercase tracking-wide w-auto md:w-[13%] hidden md:table-cell">Streak</th>
+                            <th className="py-5 px-4 md:px-6 text-[12px] md:text-[13px] font-bold text-gray-500 uppercase tracking-wide w-auto md:w-[12%] hidden lg:table-cell">Time</th>
+                            <th className="py-5 px-4 md:px-6 text-[12px] md:text-[13px] font-bold text-gray-500 uppercase tracking-wide w-auto md:w-[13%] text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -247,38 +247,38 @@ const LeaderboardTable = memo(({ tableUsers }) => {
                             const initials = user.name.split(' ').map(n => n[0]).join('');
                             return (
                                 <tr key={idx} className={idx !== tableUsers.length - 1 ? 'border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer' : 'hover:bg-gray-50/50 transition-colors cursor-pointer'}>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 md:px-6">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0" style={{ backgroundColor: user.color }}>
                                                 {initials}
                                             </div>
-                                            <span className="font-bold text-gray-900 truncate">{user.name}</span>
+                                            <span className="font-bold text-gray-900 truncate max-w-[80px] md:max-w-none">{user.name}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 md:px-6 hidden sm:table-cell">
                                         <div className="flex items-center gap-2">
                                             <user.TaskIcon size={16} style={{ color: user.color }} strokeWidth={2.5} className="shrink-0" />
                                             <span className="font-semibold text-gray-600 truncate">{user.task}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">{user.duration}</td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 md:px-6 font-bold text-gray-900 whitespace-nowrap hidden md:table-cell">{user.duration}</td>
+                                    <td className="py-4 px-4 md:px-6 hidden md:table-cell">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                                             <Flame size={15} fill="#3B82F6" className="text-blue-500 shrink-0" />
                                             <span className="font-bold text-gray-900">{user.streak}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 font-semibold text-gray-400 whitespace-nowrap hidden md:table-cell">{user.time}</td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 md:px-6 font-semibold text-gray-400 whitespace-nowrap hidden lg:table-cell">{user.time}</td>
+                                    <td className="py-4 px-4 md:px-6">
                                         <div className="flex justify-end">
-                                            <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${
+                                            <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] md:text-[11px] font-bold border whitespace-nowrap ${
                                                 user.status === 'Completed' 
                                                 ? 'bg-green-50 text-green-600 border-green-100/50' 
                                                 : user.status === 'In Progress' 
                                                 ? 'bg-blue-50 text-blue-600 border-blue-100/50'
                                                 : 'bg-orange-50 text-orange-600 border-orange-100/50'
                                             }`}>
-                                                {user.status === 'Completed' ? <CheckCircle2 size={13} strokeWidth={3} /> : user.status === 'In Progress' ? <Clock size={13} strokeWidth={3} /> : <AlertCircle size={13} strokeWidth={3} />} {user.status}
+                                                {user.status === 'Completed' ? <CheckCircle2 size={13} strokeWidth={3} /> : user.status === 'In Progress' ? <Clock size={13} strokeWidth={3} /> : <AlertCircle size={13} strokeWidth={3} />} <span className="hidden sm:inline">{user.status}</span>
                                             </div>
                                         </div>
                                     </td>

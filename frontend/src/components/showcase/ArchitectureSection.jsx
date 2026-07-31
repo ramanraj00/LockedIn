@@ -75,7 +75,7 @@ const ArchitectureSection = () => {
 
               {/* Node 1: Signup */}
               <div className="flex flex-col items-center relative group">
-                <span className="absolute -top-10 font-medium text-[#2C3E50] text-base tracking-wide whitespace-nowrap">Signup</span>
+                <span className="absolute -top-10 font-medium text-[#2C3E50] text-[10px] sm:text-xs md:text-base tracking-wide whitespace-nowrap">Signup</span>
                 <div className="relative w-6 h-6 flex items-center justify-center bg-[#FAF9F6] rounded-full z-10">
                   <div className="absolute inset-0 border-[1.5px] border-[#5C9EAD] rounded-full group-hover:scale-125 transition-transform duration-300"></div>
                   <motion.svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-[#5C9EAD] absolute z-20" animate={{ scale: [0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 0] }} transition={{ duration: 5, repeat: Infinity, times: [0, 0.05, 0.1, 0.95, 1] }}>
@@ -86,7 +86,7 @@ const ArchitectureSection = () => {
 
               {/* Node 2: Secure Your Vault */}
               <div className="flex flex-col items-center relative group">
-                <span className="absolute -bottom-12 font-medium text-[#2C3E50] text-base tracking-wide whitespace-nowrap">Secure Your Vault</span>
+                <span className="absolute -bottom-10 md:-bottom-12 font-medium text-[#2C3E50] text-[10px] sm:text-xs md:text-base text-center w-20 md:w-auto whitespace-normal md:whitespace-nowrap leading-tight tracking-wide">Secure Your Vault</span>
                 <div className="relative w-6 h-6 bg-[#FAF9F6] border-[2.5px] border-[#5C9EAD] rounded-full flex items-center justify-center z-10 group-hover:bg-[#5C9EAD]/10 transition-colors duration-300">
                   <motion.svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-[#5C9EAD] absolute z-20" animate={{ scale: [0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 0] }} transition={{ duration: 5, repeat: Infinity, times: [0, 0.35, 0.45, 0.95, 1] }}>
                     <polyline points="20 6 9 17 4 12" />
@@ -96,7 +96,7 @@ const ArchitectureSection = () => {
 
               {/* Node 3: Start Using LockedIn */}
               <div className="flex flex-col items-center relative group">
-                <span className="absolute -top-12 font-medium text-[#2C3E50] text-base tracking-wide whitespace-nowrap">Start Using LockedIn</span>
+                <span className="absolute -top-10 md:-top-12 font-medium text-[#2C3E50] text-[10px] sm:text-xs md:text-base text-center w-24 md:w-auto whitespace-normal md:whitespace-nowrap leading-tight tracking-wide">Start Using LockedIn</span>
                 <div className="relative w-12 h-12 flex items-center justify-center bg-[#FAF9F6] rounded-full z-10">
                   <div className="absolute inset-0 border-[1.5px] border-[#8CA8B1]/40 rounded-full group-hover:scale-110 transition-transform duration-300"></div>
                   <div className="absolute w-7 h-7 border-[1.5px] border-[#8CA8B1] rounded-full flex items-center justify-center">
