@@ -140,8 +140,10 @@ function Navbar() {
         {/* Mobile Hamburger Trigger */}
         <button
           onClick={() => setIsOpen(true)}
-          className={`md:hidden text-zinc-400 hover:text-white transition-all duration-300 p-2 rounded-full pointer-events-auto ${
-            scrolled ? "bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]" : ""
+          className={`md:hidden transition-all duration-300 p-2.5 rounded-full pointer-events-auto ${
+            scrolled 
+              ? "bg-white/90 text-gray-800 backdrop-blur-md border border-gray-200 shadow-sm hover:bg-gray-50" 
+              : "text-zinc-200 hover:text-white bg-transparent"
           }`}
         >
           <Menu size={24} />

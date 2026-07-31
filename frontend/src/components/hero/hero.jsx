@@ -49,7 +49,7 @@ const Hero = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ duration: 1.8, delay: 0.8, ease: "easeInOut" }}
-          className="px-8 py-4 rounded-full bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/40 text-slate-200 font-bold tracking-widest text-sm backdrop-blur-md transition-colors duration-300 shadow-[0_0_30px_rgba(37,99,235,0.3)]"
+          className="px-6 py-3 md:px-8 md:py-4 rounded-full bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/40 text-slate-200 font-bold tracking-wider md:tracking-widest text-[11px] sm:text-xs md:text-sm backdrop-blur-md transition-colors duration-300 shadow-[0_0_30px_rgba(37,99,235,0.3)] whitespace-nowrap"
         >
           START BUILDING BETTER DAYS
         </motion.button>
