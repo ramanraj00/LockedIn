@@ -139,42 +139,52 @@ const FeatureFlowSection = () => {
           </div>
         </div>
 
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-10">
-          {features.map((feature, index) => (
-            <div key={index} className="relative h-full">
-              
-              <div className="bg-white border border-[#E5E3DB] rounded-[24px] p-6 shadow-sm flex flex-col justify-between gap-3 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all h-full">
+        {/* Alternating Timeline Feature Flow */}
+        <div className="flex flex-col gap-6 md:gap-0 w-full relative z-10 pb-12 mt-8">
+          
+          {/* Center Vertical Dashed Line (Desktop Only) */}
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px border-l-2 border-dashed border-[#5C9EAD] -translate-x-1/2 z-0"></div>
+
+          {features.map((feature, index) => {
+            const isEven = index % 2 === 0;
+            return (
+              <div key={index} className={`relative flex w-full ${isEven ? 'md:justify-start' : 'md:justify-end'} ${index > 0 ? 'md:-mt-16 lg:-mt-24' : ''} z-10`}>
                 
-                <h4 className="font-bold text-black text-[22px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
-                  {feature.title}
-                </h4>
+                {/* Horizontal Connector Line (Desktop Only) */}
+                <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-[5%] border-t-2 border-dashed border-[#5C9EAD] ${isEven ? 'right-[50%]' : 'left-[50%]'}`}></div>
                 
-                <div className="flex justify-between items-center gap-4 mt-2 h-full">
-                  <p className="text-zinc-500 text-[14px] md:text-[15px] font-medium leading-relaxed w-[45%]">
-                    {feature.desc}
-                  </p>
+                <div className="w-full md:w-[45%] bg-white border border-[#E5E3DB] rounded-[24px] p-6 shadow-sm flex flex-col justify-between gap-3 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
                   
-                  <div className="w-[50%] max-w-[240px] h-[100px] sm:h-[130px] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden shrink-0">
-                    {index === 0 ? (
-                      <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
-                        <source src="/1st.webm" type="video/webm" />
-                      </video>
-                    ) : index === 1 ? (
-                      <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
-                        <source src="/2nd.webm" type="video/webm" />
-                      </video>
-                    ) : index === 2 ? (
-                      <LottieWrapper animationData={lottieData} />
-                    ) : (
-                      <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
-                    )}
+                  <h4 className="font-bold text-black text-[22px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                    {feature.title}
+                  </h4>
+                  
+                  <div className="flex justify-between items-center gap-4 mt-2">
+                    <p className="text-zinc-500 text-[14px] md:text-[15px] font-medium leading-relaxed w-[45%]">
+                      {feature.desc}
+                    </p>
+                    
+                    <div className="w-[50%] max-w-[240px] h-[100px] sm:h-[130px] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden shrink-0">
+                      {index === 0 ? (
+                        <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
+                          <source src="/1st.webm" type="video/webm" />
+                        </video>
+                      ) : index === 1 ? (
+                        <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
+                          <source src="/2nd.webm" type="video/webm" />
+                        </video>
+                      ) : index === 2 ? (
+                        <LottieWrapper animationData={lottieData} />
+                      ) : (
+                        <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
+                      )}
+                    </div>
                   </div>
+                  
                 </div>
-                
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
       </div>
