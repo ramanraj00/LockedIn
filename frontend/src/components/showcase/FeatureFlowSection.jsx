@@ -142,15 +142,20 @@ const FeatureFlowSection = () => {
                 </div>
               )}
               
-              <div className="bg-white border border-[#E5E3DB] rounded-[24px] p-6 md:p-8 shadow-sm relative overflow-hidden group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all min-h-[160px] md:min-h-[180px] flex flex-col justify-start">
+              <div className="bg-white border border-[#E5E3DB] rounded-[24px] p-6 shadow-sm flex flex-col gap-3 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
                 
-                <div className="w-[65%] sm:w-[75%] z-10">
-                  <h4 className="font-bold text-gray-900 text-lg md:text-xl tracking-tight whitespace-nowrap mb-2">{feature.title}</h4>
-                  <p className="text-zinc-500 text-[13px] md:text-sm font-medium line-clamp-3 md:line-clamp-4 leading-relaxed">{feature.desc}</p>
-                </div>
+                <h4 className="font-bold text-black text-[22px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                  {feature.title}
+                </h4>
                 
-                <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 w-20 h-16 md:w-24 md:h-20 bg-gradient-to-br from-[#E8F3F5] to-[#D1E6EB] rounded-2xl flex items-center justify-center shadow-sm group-hover:-translate-y-1 group-hover:shadow-md transition-all duration-300">
-                  <feature.icon size={32} className="text-[#5C9EAD]" strokeWidth={2} />
+                <div className="flex justify-between items-start gap-4">
+                  <p className="text-zinc-500 text-[14px] font-medium leading-relaxed line-clamp-3 w-[60%]">
+                    {feature.desc}
+                  </p>
+                  
+                  <div className="w-[35%] max-w-[100px] aspect-video bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300">
+                    <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
+                  </div>
                 </div>
                 
               </div>
