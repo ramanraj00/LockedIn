@@ -1,5 +1,5 @@
 import React from 'react';
-import Lottie from 'lottie-react';
+import { useLottie } from 'lottie-react';
 import lottieData from '../../assets/3rd.json';
 import { motion } from 'framer-motion';
 import { 
@@ -40,6 +40,17 @@ const features = [
     desc: 'Grow streaks, earn achievements, and improve a little every day.',
     icon: Target
   }
+];
+
+const LottieWrapper = ({ animationData }) => {
+  const options = {
+    animationData,
+    loop: true,
+  };
+  const { View } = useLottie(options, { className: "w-full h-full object-cover" });
+  return View;
+};
+
 const FeatureFlowSection = () => {
   return (
     <div className="w-screen min-h-screen md:h-screen bg-[#FAF9F6] flex flex-col justify-start pt-20 md:pt-[14vh] pb-0 md:pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
@@ -163,7 +174,7 @@ const FeatureFlowSection = () => {
                         <source src="/2nd.webm" type="video/webm" />
                       </video>
                     ) : index === 2 ? (
-                      <Lottie animationData={lottieData} loop={true} className="w-full h-full object-cover" />
+                      <LottieWrapper animationData={lottieData} />
                     ) : (
                       <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
                     )}
