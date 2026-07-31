@@ -231,7 +231,7 @@ const LeaderboardTable = memo(({ tableUsers }) => {
     return (
         <div className="w-full bg-white rounded-[24px] border border-gray-100 shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse table-fixed min-w-[650px]">
+                <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                         <tr className="border-b border-gray-50">
                             <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[22%]">User</th>
