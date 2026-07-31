@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Lottie from 'lottie-react';
+import lottieData from '../../assets/3rd.json';
 import { motion } from 'framer-motion';
 import { 
   Flame, Clock, Grid, User, Users, Trophy, BarChart2, Settings,
@@ -39,18 +40,7 @@ const features = [
     desc: 'Grow streaks, earn achievements, and improve a little every day.',
     icon: Target
   }
-];
-
 const FeatureFlowSection = () => {
-  const [lottieData, setLottieData] = useState(null);
-
-  useEffect(() => {
-    fetch('/3rd.json')
-      .then(res => res.json())
-      .then(data => setLottieData(data))
-      .catch(err => console.error("Error loading Lottie animation:", err));
-  }, []);
-
   return (
     <div className="w-screen min-h-screen md:h-screen bg-[#FAF9F6] flex flex-col justify-start pt-20 md:pt-[14vh] pb-0 md:pb-16 relative overflow-visible shrink-0" id="feature-flow-section">
       {/* Applying scale to fit screen and ensure it clears the top nav */}
@@ -165,14 +155,14 @@ const FeatureFlowSection = () => {
                   
                   <div className="w-[35%] max-w-[100px] aspect-video bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                     {index === 0 ? (
-                      <video autoPlay muted loop playsInline className="w-full h-full object-cover">
+                      <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
                         <source src="/1st.webm" type="video/webm" />
                       </video>
                     ) : index === 1 ? (
-                      <video autoPlay muted loop playsInline className="w-full h-full object-cover">
+                      <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
                         <source src="/2nd.webm" type="video/webm" />
                       </video>
-                    ) : index === 2 && lottieData ? (
+                    ) : index === 2 ? (
                       <Lottie animationData={lottieData} loop={true} className="w-full h-full object-cover" />
                     ) : (
                       <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
