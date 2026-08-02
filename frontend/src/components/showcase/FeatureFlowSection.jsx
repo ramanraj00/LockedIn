@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useLottie } from 'lottie-react';
 import lottieData from '../../assets/3rd.json';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   Flame, Clock, Grid, User, Users, Trophy, BarChart2, Settings,
   Calendar, Activity, Target, TrendingUp, CheckCircle2 
@@ -43,19 +43,142 @@ const features = [
 ];
 
 const LottieWrapper = ({ animationData }) => {
-  const options = {
-    animationData,
+  const { View } = useLottie({
+    animationData: animationData,
     loop: true,
-  };
-  const { View } = useLottie(options, { className: "w-full h-full object-cover" });
+    autoplay: true,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  });
   return View;
 };
 
-const FeatureFlowSection = () => {
+const FeatureCard = ({ feature, index, isEven, scrollDir, onBranchActive }) => {
+  const ref = useRef(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["center center", "end center"] 
+  });
+
+  const leftPos = useTransform(scrollYProgress, [0, 1], ["100%", "0%"]);
+  const rightPos = useTransform(scrollYProgress, [0, 1], ["100%", "0%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.05, 0.95, 1], [0, 1, 1, 0]);
+
+  useEffect(() => {
+    return scrollYProgress.onChange((latest) => {
+      const isActive = latest > 0.05 && latest < 0.95;
+      onBranchActive(index, isActive);
+    });
+  }, [scrollYProgress, index, onBranchActive]);
+
   return (
-    <div className="w-screen min-h-screen bg-[#FAF9F6] flex flex-col justify-start pt-8 md:pt-[10vh] pb-12 relative overflow-hidden shrink-0" id="feature-flow-section">
+    <div ref={ref} className={`relative flex w-full ${isEven ? 'md:justify-start' : 'md:justify-end'} ${index > 0 ? 'md:-mt-12 lg:-mt-14' : ''} z-10`}>
+      
+      {/* Horizontal Connector Line (Desktop Only) */}
+      <div 
+        className="hidden md:block absolute top-1/2 -translate-y-1/2 border-t-2 border-dashed border-[#5C9EAD]"
+        style={{
+          left: isEven ? '45%' : '49.5%',
+          right: isEven ? '49.5%' : '45%',
+          zIndex: -1
+        }}
+      >
+         {/* Branching Animated Scroll Arrow */}
+         <motion.div
+           style={{
+             position: 'absolute',
+             top: '50%',
+             translateY: '-50%',
+             left: isEven ? leftPos : 'auto',
+             right: !isEven ? rightPos : 'auto',
+             opacity: opacity,
+           }}
+           className="z-20 flex items-center justify-center bg-[#FAF9F6] px-1"
+         >
+           <motion.div
+             animate={{ 
+               opacity: scrollDir === 'up' ? 0 : 1,
+               rotate: isEven 
+                 ? (scrollDir === 'down' ? 90 : -90)
+                 : (scrollDir === 'down' ? -90 : 90)
+             }}
+             transition={{ duration: 0.2 }}
+           >
+             <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[12px] border-t-[#5C9EAD]"></div>
+           </motion.div>
+         </motion.div>
+      </div>
+      
+      <div className="w-full md:w-[45%] bg-white border border-[#E5E3DB] rounded-[24px] p-4 lg:p-5 shadow-sm flex flex-col justify-between gap-2 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
+        
+        <h4 className="font-bold text-black text-[20px] lg:text-[22px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
+          {feature.title}
+        </h4>
+        
+        <div className="flex justify-between items-center gap-4 mt-1">
+          <p className="text-zinc-500 text-[13px] lg:text-[14px] font-medium leading-relaxed w-[45%]">
+            {feature.desc}
+          </p>
+          
+          <div className="w-[50%] max-w-[240px] h-[90px] sm:h-[110px] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden shrink-0">
+            {index === 0 ? (
+              <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
+                <source src="/1st.webm" type="video/webm" />
+              </video>
+            ) : index === 1 ? (
+              <LottieWrapper animationData={lottieData} />
+            ) : index === 2 ? (
+              <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
+                <source src="/2nd.webm" type="video/webm" />
+              </video>
+            ) : index === 3 ? (
+              <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
+                <source src="/4.webm" type="video/webm" />
+              </video>
+            ) : (
+              <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
+            )}
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  );
+};
+
+const FeatureFlowSection = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress, scrollY } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end center"]
+  });
+
+  const [scrollDir, setScrollDir] = useState('down');
+  const [activeBranches, setActiveBranches] = useState({});
+  
+  const handleBranchActive = React.useCallback((index, isActive) => {
+    setActiveBranches(prev => {
+      if (prev[index] === isActive) return prev;
+      return { ...prev, [index]: isActive };
+    });
+  }, []);
+
+  useEffect(() => {
+    return scrollY.onChange((latest) => {
+      const prev = scrollY.getPrevious();
+      if (latest > prev) setScrollDir('down');
+      else if (latest < prev) setScrollDir('up');
+    });
+  }, [scrollY]);
+
+  const arrowTop = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  return (
+    <div className="w-screen min-h-screen bg-[#FAF9F6] flex flex-col justify-start pt-20 md:pt-[10vh] lg:pt-[12vh] pb-8 relative overflow-hidden shrink-0" id="feature-flow-section">
       {/* Applying scale to fit screen and ensure it clears the top nav */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 w-full flex flex-col items-center origin-top">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 w-full flex flex-col items-center origin-top scale-95 md:scale-[0.75] lg:scale-[0.80]">
         
         {/* Top Icons Row */}
         <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-between gap-2 md:gap-0 w-full max-w-3xl mb-4 relative z-10">
@@ -135,58 +258,41 @@ const FeatureFlowSection = () => {
              <svg width="2" height="32" className="absolute top-0 left-0">
                <line x1="1" y1="0" x2="1" y2="32" stroke="#5C9EAD" strokeWidth="2" strokeDasharray="4 4" />
              </svg>
-             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-[#5C9EAD]"></div>
           </div>
         </div>
 
         {/* Alternating Timeline Feature Flow */}
-        <div className="flex flex-col gap-6 md:gap-0 w-full relative z-10 pb-4 mt-4">
+        <div ref={containerRef} className="flex flex-col gap-6 md:gap-0 w-full relative z-10 pb-4 mt-4">
           
           {/* Center Vertical Dashed Line (Desktop Only) */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px border-l-2 border-dashed border-[#5C9EAD] -translate-x-1/2 z-0"></div>
+          <div className="hidden md:block absolute left-1/2 top-0 -bottom-32 w-px border-l-2 border-dashed border-[#5C9EAD] -translate-x-1/2 z-0">
+            {/* Upward Scroll Arrow Only */}
+            <motion.div 
+              style={{ top: arrowTop }}
+              animate={{ opacity: scrollDir === 'up' ? 1 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute left-1/2 -translate-x-1/2 -ml-[1px] z-20 flex items-center justify-center bg-[#FAF9F6] py-1.5"
+            >
+               <motion.div
+                 animate={{ rotate: scrollDir === 'down' ? 0 : 180 }}
+                 transition={{ duration: 0.3 }}
+               >
+                 <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[12px] border-t-[#5C9EAD]"></div>
+               </motion.div>
+            </motion.div>
+          </div>
 
           {features.map((feature, index) => {
             const isEven = index % 2 === 0;
             return (
-              <div key={index} className={`relative flex w-full ${isEven ? 'md:justify-start' : 'md:justify-end'} ${index > 0 ? 'md:-mt-20 lg:-mt-28' : ''} z-10`}>
-                
-                {/* Horizontal Connector Line (Desktop Only) */}
-                <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-[5%] border-t-2 border-dashed border-[#5C9EAD] ${isEven ? 'right-[50%]' : 'left-[50%]'}`}></div>
-                
-                <div className="w-full md:w-[45%] bg-white border border-[#E5E3DB] rounded-[24px] p-4 lg:p-5 shadow-sm flex flex-col justify-between gap-2 group hover:shadow-md hover:border-[#5C9EAD]/30 transition-all">
-                  
-                  <h4 className="font-bold text-black text-[20px] lg:text-[22px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
-                    {feature.title}
-                  </h4>
-                  
-                  <div className="flex justify-between items-center gap-4 mt-1">
-                    <p className="text-zinc-500 text-[13px] lg:text-[14px] font-medium leading-relaxed w-[45%]">
-                      {feature.desc}
-                    </p>
-                    
-                    <div className="w-[50%] max-w-[240px] h-[90px] sm:h-[110px] bg-gradient-to-br from-[#E8F3F5] to-[#CBE4E9] rounded-2xl flex items-center justify-center shadow-inner group-hover:-translate-y-1 transition-all duration-300 overflow-hidden shrink-0">
-                      {index === 0 ? (
-                        <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
-                          <source src="/1st.webm" type="video/webm" />
-                        </video>
-                      ) : index === 1 ? (
-                        <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
-                          <source src="/2nd.webm" type="video/webm" />
-                        </video>
-                      ) : index === 2 ? (
-                        <LottieWrapper animationData={lottieData} />
-                      ) : index === 3 ? (
-                        <video autoPlay muted loop playsInline webkit-playsinline="true" className="w-full h-full object-cover">
-                          <source src="/4.webm" type="video/webm" />
-                        </video>
-                      ) : (
-                        <feature.icon size={36} className="text-[#5C9EAD]" strokeWidth={1.5} />
-                      )}
-                    </div>
-                  </div>
-                  
-                </div>
-              </div>
+              <FeatureCard 
+                key={index} 
+                feature={feature} 
+                index={index} 
+                isEven={isEven} 
+                scrollDir={scrollDir} 
+                onBranchActive={handleBranchActive}
+              />
             );
           })}
         </div>

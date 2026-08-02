@@ -56,7 +56,7 @@ const HorizontalScrollSections = () => {
           <div className="w-screen h-full shrink-0 flex items-center justify-center relative">
             <ProgressSection />
           </div>
-          <div className="w-screen h-full shrink-0 flex items-start justify-center relative overflow-y-auto overflow-x-hidden">
+          <div className="w-screen h-full shrink-0 flex items-start justify-center relative">
             <FeatureFlowSection />
           </div>
         </motion.div>

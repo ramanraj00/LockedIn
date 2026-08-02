@@ -231,15 +231,15 @@ const LeaderboardTable = memo(({ tableUsers }) => {
     return (
         <div className="w-full bg-white rounded-[24px] border border-gray-100 shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+                <table className="w-full text-left border-collapse min-w-[700px] lg:min-w-full lg:table-fixed">
                     <thead>
                         <tr className="border-b border-gray-50">
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[22%]">User</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[25%]">Task</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[15%]">Duration</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%]">Streak</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[12%] hidden md:table-cell">Time</th>
-                            <th className="py-5 px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%] text-right">Status</th>
+                            <th className="py-5 px-4 lg:px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[22%]">User</th>
+                            <th className="py-5 px-4 lg:px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[25%]">Task</th>
+                            <th className="py-5 px-4 lg:px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[15%]">Duration</th>
+                            <th className="py-5 px-4 lg:px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%]">Streak</th>
+                            <th className="py-5 px-4 lg:px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[12%] hidden md:table-cell">Time</th>
+                            <th className="py-5 px-4 lg:px-6 text-[13px] font-bold text-gray-500 uppercase tracking-wide w-[13%] text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -247,7 +247,7 @@ const LeaderboardTable = memo(({ tableUsers }) => {
                             const initials = user.name.split(' ').map(n => n[0]).join('');
                             return (
                                 <tr key={idx} className={idx !== tableUsers.length - 1 ? 'border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer' : 'hover:bg-gray-50/50 transition-colors cursor-pointer'}>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 lg:px-6">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0" style={{ backgroundColor: user.color }}>
                                                 {initials}
@@ -255,21 +255,21 @@ const LeaderboardTable = memo(({ tableUsers }) => {
                                             <span className="font-bold text-gray-900 truncate">{user.name}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 lg:px-6">
                                         <div className="flex items-center gap-2">
                                             <user.TaskIcon size={16} style={{ color: user.color }} strokeWidth={2.5} className="shrink-0" />
                                             <span className="font-semibold text-gray-600 truncate">{user.task}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">{user.duration}</td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 lg:px-6 font-bold text-gray-900 whitespace-nowrap">{user.duration}</td>
+                                    <td className="py-4 px-4 lg:px-6">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                                             <Flame size={15} fill="#3B82F6" className="text-blue-500 shrink-0" />
                                             <span className="font-bold text-gray-900">{user.streak}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 font-semibold text-gray-400 whitespace-nowrap hidden md:table-cell">{user.time}</td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-4 lg:px-6 font-semibold text-gray-400 whitespace-nowrap hidden md:table-cell">{user.time}</td>
+                                    <td className="py-4 px-4 lg:px-6">
                                         <div className="flex justify-end">
                                             <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${
                                                 user.status === 'Completed' 
@@ -313,9 +313,9 @@ const LiveFocusSection = () => {
   // Custom mock data mimicking exactly the screenshot provided by user
   const tableUsers = [
         { id: '4', name: 'Butterfly', task: 'Flutter App Development', TaskIcon: Monitor, color: '#A855F7', duration: '2h 15m', streak: '42 days', time: 'Just now', status: 'In Progress' },
-        { id: '5', name: 'grim', task: 'Backend System Architecture', TaskIcon: BarChart2, color: '#3B82F6', duration: '4h 30m', streak: '112 days', time: '10m ago', status: 'Completed' },
+        { id: '5', name: 'Elon bucks', task: 'Backend System Architecture', TaskIcon: BarChart2, color: '#3B82F6', duration: '4h 30m', streak: '112 days', time: '10m ago', status: 'Completed' },
         { id: '6', name: 'Shane Levine', task: 'Reading Philosophy', TaskIcon: BookOpen, color: '#F97316', duration: '1h 45m', streak: '65 days', time: '5m ago', status: 'Paused' },
-        { id: '7', name: 'Christopher Nolan', task: 'Script Writing', TaskIcon: FileText, color: '#10B981', duration: '3h 20m', streak: '88 days', time: '1h 30m ago', status: 'Completed' },
+        { id: '7', name: 'Michael', task: 'Script Writing', TaskIcon: FileText, color: '#10B981', duration: '3h 20m', streak: '88 days', time: '1h 30m ago', status: 'Completed' },
   ];
 
   return (
