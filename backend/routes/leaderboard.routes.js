@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { getCache, setCache } = require("../utils/cache");
 
 const User = require("../models/users");
 const dailysessionmodel = require("../models/daysession");
@@ -8,7 +9,15 @@ const taskmodel = require("../models/tasks");
 // GET /api/leaderboard
 router.get("/", async (req, res) => {
     try {
-        const users = await User.find({});
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 0;
+        const cacheKey = "leaderboard_full";
+
+        let finalData = getCache(cacheKey);
+
+        if (!finalData) {
+            // Fetch only required fields to save RAM, excluding heavy crypto fields
+            const users = await User.find({}).select("name imageUrl avatar picture badges createdAt").lean();
         
         // 🔥 FIX 1: Exact Midnight ke bajaye poore din ki Time Range banayenge
         const startOfDay = new Date();
@@ -20,11 +29,11 @@ router.get("/", async (req, res) => {
         const userIds = users.map(u => u._id);
         const userIdsStr = users.map(u => u._id.toString());
 
-        // 1. Bulk Fetch Today's Sessions
+        // 1. Bulk Fetch Today's Sessions (Projected)
         const todaySessions = await dailysessionmodel.find({ 
             userId: { $in: userIds }, 
             date: { $gte: startOfDay, $lte: endOfDay } 
-        }).lean();
+        }).select("userId totalDaytime").lean();
         
         const xpByUserId = {};
         todaySessions.forEach(s => {
@@ -41,8 +50,11 @@ router.get("/", async (req, res) => {
             if(t.daySessionId) tasksSessionIdsByUserId[uid].add(t.daySessionId.toString());
         });
 
-        // 3. Bulk Fetch ALL Study Days for Streak Calculation
-        const allStudyDays = await dailysessionmodel.find({ userId: { $in: userIds } }).sort({ date: 1 }).lean();
+        // 3. Bulk Fetch ALL Study Days for Streak Calculation (Projected)
+        const allStudyDays = await dailysessionmodel.find({ userId: { $in: userIds } })
+            .select("userId date totalDaytime")
+            .sort({ date: 1 })
+            .lean();
         const studyDaysByUserId = {};
         
         allStudyDays.forEach(s => {
@@ -132,7 +144,7 @@ router.get("/", async (req, res) => {
         // ==========================================
         // 4. Send Clean Data to Frontend
         // ==========================================
-        const finalData = leaderboardData.map(u => ({
+        finalData = leaderboardData.map(u => ({
             id: u.id,
             name: u.name,
             avatar: u.avatar,
@@ -141,7 +153,17 @@ router.get("/", async (req, res) => {
             badges: u.badges
         }));
 
-        res.status(200).json(finalData);
+        setCache(cacheKey, finalData);
+      } // End if (!finalData)
+
+      let paginatedData = finalData;
+      if (limit > 0) {
+          const startIndex = (page - 1) * limit;
+          const endIndex = page * limit;
+          paginatedData = finalData.slice(startIndex, endIndex);
+      }
+
+      res.status(200).json(paginatedData);
     } catch (err) {
         console.error("Leaderboard Error:", err);
         res.status(500).json({ message: "Something went wrong", error: err.message });

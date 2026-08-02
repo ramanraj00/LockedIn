@@ -1,6 +1,7 @@
 const express = require("express");
 const timermodel = require("../models/studysession");
 const dailysessionmodel = require("../models/daysession");
+const { invalidateCache } = require("../utils/cache");
 const router = express.Router();
 
 // 1. WORKSPACE SESSION START
@@ -127,6 +128,7 @@ router.patch("/day/:id/complete", async (req, res) => {
         await dailysessionmodel.updateOne({ _id: req.params.id, userId }, { $set: { status: "completed" } });
     }
 
+    invalidateCache("leaderboard_full");
     res.status(200).json({ message: "Day session completed" });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
@@ -158,6 +160,7 @@ router.delete("/session/:id", async (req, res) => {
            { _id: session.daySessionId },
            { $inc: { totalDaytime: -session.duration } }
        );
+       invalidateCache("leaderboard_full");
     }
     
     res.status(200).json({ message: "Session deleted successfully" });
@@ -219,6 +222,8 @@ router.patch("/session/:id/pause", async (req, res) => {
       { _id: session.daySessionId },
       { $inc: { totalDaytime: duration } }
     );
+    
+    invalidateCache("leaderboard_full");
 
     res.status(200).json({ message: "Session paused", session });
   } catch (err) {
@@ -246,6 +251,8 @@ router.delete("/day/:id/sessions/reset", async (req, res) => {
     );
 
     if (!daySession) return res.status(404).json({ message: "Day session not found" });
+    
+    invalidateCache("leaderboard_full");
     res.status(200).json({ message: "Timer reset successfully", daySession });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
@@ -269,20 +276,41 @@ router.post("/stopwatch/start", async (req, res) => {
     }
 
     const runningSessions = await timermodel.find({ userId, status: "running" });
-    for (let r of runningSessions) {
-        const d = Math.floor((new Date() - r.startTime) / 1000);
-        
-        // 🔥 FIX: Only add to stopwatchTime if this session was created by Stopwatch!
-        const incQuery = { totalDaytime: d };
-        if (r.source === "stopwatch") {
-            incQuery.stopwatchTime = d;
+    
+    if (runningSessions.length > 0) {
+        const dailySessionBulkOps = [];
+        const timerSessionBulkOps = [];
+
+        for (let r of runningSessions) {
+            const d = Math.floor((new Date() - r.startTime) / 1000);
+            
+            // 🔥 FIX: Only add to stopwatchTime if this session was created by Stopwatch!
+            const incQuery = { totalDaytime: d };
+            if (r.source === "stopwatch") {
+                incQuery.stopwatchTime = d;
+            }
+
+            dailySessionBulkOps.push({
+                updateOne: {
+                    filter: { _id: r.daySessionId },
+                    update: { $inc: incQuery }
+                }
+            });
+
+            timerSessionBulkOps.push({
+                deleteOne: {
+                    filter: { _id: r._id }
+                }
+            });
         }
 
-        await dailysessionmodel.updateOne(
-            { _id: r.daySessionId }, 
-            { $inc: incQuery } 
-        );
-        await timermodel.deleteOne({ _id: r._id });
+        if (dailySessionBulkOps.length > 0) {
+            await dailysessionmodel.bulkWrite(dailySessionBulkOps);
+            invalidateCache("leaderboard_full");
+        }
+        if (timerSessionBulkOps.length > 0) {
+            await timermodel.bulkWrite(timerSessionBulkOps);
+        }
     }
 
     const session = await timermodel.create({
@@ -338,7 +366,10 @@ router.post("/stopwatch/stop", async (req, res) => {
         const pausedSessions = await timermodel.find({ userId, status: "paused", source: "stopwatch" });
         for (let p of pausedSessions) {
             totalDurationToSave += (p.duration || 0);
-            await timermodel.deleteOne({ _id: p._id }); 
+        }
+
+        if (pausedSessions.length > 0) {
+            await timermodel.deleteMany({ userId, status: "paused", source: "stopwatch" });
         }
 
         if (totalDurationToSave > 0) {
@@ -352,6 +383,7 @@ router.post("/stopwatch/stop", async (req, res) => {
                     } 
                 }
             );
+            invalidateCache("leaderboard_full");
         }
     }
 

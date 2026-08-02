@@ -294,7 +294,7 @@ exports.getProfile = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;
         if (!userId) return res.status(401).json({ success: false, message: "Unauthorized: User ID missing" });
-        const user = await usermodel.findById(userId).select("-password"); 
+        const user = await usermodel.findById(userId).select("-password").lean(); 
         if (!user) return res.status(404).json({ success: false, message: "User not found" });
         res.status(200).json({ success: true, user });
     } catch (error) {
@@ -521,7 +521,7 @@ exports.getPublicProfile = async (req, res) => {
         }
 
         // Yahan maine 'usermodel' correct kar diya hai!
-        const user = await usermodel.findById(userId).select('-password'); 
+        const user = await usermodel.findById(userId).select('-password').lean(); 
         
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -564,7 +564,7 @@ exports.searchUsers = async (req, res) => {
         // Name ya Username me kuch bhi match hoga toh return karega (Max 5 users)
         const users = await usermodel.find({
             $or: [{ username: regex }, { name: regex }]
-        }).select('name username imageUrl avatar _id').limit(5);
+        }).select('name username imageUrl avatar _id').limit(5).lean();
         
         res.status(200).json({ success: true, users });
     } catch (error) {
@@ -613,7 +613,8 @@ exports.getFollowData = async (req, res) => {
     try {
         const user = await usermodel.findById(req.params.id)
             .populate('followers', 'name username imageUrl')
-            .populate('following', 'name username imageUrl');
+            .populate('following', 'name username imageUrl')
+            .lean();
         if (!user) return res.status(404).json({ success: false });
         res.status(200).json({ success: true, followers: user.followers, following: user.following });
     } catch (error) {
@@ -627,7 +628,8 @@ exports.getNotifications = async (req, res) => {
         const userId = req.userId || (req.user && req.user.id) || req.user;
         const notifications = await Notification.find({ recipient: userId })
             .populate('sender', 'name username imageUrl')
-            .sort({ createdAt: -1 }).limit(20);
+            .sort({ createdAt: -1 }).limit(20)
+            .lean();
         res.status(200).json({ success: true, notifications });
     } catch (error) {
         res.status(500).json({ success: false });

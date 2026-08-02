@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { mongoose } = require("../database/db");
 
 const User = require("../models/users");
 const dailysessionmodel = require("../models/daysession");
@@ -11,7 +12,7 @@ const taskmodel = require("../models/tasks"); // 🔥 NEW: Task model import
 router.get("/dashboard/profile", async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -29,7 +30,8 @@ router.get("/dashboard/profile", async (req, res) => {
           { _id: { $in: daySessionsWithTasks } }
         ]
       })
-      .sort({ date: 1 });
+      .sort({ date: 1 })
+      .lean();
 
     // Core Stats
     let longestStreak = 0;
@@ -143,21 +145,24 @@ router.get("/dashboard/weekly-chart", async (req, res) => {
     sevenDaysAgo.setHours(0, 0, 0, 0);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
-    const sessions = await dailysessionmodel
-      .find({
-        userId,
-        date: { $gte: sevenDaysAgo },
-      })
-      .sort({ date: 1 });
+    const aggregation = await dailysessionmodel.aggregate([
+      { 
+        $match: { 
+          userId: new mongoose.Types.ObjectId(userId), 
+          date: { $gte: sevenDaysAgo } 
+        } 
+      },
+      { 
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          totalDaytime: { $sum: "$totalDaytime" }
+        }
+      }
+    ]);
 
     const sessionMap = new Map();
-
-    sessions.forEach((session) => {
-      const dateKey = session.date.toISOString().split("T")[0];
-      const hours = Number(session.totalDaytime) / 3600;
-      
-      const existingHours = sessionMap.get(dateKey) || 0;
-      sessionMap.set(dateKey, existingHours + hours);
+    aggregation.forEach((doc) => {
+      sessionMap.set(doc._id, Number(doc.totalDaytime) / 3600);
     });
 
     const weeklyData = [];
@@ -198,22 +203,24 @@ router.get("/dashboard/heatmap", async (req, res) => {
     oneYearAgo.setHours(0, 0, 0, 0);
     oneYearAgo.setDate(oneYearAgo.getDate() - 364);
 
-    const sessions = await dailysessionmodel
-      .find({
-        userId,
-        date: { $gte: oneYearAgo },
-      })
-      .select("date totalDaytime")
-      .sort({ date: 1 });
+    const aggregation = await dailysessionmodel.aggregate([
+      { 
+        $match: { 
+          userId: new mongoose.Types.ObjectId(userId), 
+          date: { $gte: oneYearAgo } 
+        } 
+      },
+      { 
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          totalDaytime: { $sum: "$totalDaytime" }
+        }
+      }
+    ]);
 
     const sessionMap = new Map();
-
-    sessions.forEach((session) => {
-      const dateKey = session.date.toISOString().split("T")[0];
-      const hours = Number(session.totalDaytime) / 3600;
-      
-      const existingHours = sessionMap.get(dateKey) || 0;
-      sessionMap.set(dateKey, existingHours + hours);
+    aggregation.forEach((doc) => {
+      sessionMap.set(doc._id, Number(doc.totalDaytime) / 3600);
     });
 
     const heatmapData = [];
