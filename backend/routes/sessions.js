@@ -173,7 +173,8 @@ router.delete("/session/:id", async (req, res) => {
 router.get("/day/all", async (req, res) => {
   try {
     const userId = req.user.id;
-    const daySessions = await dailysessionmodel.find({ userId }).sort({ date: -1 });
+    // Added createdAt: -1 to fallback sorting for boxes created on the same day
+    const daySessions = await dailysessionmodel.find({ userId }).sort({ date: -1, createdAt: -1 });
     res.status(200).json({ daySessions });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err.message });
@@ -197,6 +198,10 @@ router.post("/day/add", async (req, res) => {
 
     res.status(201).json({ message: "Workspace box created", daySession });
   } catch (err) {
+    if (err.code === 11000) {
+        // E11000 duplicate key error means they already have a box for today
+        return res.status(400).json({ message: "You can only create one workspace box per day!" });
+    }
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 });

@@ -571,7 +571,7 @@ exports.searchUsers = async (req, res) => {
         // Name ya Username me kuch bhi match hoga toh return karega (Max 5 users)
         const users = await usermodel.find({
             $or: [{ username: regex }, { name: regex }]
-        }).select('name username imageUrl avatar _id').limit(5).lean();
+        }).select('name username imageUrl avatar _id').limit(5);
         
         res.status(200).json({ success: true, users });
     } catch (error) {
@@ -620,8 +620,7 @@ exports.getFollowData = async (req, res) => {
     try {
         const user = await usermodel.findById(req.params.id)
             .populate('followers', 'name username imageUrl')
-            .populate('following', 'name username imageUrl')
-            .lean();
+            .populate('following', 'name username imageUrl');
         if (!user) return res.status(404).json({ success: false });
         res.status(200).json({ success: true, followers: user.followers, following: user.following });
     } catch (error) {
@@ -635,8 +634,7 @@ exports.getNotifications = async (req, res) => {
         const userId = req.userId || (req.user && req.user.id) || req.user;
         const notifications = await Notification.find({ recipient: userId })
             .populate('sender', 'name username imageUrl')
-            .sort({ createdAt: -1 }).limit(20)
-            .lean();
+            .sort({ createdAt: -1 }).limit(20);
         res.status(200).json({ success: true, notifications });
     } catch (error) {
         res.status(500).json({ success: false });

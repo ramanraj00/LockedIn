@@ -41,6 +41,7 @@ daysessionSchema.pre("findOneAndUpdate", function (next) {
   next();
 });
 
+// Restore unique rule as requested by user (1 box per day)
 daysessionSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 const dailysessionmodel = mongoose.model(

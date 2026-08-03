@@ -4,7 +4,7 @@ const CalendarEvent = require("../models/calendar");
 exports.getEvents = async (req, res) => {
     try {
         const userId = req.user.id;
-        const events = await CalendarEvent.find({ userId }).lean();
+        const events = await CalendarEvent.find({ userId });
         res.status(200).json(events);
     } catch (error) {
         console.error("Error fetching events:", error);

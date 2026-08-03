@@ -40,7 +40,7 @@ router.get("/gettask/:daySessionId", async function (req, res) {
     const task = await taskmodel.find({
       daySessionId: req.params.daySessionId,
       userId,
-    }).sort({ createdAt: -1 }).lean();
+    }).sort({ createdAt: -1 });
 
     res.json(task);
   } catch (err) {
