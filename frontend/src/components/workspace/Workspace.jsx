@@ -160,10 +160,9 @@ const Workspace = () => {
     };
 
     const isToday = (dateStr) => {
-        // Use UTC date string to safely match backend's strict UTC midnight format
         const date = new Date(dateStr);
         const today = new Date();
-        return date.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+        return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
     };
 
     const handleCreateDaySession = async () => {

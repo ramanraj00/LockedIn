@@ -185,8 +185,11 @@ router.get("/day/all", async (req, res) => {
 router.post("/day/add", async (req, res) => {
   try {
     const userId = req.user.id;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
+    // Use IST timezone to prevent midnight bug
+    const now = new Date();
+    now.setHours(now.getHours() + 5);
+    now.setMinutes(now.getMinutes() + 30);
+    const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
 
     const daySession = await dailysessionmodel.create({
       userId,
@@ -272,8 +275,10 @@ router.delete("/day/:id/sessions/reset", async (req, res) => {
 router.post("/stopwatch/start", async (req, res) => {
   try {
     const userId = req.user.id;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(now.getHours() + 5);
+    now.setMinutes(now.getMinutes() + 30);
+    const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
 
     let daySession = await dailysessionmodel.findOne({ userId, date: today });
     if (!daySession) {
@@ -338,8 +343,10 @@ router.post("/stopwatch/stop", async (req, res) => {
     const userId = req.user.id;
     const { sessionId, isFinalSave, isReset } = req.body;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(now.getHours() + 5);
+    now.setMinutes(now.getMinutes() + 30);
+    const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
     const daySession = await dailysessionmodel.findOne({ userId, date: today });
     if (!daySession) return res.status(200).json({ success: true });
 
@@ -403,7 +410,10 @@ router.get("/stopwatch/today-stats", async (req, res) => {
     const userId = req.user.id;
     
     // Use range instead of exact date for safe fetching
-    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(now.getHours() + 5);
+    now.setMinutes(now.getMinutes() + 30);
+    const startOfDay = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
     const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
 
     const daySession = await dailysessionmodel.findOne({ userId, date: { $gte: startOfDay, $lte: endOfDay } });
