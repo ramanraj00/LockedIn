@@ -18,10 +18,11 @@ async function test() {
     try {
         const daySessions = await DaySession.find({ userId: latestUser._id }).sort({ date: -1, createdAt: -1 });
         console.log("Day Sessions for latest user:", daySessions.length);
+        console.log("JSON Output:");
+        console.log(JSON.stringify(daySessions, null, 2));
     } catch (err) {
         console.error("GET /day/all Error:", err);
     }
-    console.log(daySessions);
 
     // Also check total day sessions
     const total = await DaySession.countDocuments();
