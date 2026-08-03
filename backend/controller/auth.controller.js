@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const sendResetEmail = require("../Services/emailServices");
 const { OAuth2Client } = require('google-auth-library');
 const Notification = require('../models/notification');
+const { invalidateCache } = require('../utils/cache');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -61,6 +62,9 @@ exports.signup = async (req, res) => {
     }
 
     await user.save();
+    
+    // 🔥 NEW: Invalidate leaderboard cache so the new user appears immediately
+    invalidateCache("leaderboard_full");
     
     const token = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
@@ -252,6 +256,9 @@ exports.googleAuth = async (req, res) => {
         authProvider: "google",
         username: username, // <-- Yahan add ho gaya
       });
+      
+      // 🔥 NEW: Invalidate cache for new Google user
+      invalidateCache("leaderboard_full");
     }
     
 
@@ -294,7 +301,7 @@ exports.getProfile = async (req, res) => {
     try {
         const userId = req.userId || (req.user && req.user.id) || req.user;
         if (!userId) return res.status(401).json({ success: false, message: "Unauthorized: User ID missing" });
-        const user = await usermodel.findById(userId).select("-password").lean(); 
+        const user = await usermodel.findById(userId).select("-password"); 
         if (!user) return res.status(404).json({ success: false, message: "User not found" });
         res.status(200).json({ success: true, user });
     } catch (error) {
@@ -521,7 +528,7 @@ exports.getPublicProfile = async (req, res) => {
         }
 
         // Yahan maine 'usermodel' correct kar diya hai!
-        const user = await usermodel.findById(userId).select('-password').lean(); 
+        const user = await usermodel.findById(userId).select('-password'); 
         
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
