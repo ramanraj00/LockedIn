@@ -23,7 +23,7 @@ const daysessionSchema = new Schema(
       default: "active",
     },
   },
-  { timestamps: true },
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
 daysessionSchema.pre("save", function (next) {

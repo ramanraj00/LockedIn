@@ -199,8 +199,8 @@ router.post("/day/add", async (req, res) => {
     res.status(201).json({ message: "Workspace box created", daySession });
   } catch (err) {
     if (err.code === 11000) {
-        // E11000 duplicate key error means they already have a box for today
-        return res.status(400).json({ message: "You can only create one workspace box per day!" });
+        // Return 200 instead of 400 so the frontend shows it as a normal toast (not a red error box)
+        return res.status(200).json({ message: "You can only create one workspace box per day!" });
     }
     res.status(500).json({ message: "Something went wrong", error: err.message });
   }
