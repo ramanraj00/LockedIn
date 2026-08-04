@@ -112,7 +112,7 @@ router.get("/", async (req, res) => {
               const lastStudyDate = new Date(studyDays[studyDays.length - 1].date);
               lastStudyDate.setHours(0, 0, 0, 0);
               
-              const diffFromToday = Math.floor((startOfDay - lastStudyDate) / (1000 * 60 * 60 * 24));
+              const diffFromToday = Math.floor((today - lastStudyDate) / (1000 * 60 * 60 * 24));
               if (diffFromToday > 1) {
                 currentStreak = 0;
               }
