@@ -369,10 +369,13 @@ const Profile = () => {
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 20 }}>
                             {[1, 2, 3, 4, 5].map(i => (
-                                <div key={i} className="badge-card locked" style={{ minHeight: 220, cursor: 'default' }}>
-                                    <div className="skeleton" style={{ width: 88, height: 88, borderRadius: '50%' }}></div>
-                                    <div className="skeleton" style={{ width: 80, height: 18, borderRadius: 6, marginTop: 4 }}></div>
-                                    <div className="skeleton" style={{ width: 120, height: 12, borderRadius: 4 }}></div>
+                                <div key={i} className="badge-card locked" style={{ minHeight: 220, cursor: 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                    {/* Circle for Badge Image */}
+                                    <div className="skeleton" style={{ width: 88, height: 88, borderRadius: '50%', marginBottom: 8 }}></div>
+                                    {/* Skeleton for Title */}
+                                    <div className="skeleton" style={{ width: 100, height: 18, borderRadius: 6, marginBottom: 8 }}></div>
+                                    {/* Skeleton for Description */}
+                                    <div className="skeleton" style={{ width: 140, height: 12, borderRadius: 4 }}></div>
                                 </div>
                             ))}
                         </div>
