@@ -276,16 +276,43 @@ const Analytics = () => {
                 <div style={{ paddingTop: isMobile ? 84 : 32, paddingBottom: 0, width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                     <div className="w-full pt-0 flex flex-col gap-6 md:gap-8 relative z-10" style={{ paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)' }}>
                         <header className="w-full flex flex-col gap-2 pb-0 relative z-10">
-                            <div className="skeleton" style={{ width: 250, height: 48, borderRadius: 8, marginTop: 8 }}></div>
+                            <div className="skeleton" style={{ width: 280, height: 48, borderRadius: 8, marginTop: 8 }}></div>
                         </header>
                         <div className="w-full flex flex-col gap-6 md:gap-6 mt-2">
                             <section className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                 {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className="skeleton" style={{ width: '100%', height: 130, borderRadius: 12 }}></div>
+                                    <div key={i} className="w-full h-[130px] rounded-none border border-white/10 bg-[#0A0A0A] flex flex-col p-5 gap-2">
+                                        <div className="skeleton" style={{ width: 100, height: 14, borderRadius: 4 }}></div>
+                                        <div className="skeleton" style={{ width: '80%', height: 36, borderRadius: 6, marginTop: 'auto' }}></div>
+                                    </div>
                                 ))}
                             </section>
-                            <div className="skeleton" style={{ width: '100%', height: 360, borderRadius: 12 }}></div>
-                            <div className="skeleton" style={{ width: '100%', height: 320, borderRadius: 12, marginTop: 8 }}></div>
+
+                            {/* Chart Card Skeleton */}
+                            <div className="w-full h-[280px] md:h-[360px] rounded-none border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                                    <div className="flex flex-col gap-2 w-full">
+                                        <div className="skeleton" style={{ width: 120, height: 16, borderRadius: 4 }}></div>
+                                        <div className="skeleton" style={{ width: 90, height: 12, borderRadius: 4 }}></div>
+                                    </div>
+                                </div>
+                                <div className="p-6 w-full h-full">
+                                    <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: 8 }}></div>
+                                </div>
+                            </div>
+
+                            {/* Heatmap Card Skeleton */}
+                            <div className="w-full h-[280px] md:h-[320px] rounded-none border border-white/10 bg-[#0A0A0A] flex flex-col overflow-hidden">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                                    <div className="flex flex-col gap-2 w-full">
+                                        <div className="skeleton" style={{ width: 120, height: 16, borderRadius: 4 }}></div>
+                                        <div className="skeleton" style={{ width: 90, height: 12, borderRadius: 4 }}></div>
+                                    </div>
+                                </div>
+                                <div className="p-6 w-full h-full">
+                                    <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: 8 }}></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
