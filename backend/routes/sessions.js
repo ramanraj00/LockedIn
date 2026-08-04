@@ -414,10 +414,9 @@ router.get("/stopwatch/today-stats", async (req, res) => {
     const now = new Date();
     now.setHours(now.getHours() + 5);
     now.setMinutes(now.getMinutes() + 30);
-    const startOfDay = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
-    const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+    const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
 
-    const daySession = await dailysessionmodel.findOne({ userId, date: { $gte: startOfDay, $lte: endOfDay } });
+    const daySession = await dailysessionmodel.findOne({ userId, date: today });
     if (!daySession) return res.status(200).json({ success: true, totalDaytime: 0, totalSessions: 0 });
 
     res.status(200).json({ 

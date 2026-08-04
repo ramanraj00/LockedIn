@@ -144,8 +144,12 @@ router.get("/weekly-chart", async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(now.getHours() + 5);
+    now.setMinutes(now.getMinutes() + 30);
+    const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
+
+    const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
     const aggregation = await dailysessionmodel.aggregate([
@@ -202,8 +206,12 @@ router.get("/heatmap", async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const oneYearAgo = new Date();
-    oneYearAgo.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(now.getHours() + 5);
+    now.setMinutes(now.getMinutes() + 30);
+    const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
+
+    const oneYearAgo = new Date(today);
     oneYearAgo.setDate(oneYearAgo.getDate() - 364);
 
     const aggregation = await dailysessionmodel.aggregate([
