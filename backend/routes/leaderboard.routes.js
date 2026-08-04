@@ -19,12 +19,11 @@ router.get("/", async (req, res) => {
             // Fetch only required fields to save RAM, excluding heavy crypto fields
             const users = await User.find({}).select("name imageUrl avatar picture badges createdAt").lean();
         
-        // 🔥 FIX 1: Exact Midnight ke bajaye poore din ki Time Range banayenge
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        
-        const endOfDay = new Date();
-        endOfDay.setHours(23, 59, 59, 999);
+        // 🔥 FIX 1: IST ke hisaab se exact today ki date nikalenge
+        const now = new Date();
+        now.setHours(now.getHours() + 5);
+        now.setMinutes(now.getMinutes() + 30);
+        const today = new Date(now.toISOString().split('T')[0] + "T00:00:00.000Z");
 
         const userIds = users.map(u => u._id);
         const userIdsStr = users.map(u => u._id.toString());
@@ -32,7 +31,7 @@ router.get("/", async (req, res) => {
         // 1. Bulk Fetch Today's Sessions (Projected)
         const todaySessions = await dailysessionmodel.find({ 
             userId: { $in: userIds }, 
-            date: { $gte: startOfDay, $lte: endOfDay } 
+            date: today 
         }).select("userId totalDaytime").lean();
         
         const xpByUserId = {};
