@@ -332,16 +332,16 @@ const Profile = () => {
 
                     {/* Right Column Skeleton */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, flex: 1, minWidth: 280, paddingTop: 16 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <div className="skeleton" style={{ width: 250, height: 48, borderRadius: 12 }}></div>
-                            <div className="skeleton" style={{ width: 150, height: 24, borderRadius: 8 }}></div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <div className="skeleton" style={{ width: '60%', maxWidth: 400, height: 60, borderRadius: 12 }}></div>
+                            <div className="skeleton" style={{ width: 200, height: 24, borderRadius: 8 }}></div>
                         </div>
 
-                        <div className="skeleton" style={{ width: '100%', height: 100, borderRadius: 16, marginTop: 16 }}></div>
+                        <div className="skeleton" style={{ width: '100%', height: 120, borderRadius: 16, marginTop: 16 }}></div>
                         
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 32 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginTop: 32 }}>
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="skeleton" style={{ width: 200, height: 240, borderRadius: 20 }}></div>
+                                <div key={i} className="skeleton" style={{ width: 180, height: 220, borderRadius: 20 }}></div>
                             ))}
                         </div>
                     </div>
