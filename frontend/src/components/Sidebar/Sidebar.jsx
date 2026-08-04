@@ -33,17 +33,18 @@ const SidebarItem = React.memo(({ item, isActive, isHovered, setHoveredItem, nav
                 onMouseEnter={() => setHoveredItem(item.name)}
                 style={{ 
                     position: 'relative', 
-                    width: isMobile ? '48px' : '100%', 
+                    width: isMobile ? '48px' : 'calc(100% - 32px)', 
                     height: isMobile ? '48px' : 'auto',
-                    padding: isMobile ? '0' : '14px 40px', 
-                    borderRadius: isMobile ? 16 : 0, 
+                    padding: isMobile ? '0' : '12px 20px', 
+                    borderRadius: 12, 
                     display: 'flex',
                     justifyContent: isMobile ? 'center' : 'flex-start',
                     alignItems: 'center',
-                    fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s ease',
+                    fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s ease',
                     border: 'none', outline: 'none',
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.08)' : isHovered ? 'rgba(255,255,255,0.04)' : 'transparent', 
-                    color: isActive || isHovered ? '#FFFFFF' : '#9CA3AF' 
+                    backgroundColor: isActive ? '#2A2A2A' : isHovered ? 'rgba(255,255,255,0.06)' : 'transparent', 
+                    color: isActive || isHovered ? '#FFFFFF' : '#8A8A8E',
+                    margin: isMobile ? '0' : '2px 16px'
                 }}
                 className="group"
             >
@@ -231,8 +232,8 @@ const Sidebar = ({ activePage }) => {
                 onMouseLeave={() => setIsOpen(false)} 
                 style={{ 
                     position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth, 
-                    background: 'linear-gradient(180deg, #0B0D14 0%, #08090C 100%)', 
-                    borderRight: '1px solid rgba(255,255,255,0.06)', zIndex: 50, 
+                    backgroundColor: '#1C1C1E', 
+                    borderRight: '1px solid #2C2C2E', zIndex: 50, 
                     padding: isMobile ? '24px 0' : 24, 
                     display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'stretch',
                     transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', 
@@ -266,9 +267,9 @@ const Sidebar = ({ activePage }) => {
                             alignItems: 'center', 
                             justifyContent: isMobile ? 'center' : 'space-between', 
                             padding: isMobile ? '10px 0' : '10px 14px', 
-                            borderRadius: isMobile ? 24 : 16, 
-                            backgroundColor: 'rgba(255, 255, 255, 0.04)', 
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: isMobile ? 24 : 12, 
+                            backgroundColor: '#222224', 
+                            border: '1px solid #2C2C2E',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             textAlign: 'left'
