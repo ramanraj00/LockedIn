@@ -3,16 +3,20 @@ import { Navigate } from 'react-router-dom';
 import { apiFetch } from '../../apiClient';
 
 const ProtectedRoute = ({ children }) => {
-    // 🛡️ 1. FAST SYNCHRONOUS CHECK: Kya Vault Key hai?
-    const dek = localStorage.getItem("lockedin_e2e_key") || sessionStorage.getItem("workspace_dek");
+    // 🛡️ Auth check uses TWO mechanisms:
+    // 1. auth_token in localStorage (survives reload + new tabs)
+    // 2. httpOnly cookie (set by backend, sent automatically)
+    // If NEITHER exists, user is definitely logged out → fast kick
+    const hasToken = !!localStorage.getItem("auth_token");
+    const hasDek = !!localStorage.getItem("lockedin_e2e_key") || !!sessionStorage.getItem("workspace_dek");
     
-    // 🔥 Agar frontend pe DEK nahi hai (matlab logout ho chuka hai), 
-    // toh backend check karne ki wait hi mat karo, direct kick out!
-    if (!dek) {
+    // Only fast-kick if there's no token AND no DEK at all
+    // If token exists, let the backend verify it
+    if (!hasToken && !hasDek) {
         return <Navigate to="/login" replace />;
     }
 
-    // --- BAAKI TERA PURANA ASYNC BACKEND CHECK ---
+    // --- ASYNC BACKEND CHECK ---
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -30,6 +34,8 @@ const ProtectedRoute = ({ children }) => {
                 if (data.success) {
                     setIsAuthenticated(true);
                 } else {
+                    // Token expired or invalid — clean up
+                    localStorage.removeItem("auth_token");
                     setIsAuthenticated(false);
                 }
             } catch (error) {

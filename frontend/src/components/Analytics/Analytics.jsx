@@ -211,7 +211,11 @@ const Analytics = () => {
                     apiFetch("/api/session/day/all", { credentials: "include" })
                 ]);
                 
-                setProfile(await profileRes.json());
+                if (profileRes.ok) {
+                    setProfile(await profileRes.json());
+                } else {
+                    console.error("Profile fetch failed:", profileRes.status);
+                }
                 setWeeklyData((await weeklyRes.json()).weeklyData || []);
                 setHeatmapData((await heatmapRes.json()).heatmapData || []);
                 
