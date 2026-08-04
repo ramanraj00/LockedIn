@@ -317,57 +317,62 @@ const Profile = () => {
 
     if (loading) return (
         <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 64 }}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: 64, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                    
-                    {/* Left Column Skeleton */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', flexShrink: 0, width: 220 }}>
-                        <div className="skeleton" style={{ width: 180, height: 180, borderRadius: '50%' }}></div>
-                        <div style={{ display: 'flex', gap: 24, width: '100%', justifyContent: 'center', padding: '12px 0', borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}` }}>
-                            <div className="skeleton" style={{ width: 60, height: 40, borderRadius: 8 }}></div>
-                            <div className="skeleton" style={{ width: 60, height: 40, borderRadius: 8 }}></div>
-                        </div>
-                        <div className="skeleton" style={{ width: 120, height: 36, borderRadius: 12 }}></div>
-                    </div>
-
-                    {/* Right Column Skeleton */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1, minWidth: 280, paddingTop: 16 }}>
+            <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: 64, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         
-                        {/* Header Row: Name, Bell, Search */}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 20 }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                <div className="skeleton" style={{ width: 180, height: 50, borderRadius: 12 }}></div>
-                                <div className="skeleton" style={{ width: 100, height: 20, borderRadius: 6 }}></div>
+                        {/* LEFT COLUMN SKELETON */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', flexShrink: 0, width: 220 }}>
+                            <div className="skeleton" style={{ width: 180, height: 180, borderRadius: '50%' }}></div>
+                            
+                            <div style={{ display: 'flex', gap: 24, width: '100%', justifyContent: 'center', padding: '12px 0', borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}` }}>
+                                <div className="skeleton" style={{ width: 60, height: 40, borderRadius: 8 }}></div>
+                                <div className="skeleton" style={{ width: 60, height: 40, borderRadius: 8 }}></div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
-                                <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%' }}></div>
-                                <div className="skeleton" style={{ width: 220, height: 40, borderRadius: 20 }}></div>
-                            </div>
+
+                            <div className="skeleton" style={{ width: 120, height: 36, borderRadius: 12 }}></div>
                         </div>
 
-                        {/* About Section */}
-                        <div style={{ marginTop: 24 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                                <div className="skeleton" style={{ width: 80, height: 20, borderRadius: 6 }}></div>
-                                <div className="skeleton" style={{ width: 60, height: 28, borderRadius: 14 }}></div>
+                        {/* RIGHT COLUMN SKELETON */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 700, flex: 1, paddingTop: 16, minWidth: 280 }}>
+                            
+                            {/* Header Row */}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 20 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div className="skeleton" style={{ width: 'clamp(200px, 40vw, 350px)', height: 60, borderRadius: 12 }}></div>
+                                    <div className="skeleton" style={{ width: 120, height: 20, borderRadius: 6 }}></div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
+                                    <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%' }}></div>
+                                    <div className="skeleton" style={{ width: 200, height: 40, borderRadius: 20 }}></div>
+                                </div>
                             </div>
-                            <div className="skeleton" style={{ width: '100%', height: 120, borderRadius: 16 }}></div>
-                        </div>
-                        
-                        {/* Badges Section */}
-                        <div style={{ marginTop: 40 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                                <div className="skeleton" style={{ width: 200, height: 28, borderRadius: 8 }}></div>
-                                <div className="skeleton" style={{ width: 80, height: 16, borderRadius: 4 }}></div>
-                            </div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <div key={i} className="skeleton" style={{ width: '160px', height: '220px', borderRadius: 20 }}></div>
-                                ))}
+
+                            {/* About Section */}
+                            <div style={{ marginTop: 12 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <div className="skeleton" style={{ width: 80, height: 20, borderRadius: 6 }}></div>
+                                    <div className="skeleton" style={{ width: 70, height: 28, borderRadius: 6 }}></div>
+                                </div>
+                                <div className="skeleton" style={{ width: '100%', height: 167, borderRadius: 16 }}></div>
                             </div>
                         </div>
                     </div>
 
+                    {/* BADGES SECTION SKELETON (FULL WIDTH) */}
+                    <div style={{ height: 1, width: '100%', background: `linear-gradient(to right, ${COLORS.border}, transparent)` }}></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="skeleton" style={{ width: 220, height: 28, borderRadius: 8 }}></div>
+                            <div className="skeleton" style={{ width: 100, height: 16, borderRadius: 4 }}></div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 20 }}>
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="skeleton" style={{ width: '100%', height: '220px', borderRadius: 20 }}></div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
