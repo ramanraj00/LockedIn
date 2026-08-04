@@ -272,9 +272,22 @@ const Analytics = () => {
     };
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#000000', color: '#F4F4F5', fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-                    <div className="w-5 h-5 rounded-full border-2 border-zinc-800 border-t-zinc-400 animate-spin" />
+            <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#000000', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ paddingTop: isMobile ? 84 : 32, paddingBottom: 0, width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    <div className="w-full pt-0 flex flex-col gap-6 md:gap-8 relative z-10" style={{ paddingLeft: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)', paddingRight: isMobile ? '24px' : 'clamp(96px, 6vw, 120px)' }}>
+                        <header className="w-full flex flex-col gap-2 pb-0 relative z-10">
+                            <div className="skeleton" style={{ width: 250, height: 48, borderRadius: 8, marginTop: 8 }}></div>
+                        </header>
+                        <div className="w-full flex flex-col gap-6 md:gap-6 mt-2">
+                            <section className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="skeleton" style={{ width: '100%', height: 130, borderRadius: 12 }}></div>
+                                ))}
+                            </section>
+                            <div className="skeleton" style={{ width: '100%', height: 360, borderRadius: 12 }}></div>
+                            <div className="skeleton" style={{ width: '100%', height: 320, borderRadius: 12, marginTop: 8 }}></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );

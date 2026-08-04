@@ -4,29 +4,49 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoute from './components/loginpages/ProtectedRoute.jsx'; 
 import Sidebar from './components/Sidebar/Sidebar.jsx';
 
-const Landing = lazy(() => import("./pages/landing.jsx")); 
-const Signup = lazy(() => import("./components/loginpages/signinCode.jsx"));
-const Login = lazy(() => import("./components/loginpages/reallogin.jsx"));
-const ResetPassword = lazy(() => import("./components/loginpages/ResetPassword.jsx"));
-const ForgotPassword = lazy(() => import("./components/loginpages/ForgotPassword.jsx")); 
+// 🔥 Fix for Vercel deploy chunk load errors (MIME type text/html)
+const lazyWithRetry = (componentImport) =>
+  lazy(async () => {
+    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+      window.sessionStorage.getItem('page-has-been-force-refreshed') || 'false'
+    );
+    try {
+      const component = await componentImport();
+      window.sessionStorage.setItem('page-has-been-force-refreshed', 'false');
+      return component;
+    } catch (error) {
+      if (!pageHasAlreadyBeenForceRefreshed) {
+        // Naya deployment hua hai, purana chunk delete ho gaya Vercel se, toh page reload karo
+        window.sessionStorage.setItem('page-has-been-force-refreshed', 'true');
+        return window.location.reload();
+      }
+      throw error;
+    }
+  });
 
-const Dashboard = lazy(() => import("./components/loginpages/Logout.jsx")); 
-const Profile = lazy(() => import("./components/Profile/Profile.jsx")); 
-const Workspace = lazy(() => import("./components/workspace/Workspace.jsx")); 
+const Landing = lazyWithRetry(() => import("./pages/landing.jsx")); 
+const Signup = lazyWithRetry(() => import("./components/loginpages/signinCode.jsx"));
+const Login = lazyWithRetry(() => import("./components/loginpages/reallogin.jsx"));
+const ResetPassword = lazyWithRetry(() => import("./components/loginpages/ResetPassword.jsx"));
+const ForgotPassword = lazyWithRetry(() => import("./components/loginpages/ForgotPassword.jsx")); 
+
+const Dashboard = lazyWithRetry(() => import("./components/loginpages/Logout.jsx")); 
+const Profile = lazyWithRetry(() => import("./components/Profile/Profile.jsx")); 
+const Workspace = lazyWithRetry(() => import("./components/workspace/Workspace.jsx")); 
 
 // 🔥 CALENDAR PAGE IMPORT
-const Calendar = lazy(() => import("./components/Calendar/Calendar.jsx")); 
+const Calendar = lazyWithRetry(() => import("./components/Calendar/Calendar.jsx")); 
 
 // 🔥 STOPWATCH IMPORT
-const Stopwatch = lazy(() => import("./components/stopwatch/Stopwatch.jsx"));
+const Stopwatch = lazyWithRetry(() => import("./components/stopwatch/Stopwatch.jsx"));
 
 // 🔥 NAYA ANALYTICS PAGE IMPORT
-const Analytics = lazy(() => import("./components/Analytics/Analytics.jsx"));
+const Analytics = lazyWithRetry(() => import("./components/Analytics/Analytics.jsx"));
 // Leaderboard
-const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Leaderboard = lazyWithRetry(() => import("./pages/Leaderboard"));
 
 // 🔥 SETTINGS PAGE IMPORT
-const Settings = lazy(() => import("./pages/Settings"));
+const Settings = lazyWithRetry(() => import("./pages/Settings"));
 
 function App() {
   const location = useLocation();
