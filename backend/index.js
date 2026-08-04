@@ -36,15 +36,27 @@ app.use(performanceMiddleware);
 app.use(cookieParser());
 app.use(helmet());
 
-// Apply rate limiting to all /api routes
+// General API rate limit — SPA makes 10-20+ calls per page navigation
+// 300 per 15 min = ~20 req/min, enough for normal browsing but blocks abuse
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  limit: 300,
   standardHeaders: 'draft-7', 
   legacyHeaders: false,
   message: { message: "Too many requests from this IP, please try again after 15 minutes" }
 });
 app.use("/api", apiLimiter);
+
+// 🔒 Stricter rate limit for auth routes (login/signup) to prevent brute force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20, // Only 20 login/signup attempts per 15 min
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: "Too many login attempts, please try again after 15 minutes" }
+});
+app.use("/api/auth/signin", authLimiter);
+app.use("/api/auth/signup", authLimiter);
 
 connectDb();
 

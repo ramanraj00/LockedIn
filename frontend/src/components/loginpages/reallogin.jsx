@@ -72,6 +72,8 @@ const Login = () => {
         e.preventDefault();
         setError(null); setSuccessMsg(null);
         if (!formData.email || !formData.password) return setError("Please fill all fields");
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) return setError("Please enter a valid email address.");
 
         setLoading(true);
         try {
@@ -212,9 +214,10 @@ const Login = () => {
             const masterDEK = await decryptDEK(encryptedDEK_pwd, passwordKEK);
             
             await setDek(masterDEK, true); 
-            setSuccessMsg("Vault Unlocked!");
-            setIsFlipping(true);
-             setTimeout(() => navigate('/profile'), 1200); // Isko 
+             setSuccessMsg("Vault Unlocked!");
+             setIsFlipping(true);
+             setTimeout(() => navigate('/profile'), 1200);
+             setLoading(false);
         } catch (err) {
             setError("Unable to decrypt your workspace. Please verify your Vault Password.");
             setLoading(false);
@@ -447,7 +450,7 @@ const Login = () => {
                                     {view === 'login' && (
                                         <div className="animate-fade-in flex flex-col items-center w-full">
                                             
-                                            <button onClick={() => loginWithGoogle()} type="button" className="w-full flex items-center justify-center gap-3 py-2.5 md:py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white text-[13px] font-medium transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
+                                            <button onClick={() => loginWithGoogle()} disabled={loading} type="button" className="w-full flex items-center justify-center gap-3 py-2.5 md:py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white text-[13px] font-medium transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:cursor-not-allowed">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

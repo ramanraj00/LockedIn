@@ -83,6 +83,7 @@ router.post("/session/:id/resume", async (req, res) => {
     if (oldSession.status !== "paused") return res.status(400).json({ message: "Only paused sessions can be resumed" });
 
     const daySession = await dailysessionmodel.findOne({ _id: oldSession.daySessionId, userId });
+    if (!daySession) return res.status(404).json({ message: "Day session not found" });
     if (daySession.status === "completed") return res.status(400).json({ message: "This day session is already completed" });
 
     const runningSession = await timermodel.findOne({ daySessionId: oldSession.daySessionId, userId, status: "running" });

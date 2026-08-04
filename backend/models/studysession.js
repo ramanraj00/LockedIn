@@ -72,12 +72,7 @@ sessionSchema.index({ daySessionId: 1, startTime: 1 });
 
 // ================= MIDDLEWARE =================
 
-sessionSchema.pre("save", function (next) {
-  if (this.endTime && this.startTime) {
-    this.duration = (this.endTime - this.startTime) / 1000;
-  }
-  next();
-});
+// Removed pre("save") hook because it overwrites manually accumulated duration
 
 const sessionmodel = mongoose.model("sessioncrediantials", sessionSchema);
 

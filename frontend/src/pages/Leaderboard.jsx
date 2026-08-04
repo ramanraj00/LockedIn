@@ -203,34 +203,28 @@ const ALL_BADGES = [
 // =======================================================
 // 🔥 COMPONENT: Floating 3D Dialer Carousel
 // =======================================================
-const BadgeCarousel = memo(() => {
-    const [badgeData, setBadgeData] = useState({ activeDays: 0, totalFocusTime: 0 });
+const BadgeCarousel = memo(({ focusTime }) => {
+    const [badgeData, setBadgeData] = useState({ activeDays: 0, totalFocusTime: focusTime || 0 });
+
+    useEffect(() => {
+        setBadgeData(prev => ({ ...prev, totalFocusTime: focusTime || 0 }));
+    }, [focusTime]);
 
     useEffect(() => {
         let mounted = true;
         const loadStats = async () => {
             try {
-                const [authRes, heatmapRes] = await Promise.allSettled([
-                    apiFetch("/api/auth/me", { credentials: "include" }),
-                    apiFetch("/api/dashboard/dashboard/heatmap", { credentials: "include" })
-                ]);
+                const heatmapRes = await apiFetch("/api/dashboard/heatmap", { credentials: "include" });
                 
-                let focusTime = 0;
                 let activeD = 0;
-                
-                if (authRes.status === 'fulfilled' && authRes.value.ok) {
-                    const data = await authRes.value.json();
-                    if (data?.user) focusTime = Number(data.user.totalFocusTimeAllTime || data.user.xp || 0);
-                }
-                
-                if (heatmapRes.status === 'fulfilled' && heatmapRes.value.ok) {
-                    const data = await heatmapRes.value.json();
+                if (heatmapRes.ok) {
+                    const data = await heatmapRes.json();
                     if (data?.heatmapData) {
                         activeD = data.heatmapData.filter(d => d.intensity > 0 || d.hours > 0).length;
                     }
                 }
                 
-                if (mounted) setBadgeData({ activeDays: activeD, totalFocusTime: focusTime });
+                if (mounted) setBadgeData(prev => ({ ...prev, activeDays: activeD }));
             } catch (error) { console.error("Error loading badge stats", error); }
         };
         loadStats();
@@ -756,7 +750,7 @@ const Leaderboard = () => {
                             {/* Right Column (No scroll, perfectly aligned with left side) */}
                             <div className="right-col" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '16px', height: '100%' }}>
                                 <div className="badge-carousel-wrapper" style={{ height: '240px', width: '100%', flexShrink: 0, marginBottom: '40px' }}>
-                                    <BadgeCarousel />
+                                    <BadgeCarousel focusTime={currentUserStats?.focusTime || 0} />
                                 </div>
 
                                 <div style={{

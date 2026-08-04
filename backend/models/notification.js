@@ -8,4 +8,7 @@ const notificationSchema = new Schema({
     read: { type: Boolean, default: false }
 }, { timestamps: true });
 
+// Optimize query for unread notifications of a user
+notificationSchema.index({ recipient: 1, read: 1 });
+
 module.exports = mongoose.model('Notification', notificationSchema);

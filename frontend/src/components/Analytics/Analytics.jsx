@@ -205,9 +205,9 @@ const Analytics = () => {
         const fetchAnalytics = async () => {
             try {
                 const [profileRes, weeklyRes, heatmapRes, daysRes] = await Promise.all([
-                    apiFetch("/api/dashboard/dashboard/profile", { credentials: "include" }),
-                    apiFetch("/api/dashboard/dashboard/weekly-chart", { credentials: "include" }),
-                    apiFetch("/api/dashboard/dashboard/heatmap", { credentials: "include" }),
+                    apiFetch("/api/dashboard/profile", { credentials: "include" }),
+                    apiFetch("/api/dashboard/weekly-chart", { credentials: "include" }),
+                    apiFetch("/api/dashboard/heatmap", { credentials: "include" }),
                     apiFetch("/api/session/day/all", { credentials: "include" })
                 ]);
                 

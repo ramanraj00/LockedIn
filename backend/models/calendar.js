@@ -27,5 +27,8 @@ const calendarEventSchema = new Schema({
     }
 }, { timestamps: true });
 
+// Optimize query for finding events of a user
+calendarEventSchema.index({ userId: 1 });
+
 const CalendarEvent = mongoose.model("CalendarEvent", calendarEventSchema);
 module.exports = CalendarEvent;

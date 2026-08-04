@@ -178,7 +178,7 @@ const Profile = () => {
             try {
                 // Parallelize fetching
                 let url = isPublicView ? `/api/auth/profile/${userId}` : "/api/auth/me";
-                let heatmapUrl = isPublicView ? `/api/dashboard/dashboard/heatmap?userId=${userId}` : "/api/dashboard/dashboard/heatmap";
+                let heatmapUrl = isPublicView ? `/api/dashboard/heatmap?userId=${userId}` : "/api/dashboard/heatmap";
                 
                 const [meRes, profileRes, heatmapRes] = await Promise.allSettled([
                     apiFetch("/api/auth/me", { method: "GET", credentials: "include" }),

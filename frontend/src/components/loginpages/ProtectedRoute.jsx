@@ -1,46 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { apiFetch } from '../../apiClient';
 
+// 🔥 Global cache: Backend auth check sirf ek baar hoga, har page change pe nahi
+let cachedAuthResult = null; // { authenticated: true/false, timestamp: number }
+const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minute cache — re-verify after 5 min
+
 const ProtectedRoute = ({ children }) => {
-    // 🛡️ Auth check uses TWO mechanisms:
-    // 1. auth_token in localStorage (survives reload + new tabs)
-    // 2. httpOnly cookie (set by backend, sent automatically)
-    // If NEITHER exists, user is definitely logged out → fast kick
+    // 🛡️ FAST SYNCHRONOUS CHECK:
+    // auth_token localStorage me reliably save hota hai login/signup ke time
     const hasToken = !!localStorage.getItem("auth_token");
-    const hasDek = !!localStorage.getItem("lockedin_e2e_key") || !!sessionStorage.getItem("workspace_dek");
     
-    // Only fast-kick if there's no token AND no DEK at all
-    // If token exists, let the backend verify it
-    if (!hasToken && !hasDek) {
+    // Agar token hi nahi hai, user definitely logged out hai
+    if (!hasToken) {
         return <Navigate to="/login" replace />;
     }
 
-    // --- ASYNC BACKEND CHECK ---
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    // 🔥 Check cache first — avoid unnecessary /me calls
+    const now = Date.now();
+    const cacheValid = cachedAuthResult 
+        && cachedAuthResult.authenticated 
+        && (now - cachedAuthResult.timestamp) < AUTH_CACHE_TTL;
+
+    const [isAuthenticated, setIsAuthenticated] = useState(cacheValid ? true : false);
+    const [isLoading, setIsLoading] = useState(cacheValid ? false : true);
 
     useEffect(() => {
+        // Agar cache valid hai, skip backend call
+        if (cacheValid) return;
+
         const verifyAuth = async () => {
             try {
-                // Backend se pucho user zinda hai ya nahi
                 const response = await apiFetch('/api/auth/me', {
                     method: 'GET',
                     credentials: 'include' 
                 });
                 
+                // 🔥 429 (Rate Limited) = user IS authenticated, server is just busy
+                // Don't kick the user out for rate limiting!
+                if (response.status === 429) {
+                    cachedAuthResult = { authenticated: true, timestamp: Date.now() };
+                    setIsAuthenticated(true);
+                    setIsLoading(false);
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
+                    cachedAuthResult = { authenticated: true, timestamp: Date.now() };
                     setIsAuthenticated(true);
                 } else {
-                    // Token expired or invalid — clean up
+                    // Token actually expired or invalid — clean up
+                    cachedAuthResult = null;
                     localStorage.removeItem("auth_token");
                     setIsAuthenticated(false);
                 }
             } catch (error) {
+                // Network error — don't kick out, user might just be offline
                 console.error("Auth check error:", error);
-                setIsAuthenticated(false);
+                // If token exists, give benefit of doubt
+                if (localStorage.getItem("auth_token")) {
+                    setIsAuthenticated(true);
+                } else {
+                    setIsAuthenticated(false);
+                }
             } finally {
                 setIsLoading(false); 
             }
@@ -49,7 +73,6 @@ const ProtectedRoute = ({ children }) => {
         verifyAuth();
     }, []);
 
-    // Jab tak backend check kar raha hai, Loading dikhao
     if (isLoading) {
         return (
             <div className="min-h-screen w-full bg-[#000000] flex items-center justify-center">
@@ -60,13 +83,14 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
-    // Agar API ne bola user galat hai, tabhi Login par feko
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    // Agar sab sahi hai, toh unko unka Page dikha do
     return children;
 };
+
+// 🔥 Export cache invalidator for logout
+export const clearAuthCache = () => { cachedAuthResult = null; };
 
 export default ProtectedRoute;

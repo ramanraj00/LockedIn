@@ -9,7 +9,7 @@ const taskmodel = require("../models/tasks"); // 🔥 NEW: Task model import
 //------------------------------
 // 1. GET PROFILE STATS (WITH WORKSPACE TASK ACTIVITY)
 //------------------------------
-router.get("/dashboard/profile", async (req, res) => {
+router.get("/profile", async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId).lean();
@@ -140,7 +140,7 @@ router.get("/dashboard/profile", async (req, res) => {
 //------------------------------
 // 2. GET WEEKLY CHART (FIXED PRECISION BUG)
 //------------------------------
-router.get("/dashboard/weekly-chart", async (req, res) => {
+router.get("/weekly-chart", async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -198,7 +198,7 @@ router.get("/dashboard/weekly-chart", async (req, res) => {
 //------------------------------
 // 3. GET HEATMAP (FIXED PRECISION BUG)
 //------------------------------
-router.get("/dashboard/heatmap", async (req, res) => {
+router.get("/heatmap", async (req, res) => {
   try {
     const userId = req.user.id;
 

@@ -362,8 +362,8 @@ exports.updateProfile = async (req, res) => {
                 "/avatars/henry.png"
             ];
             
-            // Ye condition check karti hai ki avatar valid hai
-            if (ALLOWED_AVATARS.includes(avatar) || avatar.startsWith('http') || avatar.includes('/avatars/')) {
+            // Strengthened validation to prevent stored XSS or malicious URLs
+            if (ALLOWED_AVATARS.includes(avatar) || (avatar.startsWith('https://') && !avatar.includes('<')) || avatar.startsWith('/avatars/')) {
                 updateData.imageUrl = avatar;
                 updateData.avatar = avatar;
             }
@@ -537,8 +537,8 @@ exports.getPublicProfile = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid user ID format" });
         }
 
-        // Yahan maine 'usermodel' correct kar diya hai!
-        const user = await usermodel.findById(userId).select('-password'); 
+        // Exclude password and sensitive crypto metadata from public profile
+        const user = await usermodel.findById(userId).select('-password -crypto -recoveryEmail'); 
         
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -577,7 +577,9 @@ exports.searchUsers = async (req, res) => {
         const query = req.query.q;
         if (!query) return res.status(200).json({ success: true, users: [] });
         
-        const regex = new RegExp(query, 'i'); // Case insensitive search
+        // Escape regex to prevent ReDoS (Regex Denial of Service) attacks
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedQuery, 'i'); // Case insensitive search
         // Name ya Username me kuch bhi match hoga toh return karega (Max 5 users)
         const users = await usermodel.find({
             $or: [{ username: regex }, { name: regex }]
