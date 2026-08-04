@@ -42,30 +42,12 @@ const SidebarItem = React.memo(({ item, isActive, isHovered, setHoveredItem, nav
                     alignItems: 'center',
                     fontSize: 15, fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s ease',
                     border: 'none', outline: 'none',
-                    backgroundColor: 'transparent', 
+                    backgroundColor: isActive ? 'rgba(255,255,255,0.08)' : isHovered ? 'rgba(255,255,255,0.04)' : 'transparent', 
                     color: isActive || isHovered ? '#FFFFFF' : '#9CA3AF' 
                 }}
                 className="group"
             >
-                {isHovered && (
-                    <motion.div
-                        layoutId={isMobile ? "mobile-hover-pill" : "sidebar-hover-pill"}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundColor: 'rgba(255,255,255,0.06)',
-                            borderTop: isMobile ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.03)',
-                            borderBottom: isMobile ? 'none' : '1px solid rgba(255,255,255,0.03)',
-                            borderRadius: isMobile ? 16 : 0,
-                            boxShadow: isMobile ? '0 8px 24px rgba(0,0,0,0.4)' : 'none',
-                            zIndex: 0
-                        }}
-                    />
-                )}
+                {/* Hover Pill Removed - Replaced with CSS background */}
 
                 {isActive && (
                     <motion.div
@@ -249,9 +231,7 @@ const Sidebar = ({ activePage }) => {
                 onMouseLeave={() => setIsOpen(false)} 
                 style={{ 
                     position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth, 
-                    backgroundColor: 'rgba(15, 15, 15, 0.65)', 
-                    backdropFilter: 'blur(40px) saturate(150%)', 
-                    WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                    background: 'linear-gradient(180deg, #0B0D14 0%, #08090C 100%)', 
                     borderRight: '1px solid rgba(255,255,255,0.06)', zIndex: 50, 
                     padding: isMobile ? '24px 0' : 24, 
                     display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'stretch',
