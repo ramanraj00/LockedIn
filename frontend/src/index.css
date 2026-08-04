@@ -41,8 +41,8 @@ html, body {
 
 @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
 .skeleton {
-    background: #27272A;
-    background-image: linear-gradient(90deg, #27272A 0px, #3F3F46 50%, #27272A 100%);
+    background: #18181B;
+    background-image: linear-gradient(90deg, #18181B 0px, #27272A 50%, #18181B 100%);
     background-size: 1000px 100%; 
     animation: shimmer 2s infinite linear; 
     border-radius: 6px;
