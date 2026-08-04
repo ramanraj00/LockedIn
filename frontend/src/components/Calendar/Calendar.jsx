@@ -521,7 +521,7 @@ const Calendar = () => {
                                                              width: `calc(${widthPercent}% - 2px)`,
                                                              backgroundColor: `${evt.color}25`, 
                                                              borderColor: evt.color,
-                                                             backdropFilter: 'blur(5px)'
+                                                             border: '1px solid rgba(255, 255, 255, 0.1)'
                                                          }}>
                                                          <span className="text-[14px] font-bold text-white/95 leading-tight truncate">{evt.title}</span>
                                                          <span className="text-white/60 text-[11px] mt-0.5 flex items-center gap-1 font-semibold truncate">

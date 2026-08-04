@@ -348,7 +348,7 @@ const Analytics = () => {
             {/* RIGHT WIDGET TRIGGER */}
             <button 
                 onClick={() => setDrawerOpen(!drawerOpen)}
-                style={{ position: 'fixed', top: 24, right: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease' }}
+                style={{ position: 'fixed', top: 24, right: 24, zIndex: 40, width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}
                 className={`group shadow-sm border ${drawerOpen ? 'bg-white/10 border-white/20 text-white' : 'bg-white/[0.03] border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20'}`}
             >
                 <div className="group-hover:scale-105 transition-transform duration-300">

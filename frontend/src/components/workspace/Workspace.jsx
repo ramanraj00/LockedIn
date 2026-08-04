@@ -654,7 +654,7 @@ const Workspace = () => {
             <div style={{ minHeight: '100vh', width: '100%', backgroundColor: COLORS.bg, color: COLORS.textPrimary, fontFamily: "'Inter', monospace, sans-serif", position: 'relative', overflowX: 'hidden' }}>
                 <div style={{ paddingTop: 96, paddingBottom: 48, paddingLeft: 'clamp(24px, 5vw, 96px)', paddingRight: 'clamp(24px, 5vw, 96px)', width: '100%', margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
                     
-                    {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease', maxWidth: '90vw', wordWrap: 'break-word' }}>{globalError}</div>}
+                    {globalError && <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100, padding: '10px 24px', border: '1px solid rgba(239,68,68,0.3)', backgroundColor: 'rgba(15,15,15,0.95)', color: '#F87171', fontSize: 13, borderRadius: 8, animation: 'fadeIn 0.3s ease', maxWidth: '90vw', wordWrap: 'break-word' }}>{globalError}</div>}
                     
                     {toastMessage && (
                         <div className="workspace-toast" style={{ 
@@ -679,7 +679,7 @@ const Workspace = () => {
                     {deleteBoxWarning && (
                         <>
                             {/* Backdrop Blur Overlay */}
-                            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 9998, animation: 'fadeIn 0.2s ease' }} onClick={() => setDeleteBoxWarning(null)} />
+                            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9998, animation: 'fadeIn 0.2s ease' }} onClick={() => setDeleteBoxWarning(null)} />
                             
                             <div className="delete-warning-box" style={{
                                 position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
