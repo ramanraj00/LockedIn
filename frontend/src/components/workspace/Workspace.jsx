@@ -129,8 +129,8 @@ const Workspace = () => {
             if (data.daySessions) {
                 setDaySessions(data.daySessions);
                 data.daySessions.forEach(day => {
-                    fetchTasks(day._id);
-                    fetchTimers(day._id);
+                    fetchTasks((day._id || day.id));
+                    fetchTimers((day._id || day.id));
                 });
             }
         } catch (err) { console.error(err); }
@@ -408,16 +408,17 @@ const Workspace = () => {
     const getRunningSession = (dayId) => (timersByDay[dayId] || []).find(s => s.status === 'running');
     const getPausedSession = (dayId) => [...(timersByDay[dayId] || [])].reverse().find(s => s.status === 'paused');
     const getDeadlineStatus = (day) => {
-        const tasks = tasksByDay[day._id] || [];
+        const tasks = tasksByDay[(day._id || day.id)] || [];
         if (tasks.length === 0) return 'active';
         if (tasks.every(t => t.status === true)) return 'completed';
         return 'pending';
     };
 
     const isValidBox = (day) => {
+        if (daySessions.length > 0 && (day._id || day.id) === (daySessions[0]._id || daySessions[0].id)) return true;
         if (isToday(day.date)) return true;
-        const tasks = tasksByDay[day._id] || [];
-        const sessions = timersByDay[day._id] || [];
+        const tasks = tasksByDay[(day._id || day.id)] || [];
+        const sessions = timersByDay[(day._id || day.id)] || [];
         return tasks.length > 0 || sessions.length > 0;
     };
 
@@ -464,19 +465,19 @@ const Workspace = () => {
     const groupedHistory = getGroupedHistory();
 
     const renderDaySession = (day) => {
-        const isExpanded = expandedBoxes[day._id] === true; 
-        const isEditing = editingDayId === day._id;
-        const tasks = tasksByDay[day._id] || [];
-        const sessions = timersByDay[day._id] || [];
-        const runningSession = getRunningSession(day._id);
-        const pausedSession = getPausedSession(day._id);
+        const isExpanded = expandedBoxes[(day._id || day.id)] === true; 
+        const isEditing = editingDayId === (day._id || day.id);
+        const tasks = tasksByDay[(day._id || day.id)] || [];
+        const sessions = timersByDay[(day._id || day.id)] || [];
+        const runningSession = getRunningSession((day._id || day.id));
+        const pausedSession = getPausedSession((day._id || day.id));
         const statusLabel = getDeadlineStatus(day);
         const isDayCompleted = day.status === 'completed';
-        const isConfirming = confirmAction?.dayId === day._id;
-        const isLatestBox = day._id === daySessions[0]?._id;
+        const isConfirming = confirmAction?.dayId === (day._id || day.id);
+        const isLatestBox = (day._id || day.id) === daySessions[0]?._id;
         
         return (
-            <div key={day._id} style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
+            <div key={(day._id || day.id)} style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
                 <div className="day-box" style={{ width: '100%', border: `1px solid ${COLORS.border}`, borderRadius: 8, backgroundColor: COLORS.card, padding: 24, transition: 'all 0.3s ease-in-out' }}>
                     {/* 🔥 UI Layout fixed to gracefully stack on mobile using flexWrap and smart margins */}
                     <div className="day-box-header" style={{ display: 'flex', gap: 24, justifyContent: 'space-between', alignItems: 'center', paddingBottom: isExpanded ? 16 : 0, borderBottom: isExpanded ? `1px solid ${COLORS.border}` : 'none', transition: 'all 0.3s ease' }}>
@@ -492,27 +493,27 @@ const Workspace = () => {
                             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
                                 <div className="timer-container" style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.02)', padding: '6px 16px', borderRadius: 12, border: `1px solid ${COLORS.border}` }}>
                                     {/* 🔥 ATOM LEVEL OPTIMIZATION: Sirf timer component update hoga, pura Workspace nahi */}
-                                    <LiveTimerDisplay sessions={sessions} localStartTime={localStartTimes[day._id]} />
+                                    <LiveTimerDisplay sessions={sessions} localStartTime={localStartTimes[(day._id || day.id)]} />
                                     <div className="timer-divider" style={{ height: 20, width: 1, backgroundColor: COLORS.borderHover, margin: '0 4px' }}></div>
                                     {isConfirming ? (
                                         <div className="timer-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <span style={{ fontSize: 12, color: COLORS.textMuted, whiteSpace: 'nowrap' }}>{confirmAction.type === 'save' ? 'end day?' : 'reset timer?'}</span>
-                                            <button onClick={() => { if (confirmAction.type === 'save') handleCompleteDay(day._id); else handleResetTimer(day._id); setConfirmAction(null); }} className="timer-text-btn save-btn">yes</button>
+                                            <button onClick={() => { if (confirmAction.type === 'save') handleCompleteDay((day._id || day.id)); else handleResetTimer((day._id || day.id)); setConfirmAction(null); }} className="timer-text-btn save-btn">yes</button>
                                             <button onClick={() => setConfirmAction(null)} className="timer-text-btn reset-btn">no</button>
                                         </div>
                                     ) : isDayCompleted ? (
-                                        isLatestBox ? <button onClick={() => handleReopenDay(day._id)} className="timer-text-btn start-btn">Reopen</button> : <span style={{ fontSize: 11, color: COLORS.textMuted, padding: '4px 10px', letterSpacing: '0.05em', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>ARCHIVED</span>
+                                        isLatestBox ? <button onClick={() => handleReopenDay((day._id || day.id))} className="timer-text-btn start-btn">Reopen</button> : <span style={{ fontSize: 11, color: COLORS.textMuted, padding: '4px 10px', letterSpacing: '0.05em', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>ARCHIVED</span>
                                     ) : !isLatestBox && !runningSession ? (
                                         <span style={{ fontSize: 11, color: COLORS.textMuted, padding: '4px 10px', letterSpacing: '0.05em', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>ARCHIVED</span>
                                     ) : (
                                         <div className="timer-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             {!runningSession ? (
-                                                <button onClick={() => pausedSession ? handleResumeTimer(day._id, pausedSession._id) : handleStartTimer(day._id)} className="timer-text-btn start-btn">{pausedSession ? "Resume" : "Start"}</button>
+                                                <button onClick={() => pausedSession ? handleResumeTimer((day._id || day.id), pausedSession._id) : handleStartTimer((day._id || day.id))} className="timer-text-btn start-btn">{pausedSession ? "Resume" : "Start"}</button>
                                             ) : (
                                                 <>
-                                                    <button onClick={() => handlePauseTimer(day._id)} className="timer-text-btn pause-btn">Pause</button>
-                                                    <button onClick={() => setConfirmAction({ type: 'reset', dayId: day._id })} className="timer-text-btn reset-btn">Reset</button>
-                                                    <button onClick={() => setConfirmAction({ type: 'save', dayId: day._id })} className="timer-text-btn save-btn">Save</button>
+                                                    <button onClick={() => handlePauseTimer((day._id || day.id))} className="timer-text-btn pause-btn">Pause</button>
+                                                    <button onClick={() => setConfirmAction({ type: 'reset', dayId: (day._id || day.id) })} className="timer-text-btn reset-btn">Reset</button>
+                                                    <button onClick={() => setConfirmAction({ type: 'save', dayId: (day._id || day.id) })} className="timer-text-btn save-btn">Save</button>
                                                 </>
                                             )}
                                         </div>
@@ -522,15 +523,15 @@ const Workspace = () => {
                         )}
                         <div className="day-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, flex: isExpanded ? 1 : 0, minWidth: 0 }}>
                             <div className="day-actions-inner" style={{ display: 'flex', alignItems: 'center', gap: 16, border: isExpanded ? `1px solid ${COLORS.border}` : 'none', borderRadius: 6, padding: isExpanded ? '6px 16px' : '0' }}>
-                                {isExpanded && <button onClick={() => { setAddingTaskDayId(day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn" title="Add New Task"><Plus size={16} /></button>}
-                                <button onClick={() => setExpandedBoxes(p => ({ ...p, [day._id]: !isExpanded }))} className="header-btn" title={isExpanded ? "Collapse" : "Expand"} style={{ marginLeft: !isExpanded ? 'auto' : 0 }}>
+                                {isExpanded && <button onClick={() => { setAddingTaskDayId((day._id || day.id)); setExpandedBoxes(p => ({ ...p, [(day._id || day.id)]: true })); }} className="header-btn" title="Add New Task"><Plus size={16} /></button>}
+                                <button onClick={() => setExpandedBoxes(p => ({ ...p, [(day._id || day.id)]: !isExpanded }))} className="header-btn" title={isExpanded ? "Collapse" : "Expand"} style={{ marginLeft: !isExpanded ? 'auto' : 0 }}>
                                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
-                                {isExpanded && <button onClick={() => { setEditingDayId(isEditing ? null : day._id); setExpandedBoxes(p => ({ ...p, [day._id]: true })); }} className="header-btn">{isEditing ? 'done' : 'edit'}</button>}
+                                {isExpanded && <button onClick={() => { setEditingDayId(isEditing ? null : (day._id || day.id)); setExpandedBoxes(p => ({ ...p, [(day._id || day.id)]: true })); }} className="header-btn">{isEditing ? 'done' : 'edit'}</button>}
                                 {isExpanded && (
                                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <button className="header-btn" onClick={(e) => { const input = e.currentTarget.nextSibling; try { input.showPicker(); } catch { input.focus(); } }}>Deadline</button>
-                                        <input type="date" style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} onChange={(e) => { if (e.target.value) handleUpdateDaySession(day._id, day.title, e.target.value); }} />
+                                        <input type="date" style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} onChange={(e) => { if (e.target.value) handleUpdateDaySession((day._id || day.id), day.title, e.target.value); }} />
                                     </div>
                                 )}
                             </div>
@@ -540,11 +541,11 @@ const Workspace = () => {
                     {isExpanded && (
                         <div style={{ paddingTop: 16, animation: 'fadeIn 0.3s ease-in-out' }}>
                             <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-                            {addingTaskDayId === day._id && (
+                            {addingTaskDayId === (day._id || day.id) && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: `1px solid ${COLORS.border}` }}>
                                     <span style={{ color: COLORS.textMuted, fontSize: 14 }}>+</span>
-                                    <input type="text" autoFocus placeholder="new task..." value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') confirmAddTask(day._id); }} style={{ flex: 1, background: 'transparent', border: 'none', color: COLORS.textPrimary, fontSize: 14, outline: 'none' }} />
-                                    <button onClick={() => confirmAddTask(day._id)} className="action-btn">save</button>
+                                    <input type="text" autoFocus placeholder="new task..." value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') confirmAddTask((day._id || day.id)); }} style={{ flex: 1, background: 'transparent', border: 'none', color: COLORS.textPrimary, fontSize: 14, outline: 'none' }} />
+                                    <button onClick={() => confirmAddTask((day._id || day.id))} className="action-btn">save</button>
                                     <button onClick={() => { setAddingTaskDayId(null); setNewTaskText(''); }} className="action-btn">cancel</button>
                                 </div>
                             )}
@@ -560,12 +561,12 @@ const Workspace = () => {
                                     </div>
                                     
                                     <div className="task-actions" style={{ display: 'flex', gap: 16 }}>
-                                        <button onClick={() => handleToggleTask(task._id, task.status, day._id)} className="action-btn">{task.status ? 'undo' : 'done'}</button>
-                                        <button onClick={() => handleDeleteTask(task._id, day._id)} className="action-btn">delete</button>
+                                        <button onClick={() => handleToggleTask(task._id, task.status, (day._id || day.id))} className="action-btn">{task.status ? 'undo' : 'done'}</button>
+                                        <button onClick={() => handleDeleteTask(task._id, (day._id || day.id))} className="action-btn">delete</button>
                                     </div>
                                 </div>
                             ))}
-                            {tasks.length === 0 && addingTaskDayId !== day._id && <div style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 16 }}>no tasks yet.</div>}
+                            {tasks.length === 0 && addingTaskDayId !== (day._id || day.id) && <div style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 16 }}>no tasks yet.</div>}
                         </div>
                     )}
                 </div>

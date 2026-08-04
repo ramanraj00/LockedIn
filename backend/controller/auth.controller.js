@@ -75,9 +75,19 @@ exports.signup = async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.status(201).json({ message: "Account created Successfully", token });
+    res.status(201).json({ 
+        message: "Account created Successfully", 
+        token,
+        cryptoKeys: user.crypto ? {
+            encryptedDEK_pwd: user.crypto.encryptedDEK_pwd,
+            encryptedDEK_rec: user.crypto.encryptedDEK_rec,
+            userSalt: user.crypto.userSalt,
+            recoverySalt: user.crypto.recoverySalt,
+            pbkdf2Iterations: user.crypto.pbkdf2Iterations,
+            kdf: user.crypto.kdf
+        } : null 
+    });
   } catch (err) {
-    console.error("Signup Error:", err);
     res.status(500).json({ message: "Error creating account", error: err.message });
   }
 };

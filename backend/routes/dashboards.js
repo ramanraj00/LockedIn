@@ -93,12 +93,15 @@ router.get("/dashboard/profile", async (req, res) => {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const lastStudyDate = new Date(studyDays[studyDays.length - 1].date);
-      lastStudyDate.setHours(0, 0, 0, 0);
+      
+      if (studyDays.length > 0) {
+          const lastStudyDate = new Date(studyDays[studyDays.length - 1].date);
+          lastStudyDate.setHours(0, 0, 0, 0);
 
-      const diffFromToday = Math.floor((today - lastStudyDate) / (1000 * 60 * 60 * 24));
-      if (diffFromToday > 1) {
-        currentStreak = 0;
+          const diffFromToday = Math.floor((today - lastStudyDate) / (1000 * 60 * 60 * 24));
+          if (diffFromToday > 1) {
+            currentStreak = 0;
+          }
       }
     }
 
