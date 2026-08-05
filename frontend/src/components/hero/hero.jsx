@@ -1,17 +1,37 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Preload image in JS as well for faster detection
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/herobg.webp";
+    if (img.complete) {
+      setImageLoaded(true);
+    } else {
+      img.onload = () => setImageLoaded(true);
+    }
+  }, []);
+
   return (
     <div className="w-full min-h-screen relative flex flex-col items-center justify-center pt-10">
       
-      {/* Background Image (Full Page) */}
+      {/* Background Image (Full Page) with fade-in */}
       <img 
         src="/herobg.webp" 
         alt="Hero Background" 
+        loading="eager"
+        fetchpriority="high"
+        onLoad={() => setImageLoaded(true)}
         className="absolute inset-0 w-full h-full object-cover z-0"
+        style={{
+          opacity: imageLoaded ? 1 : 0,
+          transition: 'opacity 0.5s ease-in-out'
+        }}
       />
       
       {/* Hero Content Overlay */}
