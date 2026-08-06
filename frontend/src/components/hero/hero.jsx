@@ -43,12 +43,13 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.8, ease: "easeInOut" }}
           className="text-3xl md:text-5xl lg:text-5xl font-medium text-white flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 md:mb-6"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
-          <span className="md:[-webkit-text-stroke:1.5px_black]">Your</span>
-          <span className="bg-white text-black px-6 py-1 md:py-2 rounded-full font-bold shadow-lg">
+          <span className="md:[-webkit-text-stroke:1.5px_black] italic">Your</span>
+          <span className="bg-white text-black px-6 py-1 md:py-2 rounded-full font-bold shadow-lg" style={{ fontFamily: "'Inter', sans-serif" }}>
             Comfort Space
           </span>
-          <span className="md:[-webkit-text-stroke:1.5px_black]">For</span>
+          <span className="md:[-webkit-text-stroke:1.5px_black] italic">For</span>
         </motion.div>
         
         {/* Main Headline: "Building Better Days" */}
@@ -57,6 +58,7 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 0.4, ease: "easeInOut" }}
           className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tight mb-12 md:mb-16 md:[-webkit-text-stroke:2px_black] md:drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Building Better Days
         </motion.h1>
