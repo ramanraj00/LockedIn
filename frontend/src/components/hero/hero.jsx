@@ -43,11 +43,11 @@ const Hero = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.8, ease: "easeInOut" }}
-          className="text-2xl md:text-4xl lg:text-5xl font-medium text-white/90 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-2 md:mb-4 tracking-wide drop-shadow-md"
+          className="text-3xl md:text-5xl lg:text-5xl font-medium text-white flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 md:mb-6 drop-shadow-lg"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           <span>Your</span>
-          <span className="italic text-[#E0F2FE]" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600 }}>
+          <span className="bg-white text-[#1F2937] px-6 py-0.5 md:py-1 rounded-full font-bold shadow-lg" style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
             Comfort Space
           </span>
           <span>For</span>
@@ -58,7 +58,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 0.4, ease: "easeInOut" }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight mb-12 md:mb-16 drop-shadow-xl"
+          className="text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight mb-12 md:mb-16 drop-shadow-2xl"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Building Better Days
