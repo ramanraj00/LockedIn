@@ -38,18 +38,19 @@ const Hero = () => {
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 w-full max-w-5xl mx-auto -mt-20">
         
         {/* Top Header: "Your Comfort Space For" */}
+        {/* Top Header: "Your Comfort Space For" */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.8, ease: "easeInOut" }}
-          className="text-3xl md:text-5xl lg:text-5xl font-medium text-white flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 md:mb-6"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          className="text-2xl md:text-4xl lg:text-5xl font-medium text-white/90 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-2 md:mb-4 tracking-wide drop-shadow-md"
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          <span className="md:[-webkit-text-stroke:1.5px_black] italic">Your</span>
-          <span className="bg-white text-black px-6 py-1 md:py-2 rounded-full font-bold shadow-lg" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <span>Your</span>
+          <span className="italic text-[#E0F2FE]" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600 }}>
             Comfort Space
           </span>
-          <span className="md:[-webkit-text-stroke:1.5px_black] italic">For</span>
+          <span>For</span>
         </motion.div>
         
         {/* Main Headline: "Building Better Days" */}
@@ -57,7 +58,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 0.4, ease: "easeInOut" }}
-          className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tight mb-12 md:mb-16 md:[-webkit-text-stroke:2px_black] md:drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+          className="text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight mb-12 md:mb-16 drop-shadow-xl"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Building Better Days
