@@ -58,7 +58,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 0.4, ease: "easeInOut" }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight mb-12 md:mb-16 drop-shadow-2xl"
+          className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-12 md:mb-16 drop-shadow-lg md:[-webkit-text-stroke:0.5px_rgba(0,0,0,0.3)]"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Building Better Days
