@@ -20,34 +20,39 @@ const Hero = () => {
   return (
     <div className="w-full min-h-screen relative flex flex-col items-center justify-center pt-10">
       
-      {/* Background Image (Full Page) with fade-in */}
-      <img 
-        src="/herobg.webp" 
-        alt="Hero Background" 
-        loading="eager"
-        fetchpriority="high"
-        onLoad={() => setImageLoaded(true)}
-        className="absolute inset-0 w-full h-full object-cover z-0"
-        style={{
-          opacity: imageLoaded ? 1 : 0,
-          transition: 'opacity 0.5s ease-in-out'
-        }}
-      />
+      {/* Background Image with Light Overlay for contrast & consistency */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src="/herobg.webp" 
+          alt="Hero Background" 
+          loading="eager"
+          fetchpriority="high"
+          onLoad={() => setImageLoaded(true)}
+          className="w-full h-full object-cover"
+          style={{
+            opacity: imageLoaded ? 1 : 0,
+            transition: 'opacity 0.5s ease-in-out'
+          }}
+        />
+        {/* Soft light overlay to make dark text pop and match the site's light theme */}
+        <div className="absolute inset-0 bg-white/50 md:bg-white/40 backdrop-blur-[2px]"></div>
+        {/* Gradient to blend smoothly into the next section */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-[#FAFAFA]"></div>
+      </div>
       
       {/* Hero Content Overlay */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 w-full max-w-5xl mx-auto -mt-20">
         
         {/* Top Header: "Your Comfort Space For" */}
-        {/* Top Header: "Your Comfort Space For" */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.8, ease: "easeInOut" }}
-          className="text-3xl md:text-5xl lg:text-5xl font-medium text-white flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 md:mb-6 drop-shadow-lg"
+          className="text-3xl md:text-5xl lg:text-5xl font-medium text-[#1F2937] flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 md:mb-6 drop-shadow-sm"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           <span>Your</span>
-          <span className="bg-white text-[#1F2937] px-6 py-0.5 md:py-1 rounded-full font-bold shadow-lg" style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
+          <span className="bg-[#1F2937] text-white px-6 py-0.5 md:py-1 rounded-full font-bold shadow-md" style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
             Comfort Space
           </span>
           <span>For</span>
@@ -58,7 +63,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 0.4, ease: "easeInOut" }}
-          className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-12 md:mb-16 drop-shadow-lg md:[-webkit-text-stroke:0.5px_rgba(0,0,0,0.3)]"
+          className="text-4xl md:text-6xl lg:text-7xl font-bold text-[#1F2937] tracking-tight mb-12 md:mb-16 drop-shadow-sm"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Building Better Days
@@ -72,7 +77,7 @@ const Hero = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ duration: 1.8, delay: 0.8, ease: "easeInOut" }}
-          className="px-6 py-3 md:px-8 md:py-4 rounded-full bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/40 text-slate-200 font-bold tracking-wider md:tracking-widest text-[11px] sm:text-xs md:text-sm backdrop-blur-md transition-colors duration-300 shadow-[0_0_30px_rgba(37,99,235,0.3)] whitespace-nowrap"
+          className="px-6 py-3 md:px-8 md:py-4 rounded-full bg-[#1F2937] hover:bg-[#374151] text-white font-bold tracking-wider md:tracking-widest text-[11px] sm:text-xs md:text-sm transition-colors duration-300 shadow-xl whitespace-nowrap"
         >
           START BUILDING BETTER DAYS
         </motion.button>
