@@ -17,7 +17,8 @@
   [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
   [![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-  [![Vercel](https://img.shields.io/badge/Deployed_on_Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+  [![Vercel](https://img.shields.io/badge/Frontend_on_Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+  [![Render](https://img.shields.io/badge/Backend_on_Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 
 </div>
 
@@ -209,9 +210,10 @@ LockedIn implements a **zero-knowledge encryption model** where the server never
 ### Infrastructure
 | Technology | Purpose |
 |---|---|
-| **Vercel** | Serverless deployment (frontend + backend) |
+| **Vercel** | Frontend hosting + SPA deployment |
+| **Render** | Backend API server hosting |
 | **MongoDB Atlas** | Cloud-hosted database |
-| **Vercel Serverless Functions** | Email delivery service |
+| **Vercel Serverless Functions** | Email delivery service (Render blocks outgoing SMTP to prevent spam) |
 
 <br />
 
@@ -512,23 +514,20 @@ LockedIn/
 
 ## 🚢 Deployment
 
-Both frontend and backend are deployed on **Vercel** as separate projects.
+The frontend and backend are deployed on **separate platforms** for optimal performance and reliability.
 
-### Frontend Deployment
+### Frontend → Vercel
 ```bash
 cd frontend
 vercel --prod
 ```
+- SPA rewrite rule (`/(.*) → /index.html`) configured in `vercel.json`
+- Vercel Serverless Functions handle email delivery (`api/sendEmail.js`) since Render blocks outgoing SMTP to prevent spam abuse
 
-### Backend Deployment
-```bash
-cd backend
-vercel --prod
-```
-
-Both directories include `vercel.json` configurations:
-- **Frontend**: SPA rewrite rule (`/(.*) → /index.html`)
-- **Backend**: Serverless function routing (`/(.*) → index.js`)
+### Backend → Render
+- Deployed as a **Web Service** on [Render](https://render.com/)
+- Auto-deploys from the `backend/` directory
+- `vercel.json` in backend is kept as a fallback config
 
 <br />
 
