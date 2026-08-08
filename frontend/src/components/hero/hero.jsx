@@ -10,7 +10,7 @@ const Hero = () => {
     <div className="w-full min-h-screen relative flex flex-col items-center justify-center pt-10 overflow-hidden">
       
       {/* Background Grid */}
-      <div className="absolute inset-0 w-full h-full z-0 grid grid-cols-2 grid-rows-2">
+      <div className="absolute inset-0 w-full h-full z-0 grid grid-cols-2 grid-rows-2 contrast-[1.10]">
         
         {/* Top Left Square */}
         <div className="w-full h-full relative overflow-hidden">
