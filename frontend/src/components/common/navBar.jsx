@@ -63,7 +63,7 @@ function Navbar() {
         <div
           onClick={() => handleScroll("hero-section")}
           style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-          className={`cursor-pointer text-2xl font-black tracking-tighter select-none transition-all duration-300 text-white ${
+          className={`cursor-pointer text-2xl font-black tracking-tighter select-none transition-all duration-300 text-slate-800 ${
             scrolled
               ? "opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto md:bg-white md:text-black md:rounded-2xl md:px-4 md:py-1.5 md:shadow-lg"
               : "opacity-100"
@@ -74,25 +74,25 @@ function Navbar() {
         
         {/* Desktop Navigation links */}
         <div
-          className={`hidden md:flex items-center gap-10 px-8 py-3 rounded-full bg-blue-600/20 border border-blue-400/40 backdrop-blur-md shadow-[0_0_30px_rgba(37,99,235,0.3)] text-slate-200 transition-all duration-300 ${
+          className={`hidden md:flex items-center gap-10 px-8 py-2.5 rounded-full bg-white/80 border border-white/60 backdrop-blur-xl shadow-sm text-slate-700 transition-all duration-300 ${
             scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
           }`}
         >
           <span
             onClick={() => handleScroll("hero-section")}
-            className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
+            className="cursor-pointer font-medium hover:text-slate-900 hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             Home
           </span>
           <span
             onClick={() => handleScroll("features")}
-            className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
+            className="cursor-pointer font-medium hover:text-slate-900 hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             Features
           </span>
           <span
             onClick={() => handleScroll("leaderboard-section")}
-            className="cursor-pointer font-medium hover:text-white hover:underline decoration-2 underline-offset-2 transition-all duration-200"
+            className="cursor-pointer font-medium hover:text-slate-900 hover:underline decoration-2 underline-offset-2 transition-all duration-200"
           >
             More
           </span>
@@ -107,8 +107,8 @@ function Navbar() {
               scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
             }`}
             style={{
-              borderColor: position.x !== 0 || position.y !== 0 ? "rgba(255, 255, 255, 0.4)" : "transparent", 
-              backgroundColor: position.x !== 0 || position.y !== 0 ? "rgba(255, 255, 255, 0.05)" : "transparent"
+              borderColor: position.x !== 0 || position.y !== 0 ? "rgba(0, 0, 0, 0.2)" : "transparent", 
+              backgroundColor: position.x !== 0 || position.y !== 0 ? "rgba(0, 0, 0, 0.05)" : "transparent"
             }}
           >
             <motion.div
@@ -119,7 +119,7 @@ function Navbar() {
               <button 
                 onClick={navigateToLogin}
                 style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-                className="bg-transparent hover:text-white text-zinc-200 font-medium rounded-lg px-4 py-2 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                className="bg-white/80 backdrop-blur-xl shadow-sm border border-white/60 hover:bg-white text-slate-800 font-bold text-[13px] tracking-wide rounded-full px-6 py-2 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
                 Login
               </button>
@@ -129,7 +129,7 @@ function Navbar() {
           <button 
             onClick={navigateToSignup}
             style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-            className={`text-sm font-bold text-[#fafafa] uppercase px-4 py-1.5 rounded-lg border-2 border-[#fafafa] bg-[#252525] shadow-[2px_2px_#fafafa] cursor-pointer transition-all active:shadow-none active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap ${
+            className={`text-[13px] tracking-wide font-bold text-white uppercase px-6 py-2 rounded-full bg-slate-900 shadow-md hover:bg-slate-800 border-2 border-transparent cursor-pointer transition-all active:shadow-none active:scale-95 whitespace-nowrap ${
               scrolled ? "pointer-events-auto" : ""
             }`}
           >

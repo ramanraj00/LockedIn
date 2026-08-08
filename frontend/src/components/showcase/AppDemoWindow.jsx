@@ -1901,7 +1901,7 @@ const renderMiniMonth = (year, monthIndex) => {
       <div className="w-full max-w-6xl mx-auto px-4 z-20 relative drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         
         {/* Outer "Picture Frame" Border */}
-        <div className="w-full p-4 md:p-5 bg-[#FAF9F6] rounded-[32px] md:rounded-[40px] shadow-2xl border border-white/50">
+        <div className="w-full p-4 md:p-5 bg-white/30 backdrop-blur-lg rounded-[32px] md:rounded-[40px] shadow-[0_30px_60px_rgba(0,0,0,0.1)] border border-white/60">
           
           {/* Main Window Container */}
           <div className="w-full h-[600px] md:h-[700px] bg-[#1e1e1e] rounded-[20px] md:rounded-[24px] border border-black/50 flex flex-col md:flex-row overflow-hidden shadow-inner relative">
