@@ -72,68 +72,42 @@ function Navbar() {
           <span>LockedIn</span>
         </div>
         
-        {/* Desktop Navigation links */}
+        {/* Desktop Navigation & Actions */}
         <div
-          className={`hidden md:flex items-center gap-10 px-8 py-2.5 rounded-full bg-white/80 border border-white/60 backdrop-blur-xl shadow-sm text-slate-700 transition-all duration-300 ${
+          className={`hidden md:flex items-center gap-8 text-[14px] text-gray-700 transition-all duration-300 ${
             scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
           }`}
         >
           <span
             onClick={() => handleScroll("hero-section")}
-            className="cursor-pointer font-medium hover:text-slate-900 hover:underline decoration-2 underline-offset-2 transition-all duration-200"
+            className="cursor-pointer hover:text-black transition-colors"
           >
             Home
           </span>
           <span
             onClick={() => handleScroll("features")}
-            className="cursor-pointer font-medium hover:text-slate-900 hover:underline decoration-2 underline-offset-2 transition-all duration-200"
+            className="cursor-pointer hover:text-black transition-colors"
           >
             Features
           </span>
           <span
             onClick={() => handleScroll("leaderboard-section")}
-            className="cursor-pointer font-medium hover:text-slate-900 hover:underline decoration-2 underline-offset-2 transition-all duration-200"
+            className="cursor-pointer hover:text-black transition-colors"
           >
             More
           </span>
-        </div>
-        
-        {/* Desktop Action Buttons */}
-        <div className="hidden md:flex items-center gap-4">
-          <div 
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className={`border border-dashed rounded-xl p-1 transition-all duration-300 ${
-              scrolled ? "opacity-0 pointer-events-none translate-y-[-10px]" : "opacity-100 translate-y-0"
-            }`}
-            style={{
-              borderColor: position.x !== 0 || position.y !== 0 ? "rgba(0, 0, 0, 0.2)" : "transparent", 
-              backgroundColor: position.x !== 0 || position.y !== 0 ? "rgba(0, 0, 0, 0.05)" : "transparent"
-            }}
+          <span
+            onClick={navigateToLogin}
+            className="cursor-pointer hover:text-black transition-colors"
           >
-            <motion.div
-              ref={loginRef}
-              animate={{ x: position.x, y: position.y }}
-              transition={{ type: 'spring', stiffness: 150, damping: 25, mass: 0.3 }}
-            >
-              <button 
-                onClick={navigateToLogin}
-                style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-                className="bg-white/80 backdrop-blur-xl shadow-sm border border-white/60 hover:bg-white text-slate-800 font-bold text-[13px] tracking-wide rounded-full px-6 py-2 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-              >
-                Login
-              </button>
-            </motion.div>
-          </div>
+            Login
+          </span>
           
           <button 
             onClick={navigateToSignup}
-            style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-            className={`text-[13px] tracking-wide font-bold text-white uppercase px-6 py-2 rounded-full bg-slate-900 shadow-md hover:bg-slate-800 border-2 border-transparent cursor-pointer transition-all active:shadow-none active:scale-95 whitespace-nowrap ${
-              scrolled ? "pointer-events-auto" : ""
-            }`}
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-[#2B2B2B] hover:bg-[#1A1A1A] text-white text-[13px] transition-all cursor-pointer whitespace-nowrap"
           >
-            Signup
+            Signup <span className="text-base leading-none">&rarr;</span>
           </button>
         </div>
         

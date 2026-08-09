@@ -105,7 +105,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.1, ease: "easeOut" }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight leading-none"
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#2D2D2D] tracking-tight leading-none"
             style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
           >
             Your Comfort Space
@@ -115,8 +115,8 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-            className="text-3xl md:text-4xl lg:text-5xl italic leading-tight"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#4A7B7A" }}
+            className="text-3xl md:text-4xl lg:text-5xl italic leading-tight mt-1"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#3B5A6C" }}
           >
             for building better days.
           </motion.h1>
@@ -127,7 +127,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-          className="text-sm md:text-base text-slate-600 font-medium max-w-lg leading-relaxed mb-10"
+          className="text-base md:text-lg text-[#4B5563] font-medium max-w-2xl leading-relaxed mb-10 px-4"
         >
           Track your daily focus, identify productivity patterns, and build better work habits with intelligent insights.
         </motion.p>
@@ -137,12 +137,12 @@ const Hero = () => {
           onClick={() => navigate('/signup')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="px-8 py-3.5 md:px-10 md:py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm md:text-base transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.15)] whitespace-nowrap"
+          className="flex items-center gap-2 px-6 py-3 rounded-md bg-[#2B2B2B] hover:bg-[#1A1A1A] text-white font-normal text-sm md:text-base transition-all duration-300 whitespace-nowrap"
         >
-          Start Focusing
+          Start Focusing <span className="text-lg leading-none">&rarr;</span>
         </motion.button>
         
       </div>
