@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://locked-in-five-olive.vercel.app/share_compressed.jpg" alt="LockedIn Banner" width="100%" />
+  <img src="https://locked-in-five-olive.vercel.app/hero-preview.png" alt="LockedIn Banner" width="100%" />
 
   <br />
 
