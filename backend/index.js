@@ -94,6 +94,17 @@ const server = app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
 });
 
+// 🔥 Keep-alive ping to prevent Render from going to sleep (Free tier sleeps after 15m)
+const KEEPALIVE_URL = process.env.RENDER_EXTERNAL_URL || "https://lockedin-backend-axzn.onrender.com";
+setInterval(async () => {
+  try {
+    const res = await fetch(`${KEEPALIVE_URL}/health`);
+    logger.info(`[Keep-alive] Pinged ${KEEPALIVE_URL}/health - Status: ${res.status}`);
+  } catch (error) {
+    logger.error(`[Keep-alive] Ping failed: ${error.message}`);
+  }
+}, 14 * 60 * 1000); // 14 minutes
+
 // Graceful Shutdown Logic
 const shutdown = () => {
   logger.info("SIGTERM/SIGINT received. Shutting down gracefully...");

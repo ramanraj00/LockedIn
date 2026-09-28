@@ -155,7 +155,11 @@ exports.forgetPassword = async (req, res) => {
     user.resetToken = token;
     user.resetTokenExpiry = Date.now() + 10 * 60 * 1000;
     await user.save();
-    await sendResetEmail(email, token);
+    
+    // 🔥 Fire and forget: send email asynchronously to prevent frontend from hanging
+    sendResetEmail(email, token).catch(err => {
+      console.error("Background email sending failed:", err);
+    });
 
     return res.json({ message: "If this email exists, reset link has been sent" });
   } catch (error) {
