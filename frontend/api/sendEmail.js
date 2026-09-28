@@ -11,6 +11,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing email or token' });
   }
 
+  // Debug: Check if env vars exist
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("❌ SMTP_USER or SMTP_PASS environment variable is MISSING!");
+    return res.status(500).json({ 
+      success: false, 
+      error: "Email service misconfigured — SMTP credentials missing" 
+    });
+  }
+
   // Use the env variables from Vercel
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -21,6 +30,18 @@ export default async function handler(req, res) {
       pass: process.env.SMTP_PASS,
     },
   });
+
+  // Verify SMTP connection before sending
+  try {
+    await transporter.verify();
+    console.log("✅ SMTP connection verified successfully");
+  } catch (verifyError) {
+    console.error("❌ SMTP verification FAILED:", verifyError.message);
+    return res.status(500).json({ 
+      success: false, 
+      error: "SMTP authentication failed — check Gmail App Password" 
+    });
+  }
 
   const frontendUrl = "https://locked-in-five-olive.vercel.app";
   const resetLink = `${frontendUrl}/reset-password/${token}`;
@@ -70,9 +91,10 @@ export default async function handler(req, res) {
       `
     });
     
+    console.log("✅ Email sent successfully to:", email, "MessageID:", info.messageId);
     return res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
-    console.error("Vercel Email Error:", error);
+    console.error("❌ Vercel Email Error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 }
