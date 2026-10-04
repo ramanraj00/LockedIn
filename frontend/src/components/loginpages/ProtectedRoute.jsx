@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { apiFetch } from '../../apiClient';
+import { getAuthToken, removeAuthToken } from '../../utils/authUtils';
 
 // 🔥 Global cache: Backend auth check sirf ek baar hoga, har page change pe nahi
 let cachedAuthResult = null; // { authenticated: true/false, timestamp: number }
@@ -9,7 +10,7 @@ const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minute cache — re-verify after 5 mi
 const ProtectedRoute = ({ children }) => {
     // 🛡️ FAST SYNCHRONOUS CHECK:
     // auth_token localStorage me reliably save hota hai login/signup ke time
-    const hasToken = !!localStorage.getItem("auth_token");
+    const hasToken = !!getAuthToken();
     
     // Agar token hi nahi hai, user definitely logged out hai
     if (!hasToken) {
@@ -53,14 +54,14 @@ const ProtectedRoute = ({ children }) => {
                 } else {
                     // Token actually expired or invalid — clean up
                     cachedAuthResult = null;
-                    localStorage.removeItem("auth_token");
+                    removeAuthToken();
                     setIsAuthenticated(false);
                 }
             } catch (error) {
                 // Network error — don't kick out, user might just be offline
                 console.error("Auth check error:", error);
                 // If token exists, give benefit of doubt
-                if (localStorage.getItem("auth_token")) {
+                if (getAuthToken()) {
                     setIsAuthenticated(true);
                 } else {
                     setIsAuthenticated(false);

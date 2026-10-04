@@ -6,6 +6,8 @@ import ShaderBackground from '../shaderbackground/ShaderBackground';
 import { deriveKEK, generateWorkspaceDEK, generateRecoveryKey, generateUserSalt, encryptDEK } from '../../utils/e2eMasterKey';
 import { useCrypto } from '../../context/CryptoContext';
 import { apiFetch } from '../../apiClient';
+import { setAuthToken } from "../../utils/authUtils";
+
 
 const AVATARS = [
     "/avatars/gwen.webp", "/avatars/spidey.webp", "/avatars/buttercup.webp", "/avatars/henry.webp"
@@ -142,7 +144,7 @@ const response = await apiFetch("/api/auth/signup", {
                 setError(data.message || "Failed to sign up"); setLoading(false); return;
             }
             
-            if (data.token) localStorage.setItem("auth_token", data.token);
+            if (data.token) setAuthToken(data.token);
 
             // 🔥 LOGIC FIX: Hamesha Session me save hoga (Keep Unlocked Default)
             await setDek(dek, true);

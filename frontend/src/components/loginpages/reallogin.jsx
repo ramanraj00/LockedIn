@@ -6,6 +6,8 @@ import ShaderBackground from '../shaderbackground/ShaderBackground';
 import { deriveKEK, decryptDEK, encryptDEK, generateWorkspaceDEK, generateUserSalt, generateRecoveryKey } from '../../utils/e2eMasterKey';
 import { useCrypto } from '../../context/CryptoContext';
 import { apiFetch } from '../../apiClient';
+import { setAuthToken } from "../../utils/authUtils";
+
 
 
 
@@ -95,7 +97,7 @@ const Login = () => {
                 setError(data.message || "Invalid credentials"); setLoading(false); return;
             }
             
-            if (data.token) localStorage.setItem("auth_token", data.token);
+            if (data.token) setAuthToken(data.token);
 
             if (data.cryptoKeys) {
                 setCryptoData(data.cryptoKeys);
@@ -143,7 +145,7 @@ const Login = () => {
                     setLoading(false); return;
                 }
                 
-                if (data.token) localStorage.setItem("auth_token", data.token);
+                if (data.token) setAuthToken(data.token);
 
                 if (data.isNewUser || !data.cryptoKeys) {
                     setView('vault_setup'); 
@@ -190,7 +192,7 @@ const Login = () => {
 
             const setupData = await setupRes.json();
             if (!setupRes.ok) throw new Error("Failed to save keys.");
-            if (setupData.token) localStorage.setItem("auth_token", setupData.token);
+            if (setupData.token) setAuthToken(setupData.token);
             
             await setDek(masterDEK, true); 
             setRecoveryKeyDisplay(recoveryKey);

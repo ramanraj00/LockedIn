@@ -1,7 +1,9 @@
+import { getAuthToken } from "./utils/authUtils";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export const apiFetch = async (endpoint, options = {}) => {
-  const token = localStorage.getItem("auth_token");
+  const token = getAuthToken();
   
   const headers = {
     ...options.headers,
