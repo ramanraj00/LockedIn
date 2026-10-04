@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const ratelimit = require("express-rate-limit");
-const authController = require("../controller/auth.controller");
 const userValidationMiddleware = require("../middleware/uservalidation");
 const authMiddleware = require("../middleware/authMiddleware"); 
 
@@ -11,6 +10,20 @@ const { forgetpasswordvalidatorSchemna } = require("../validators/forgetemailval
 const { resetPasswordSchema } = require("../validators/resetPasswordvalidator");
 const googleAuthSchema = require("../validators/googleauthvalidator");
 
+// --- Import fully split controllers (Max 2 responsibilities per file) ---
+const signupController = require("../controller/signup.controller");
+const passwordController = require("../controller/password.controller");
+const resetPasswordController = require("../controller/resetPassword.controller");
+const googleController = require("../controller/google.controller");
+const profileController = require("../controller/profile.controller");
+const profileLinksController = require("../controller/profileLinks.controller");
+const vaultController = require("../controller/vault.controller");
+const searchController = require("../controller/search.controller");
+const followController = require("../controller/follow.controller");
+const notificationController = require("../controller/notification.controller");
+const sessionAuthController = require("../controller/sessionAuth.controller");
+
+// --- Rate Limiters ---
 const loginLimiter = ratelimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -19,42 +32,44 @@ const loginLimiter = ratelimit({
 
 const recoveryLimiter = ratelimit({
   windowMs: 15 * 60 * 1000, 
-  max: 5, // 5 attempts per 15 min
+  max: 5,
   message: { message: "Too many recovery attempts. Try again later." },
 });
-// Ye route sabse neeche add kar do:
-router.post("/reset-vault-keys", authMiddleware, recoveryLimiter, authController.resetVaultKeys);
 
-router.get("/check-auth", authMiddleware, authController.checkAuth);
+// --- Auth Routes (signup + signin) ---
+router.post("/signup", userValidationMiddleware(userValidSchema), loginLimiter, signupController.signup);
+router.post("/signin", userValidationMiddleware(userloginSchema), loginLimiter, signupController.signin);
 
-router.post("/setup-keys", authMiddleware, authController.setupKeys);
-router.post("/signup", userValidationMiddleware(userValidSchema), loginLimiter, authController.signup);
-router.post("/signin", userValidationMiddleware(userloginSchema), loginLimiter, authController.signin);
-router.post("/forgetPassword", userValidationMiddleware(forgetpasswordvalidatorSchemna), authController.forgetPassword);
+// --- Password Reset Routes ---
+router.post("/forgetPassword", userValidationMiddleware(forgetpasswordvalidatorSchemna), passwordController.forgetPassword);
+router.get("/verify-reset-token/:token", passwordController.verifyResetToken);
+router.post("/reset-password/:token", userValidationMiddleware(resetPasswordSchema), resetPasswordController.resetPassword);
 
-// 🔥 NEW ROUTE: Frontend yahan se token check karke recovery data fetch karega
-router.get("/verify-reset-token/:token", authController.verifyResetToken);
+// --- Google Auth ---
+router.post("/google-auth", userValidationMiddleware(googleAuthSchema), googleController.googleAuth);
 
-router.post("/reset-password/:token", userValidationMiddleware(resetPasswordSchema), authController.resetPassword);
-router.post("/google-auth", userValidationMiddleware(googleAuthSchema), authController.googleAuth);
+// --- Vault / Crypto Keys ---
+router.post("/setup-keys", authMiddleware, vaultController.setupKeys);
+router.post("/reset-vault-keys", authMiddleware, recoveryLimiter, vaultController.resetVaultKeys);
 
-router.get("/me", authMiddleware, authController.getProfile);
+// --- Profile Routes ---
+router.get("/me", authMiddleware, profileController.getProfile);
+router.put("/profile", authMiddleware, profileController.updateProfile);
+router.get("/profile/:id", profileLinksController.getPublicProfile);
+router.put("/profile/links", authMiddleware, profileLinksController.updateLinks);
 
-// 👇 YAHI WOH ROUTE HAI JO ERROR FIX KAREGA
-router.get("/profile/:id", authController.getPublicProfile);
-// 👆
+// --- Social Routes (search, follow, notifications) ---
+router.get("/search", searchController.searchUsers);
+router.post("/follow/:id", authMiddleware, followController.toggleFollow);
+router.get("/follow-data/:id", authMiddleware, followController.getFollowData);
+router.get("/notifications", authMiddleware, notificationController.getNotifications);
+router.put("/notifications/read", authMiddleware, notificationController.markNotificationsRead);
 
-router.get("/search", authController.searchUsers);
+// --- Session Routes (logout, check-auth) ---
+router.post("/logout", sessionAuthController.logout);
+router.get("/check-auth", authMiddleware, sessionAuthController.checkAuth);
 
-router.put("/profile", authMiddleware, authController.updateProfile);
-router.put("/profile/links", authMiddleware, authController.updateLinks);
-router.post("/logout", authController.logout);
-router.post("/follow/:id", authMiddleware, authController.toggleFollow);
-router.get("/follow-data/:id", authMiddleware, authController.getFollowData);
-router.get("/notifications", authMiddleware, authController.getNotifications);
-router.put("/notifications/read", authMiddleware, authController.markNotificationsRead);
-
-// 🌐 PUBLIC: Landing page real stats (no auth required)
+// --- Public Stats (landing page) ---
 router.get("/public-stats", async (req, res) => {
   try {
     const User = require("../models/users");
